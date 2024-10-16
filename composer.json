@@ -21,7 +21,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Sitchco\\Parent": "src"
+            "Sitchco\\Parent\\": "src"
         }
     },
     "extra": {
