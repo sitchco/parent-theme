@@ -1,0 +1,48 @@
+{
+    "name": "sitchco/sitchco-parent-theme",
+    "description": "Sitchco parent theme based on Timber starter theme",
+    "type": "wordpress-theme",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        }
+    ],
+    "require": {
+        "timber/timber": "*"
+    },
+    "require-dev": {
+        "automattic/wordbless": "^0.4.2",
+        "yoast/wp-test-utils": "^1.0",
+        "wp-coding-standards/wpcs": "^3.1",
+        "phpcompatibility/php-compatibility": "^9",
+        "szepeviktor/phpstan-wordpress": "^1.3",
+        "10up/phpcs-composer": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sitchco\\Parent": "src"
+        }
+    },
+    "extra": {
+        "installer-paths": {
+            "vendor/automattic/wordbless/": [
+                "automattic/wordbless"
+            ]
+        },
+        "wordpress-install-dir": "wordpress"
+    },
+    "config": {
+        "allow-plugins": {
+            "roots/wordpress-core-installer": true,
+            "composer/installers": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs": "@php ./vendor/bin/phpcs",
+        "cs:fix": "@php ./vendor/bin/phpcbf",
+        "phpstan": "@php ./vendor/bin/phpstan analyse"
+    }
+}
