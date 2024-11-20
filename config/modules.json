@@ -1,0 +1,23 @@
+{
+    "cleanup": {
+        "obscurity": true,
+        "cleanHtmlMarkup": true,
+        "disableEmojis": true,
+        "disableGutenbergBlockCss": true,
+        "disableExtraRss": true,
+        "disableRecentCommentsCss": true,
+        "disableGalleryCss": true,
+        "disableXmlRpc": true,
+        "disableFeeds": true,
+        "disableDefaultPosts": true,
+        "disableComments": true,
+        "removeLanguageDropdown": true,
+        "removeWordPressVersion": true,
+        "disableRestEndpoints": true,
+        "removeJpegCompression": true,
+        "updateLoginPage": true,
+        "removeGutenbergStyles": true,
+        "removeScriptVersion": true
+    },
+    "SearchRewrite": true
+}

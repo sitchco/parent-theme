@@ -11,7 +11,6 @@
 
 namespace App;
 
-use Timber\Helper;
 use Timber\Timber;
 
 $context = Timber::context();
