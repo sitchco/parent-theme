@@ -19,5 +19,9 @@
         "removeGutenbergStyles": true,
         "removeScriptVersion": true
     },
-    "SearchRewrite": true
+    "SearchRewrite": true,
+    "timber": true,
+    "background_event_manager": {
+        "savePermalinks": true
+    }
 }
