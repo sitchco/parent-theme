@@ -19,7 +19,10 @@
         "removeGutenbergStyles": true,
         "removeScriptVersion": true
     },
-    "SearchRewrite": true,
+    "search_rewrite": {
+        "redirect": true,
+        "compatibility": true
+    },
     "timber": true,
     "background_event_manager": {
         "savePermalinks": true
