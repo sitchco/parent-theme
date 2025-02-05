@@ -11,7 +11,7 @@ use Sitchco\Model\PostBase;
  * @property string $template_area
  * @property string $is_default
  */
-class ContentPartial extends PostBase
+class ContentPartialPost extends PostBase
 {
     const POST_TYPE = 'content-partial';
 }

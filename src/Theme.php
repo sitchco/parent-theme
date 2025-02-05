@@ -2,7 +2,6 @@
 
 namespace Sitchco\Parent;
 
-use Sitchco\Parent\ContentPartial\Header;
 use Timber\Site;
 
 /**

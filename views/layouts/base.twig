@@ -7,8 +7,9 @@
 <body class="min-h-svh flex flex-col {{ body_class }}">
 {{ function('wp_body_open') }}
 <a class="skip-link absolute top-0 left-0 p-4 bg-blue-600 text-white rounded focus:outline-none focus:ring focus:ring-blue-300 -translate-y-full focus:translate-y-0 transition-transform duration-300 z-50" href="#main">{{ _e('Skip to content') }}</a>
-{% block header %}
-    {% include 'partials/header.twig' %}
+{# TODO: CONSIDER: do we really need block header here? should we just call include partials/header? #}
+{% block site_header %}
+    {% include 'partials/site-header.twig' %}
 {% endblock %}
 <div class="wrap flex-1" role="document">
     <main id="main">

@@ -11,7 +11,7 @@ use Timber\Post;
  */
 class ContentPartialRepository extends RepositoryBase
 {
-    protected string $model_class = ContentPartial::class;
+    protected string $model_class = ContentPartialPost::class;
 
     public function findDefaultHeader(): ?Post
     {

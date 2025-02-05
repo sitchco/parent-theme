@@ -1,7 +1,7 @@
 <?php
 
-use Sitchco\Parent\ContentPartial\Header;
+use Sitchco\Parent\SiteHeader\SiteHeaderModule;
 
 return [
-    Header::class => true
+    SiteHeaderModule::class => true
 ];
