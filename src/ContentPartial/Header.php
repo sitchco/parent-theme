@@ -5,20 +5,21 @@ namespace Sitchco\Parent\ContentPartial;
 use Sitchco\Framework\Core\Module;
 
 /**
- * class Header
- * @package Sitchco\Parent\ContentPartial
+ * Class Header
+ * Handles setting the header content within the Timber context.
  */
 class Header extends Module
 {
     public function init(): void
     {
-        add_filter('timber/context', [$this, 'getDefaultHeader']);
+        add_filter('timber/context', [$this, 'setHeaderContext']);
     }
 
-    public function getDefaultHeader($context)
+    public function setHeaderContext(array $context): array
     {
-        $DefaultHeader = (new ContentPartialRepository())->findDefaultHeader();
-        $context['header'] = $DefaultHeader?->post_content;
+        $repository = new ContentPartialRepository();
+        $header = $repository->findHeaderFromPage() ?? $repository->findDefaultHeader();
+        $context['header_content'] = $header?->post_content;
         return $context;
     }
 }
