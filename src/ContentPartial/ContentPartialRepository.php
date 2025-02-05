@@ -33,12 +33,16 @@ class ContentPartialRepository extends RepositoryBase
 
     public function findHeaderFromPage(?int $page_id = null): ?Post
     {
-        $page_id = $page_id ?: get_queried_object_id();
+        $page_id = $page_id ?? get_queried_object_id();
         if (!$page_id) {
             return null;
         }
 
         $page = (new PageRepository())->findById($page_id);
-        return $page?->header_partial ? $this->findById($page->header_partial) : null;
+        if (!$page || empty($header_partial_id = $page->header_partial)) {
+            return null;
+        }
+
+        return $this->findById($header_partial_id);
     }
 }
