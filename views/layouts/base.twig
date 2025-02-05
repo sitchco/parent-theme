@@ -8,8 +8,8 @@
 {{ function('wp_body_open') }}
 <a class="skip-link absolute top-0 left-0 p-4 bg-blue-600 text-white rounded focus:outline-none focus:ring focus:ring-blue-300 -translate-y-full focus:translate-y-0 transition-transform duration-300 z-50" href="#main">{{ _e('Skip to content') }}</a>
 {% block header %}
-    <header class="header">
-        <a href="{{ site.url }}">{{ site.name }}</a>
+    <header class="header-nav">
+        {{ header }}
     </header>
 {% endblock %}
 <div class="wrap flex-1" role="document">

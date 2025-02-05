@@ -2,6 +2,7 @@
 
 namespace Sitchco\Parent;
 
+use Sitchco\Parent\ContentPartial\Header;
 use Timber\Site;
 
 /**
@@ -13,6 +14,9 @@ class Theme extends Site
     {
         add_action('after_setup_theme', [$this, 'theme_supports']);
         parent::__construct();
+
+        // TODO: move to registry system when ready
+        (new Header)->init();
     }
 
     public function theme_supports()
