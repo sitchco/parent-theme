@@ -9,7 +9,9 @@ use Sitchco\Model\PostBase;
  * @package Sitcho\Parent\ContentPartial
  *
  * @property string $template_area
- * @property string $is_default
+ * @property bool $is_default
+ * @property bool $is_overlaid
+ * @property bool $is_sticky
  */
 class ContentPartialPost extends PostBase
 {
