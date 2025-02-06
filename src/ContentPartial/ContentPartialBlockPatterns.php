@@ -20,7 +20,8 @@ class ContentPartialBlockPatterns
 
         add_action('current_screen', function ($screen) {
             if ($screen && $screen->id === ContentPartialPost::POST_TYPE) {
-                self::register('default-header');
+                self::register('standard-header');
+                self::register('header-swapped');
             }
         });
     }
