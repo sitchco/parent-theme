@@ -10,8 +10,6 @@ use Sitchco\Utils\BlockPattern;
  */
 class ContentPartialBlockPatterns
 {
-    const BLOCK_PATTERN_DIR = __DIR__ . '/block-patterns';
-
     public static function init(): void
     {
         if (!is_admin()) {
@@ -20,17 +18,22 @@ class ContentPartialBlockPatterns
 
         add_action('current_screen', function ($screen) {
             if ($screen && $screen->id === ContentPartialPost::POST_TYPE) {
-                self::register('standard-header');
-                self::register('standard-header-no-cta');
-                self::register('standard-header-swapped');
-                self::register('standard-header-swapped-no-cta');
-                self::register('standard-header-no-site-logo');
+                $files_to_register = glob(self::getBlockPatternDir() . '/*');
+                foreach($files_to_register as $file) {
+                    self::register(pathinfo($file, PATHINFO_FILENAME));
+                }
             }
         });
     }
 
     public static function register(string $name): void
     {
-        BlockPattern::register($name, self::BLOCK_PATTERN_DIR . "/$name.json");
+        BlockPattern::register($name, self::getBlockPatternDir() . "/$name.json");
+    }
+
+    private static function getBlockPatternDir(): string
+    {
+        $reflector = new \ReflectionClass(static::class);
+        return dirname($reflector->getFileName()) . '/block-patterns';
     }
 }
