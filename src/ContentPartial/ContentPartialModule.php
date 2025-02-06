@@ -20,6 +20,6 @@ class ContentPartialModule extends Module
 
     public function registerBlockPatterns(): void
     {
-        add_action('init', [ContentPartialBlockPatterns::class, 'register'], 11);
+        add_action('init', [ContentPartialBlockPatterns::class, 'init'], 11);
     }
 }
