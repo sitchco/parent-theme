@@ -20,6 +20,13 @@ class SiteHeaderModule extends Module
         'registerBlockPatterns'
     ];
 
+    protected ContentPartialRepository $repository;
+
+    public function __construct(ContentPartialRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
     public function init(): void
     {
         add_filter('timber/context', [$this, 'setContext']);
@@ -27,8 +34,7 @@ class SiteHeaderModule extends Module
 
     public function setContext(array $context): array
     {
-        $repository = new ContentPartialRepository();
-        $header = $repository->findHeaderFromPage() ?? $repository->findDefaultHeader();
+        $header = $this->repository->findHeaderFromPage() ?? $this->repository->findDefaultHeader();
         $context['site_header'] = $header?->content();
         return $context;
     }
@@ -36,8 +42,9 @@ class SiteHeaderModule extends Module
     public function registerBlockPatterns(): void
     {
         /*
-         * Priority needs to be 11 here since we are removing all
-         * default wordpress block patterns in Sitchco\Cleanup.php
+         * Priority needs to be 11 or higher since we are removing all
+         * default WordPress block patterns in Sitchco\Cleanup.php
+         * at priority 10.
          *
          * Feature: removeDefaultBlockPatterns
          */
