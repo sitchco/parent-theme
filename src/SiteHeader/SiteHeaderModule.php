@@ -16,16 +16,31 @@ class SiteHeaderModule extends Module
         ContentPartialModule::class
     ];
 
+    public const FEATURES = [
+        'registerBlockPatterns'
+    ];
+
     public function init(): void
     {
-        add_filter('timber/context', [$this, 'setTimberContext']);
+        add_filter('timber/context', [$this, 'setContext']);
     }
 
-    public function setTimberContext(array $context): array
+    public function setContext(array $context): array
     {
         $repository = new ContentPartialRepository();
         $header = $repository->findHeaderFromPage() ?? $repository->findDefaultHeader();
         $context['site_header'] = $header?->content();
         return $context;
+    }
+
+    public function registerBlockPatterns(): void
+    {
+        /*
+         * Priority needs to be 11 here since we are removing all
+         * default wordpress block patterns in Sitchco\Cleanup.php
+         *
+         * Feature: removeDefaultBlockPatterns
+         */
+        add_action('init', [HeaderBlockPatterns::class, 'init'], 11);
     }
 }

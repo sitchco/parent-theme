@@ -13,13 +13,4 @@ class ContentPartialModule extends Module
     public const POST_CLASSES = [
         ContentPartialPost::class,
     ];
-
-    public const FEATURES = [
-        'registerBlockPatterns'
-    ];
-
-    public function registerBlockPatterns(): void
-    {
-        add_action('init', [ContentPartialBlockPatterns::class, 'init'], 11);
-    }
 }
