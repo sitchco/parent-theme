@@ -35,7 +35,7 @@ class SiteHeaderModule extends Module
     public function setContext(array $context): array
     {
         $header = $this->repository->findHeaderFromPage() ?? $this->repository->findDefaultHeader();
-        $context['site_header'] = $header?->content();
+        $context['site_header'] = $header->post_name ? ['name' => $header->post_name, 'content' => $header?->content()] : null;
         return $context;
     }
 
