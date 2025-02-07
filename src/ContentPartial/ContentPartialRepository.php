@@ -15,11 +15,31 @@ class ContentPartialRepository extends RepositoryBase
 
     public function findDefaultHeader(): ?Post
     {
+        return $this->findDefaultPartial('header');
+    }
+
+    public function findDefaultFooter(): ?Post
+    {
+        return $this->findDefaultPartial('footer');
+    }
+
+    public function findHeaderOverrideFromPage(?int $page_id = null): ?Post
+    {
+        return $this->findPartialOverrideFromPage('header', $page_id);
+    }
+
+    public function findFooterOverrideFromPage(?int $page_id = null): ?Post
+    {
+        return $this->findPartialOverrideFromPage('footer', $page_id);
+    }
+
+    public function findDefaultPartial(string $value): ?Post
+    {
         return $this->findOne([
             'meta_query' => [
                 [
                     'key' => 'template_area',
-                    'value' => 'header',
+                    'value' => $value,
                     'compare' => '='
                 ],
                 [
@@ -31,15 +51,16 @@ class ContentPartialRepository extends RepositoryBase
         ]);
     }
 
-    public function findHeaderFromPage(?int $page_id = null): ?Post
+    public function findPartialOverrideFromPage(string $name, ?int $page_id = null): ?Post
     {
         $page_id = $page_id ?? get_queried_object_id();
         if (!$page_id) {
             return null;
         }
 
+        $property = $name . "_partial";
         $page = (new PageRepository())->findById($page_id);
-        if (!$page || empty($header_partial_id = $page->header_partial)) {
+        if (!$page || empty($header_partial_id = $page->$property)) {
             return null;
         }
 
