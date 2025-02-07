@@ -2,29 +2,44 @@
 
 namespace Sitchco\Parent\SiteFooter;
 
-use Sitchco\Framework\Core\Module;
-use Sitchco\Parent\ContentPartial\ContentPartialModule;;
+use Sitchco\Parent\ContentPartial\ContentPartialSiteModule;
+use Timber\Post;
 
 /**
- * Class SiteFooterModule
- * Handles setting the footer content within the Timber context.
+ * class SiteFooterModule
+ * @package Sitchco\Parent\SiteFooter
  */
-class SiteFooterModule extends Module
+class SiteFooterModule extends ContentPartialSiteModule
 {
-    const DEPENDENCIES = [
-        ContentPartialModule::class
-    ];
+    protected function getTemplateArea(): string
+    {
+        return 'footer';
+    }
 
-//    public function init(): void
-//    {
-//        add_filter('timber/context', [$this, 'setTimberContext']);
-//    }
-//
-//    public function setTimberContext(array $context): array
-//    {
-//        $repository = new ContentPartialRepository();
-//        $footer = $repository->findFooterFromPage() ?? $repository->findDefaultFooter();
-//        $context['site_footer'] = $footer?->content();
-//        return $context;
-//    }
+    protected function getContextKey(): string
+    {
+        return 'site_footer';
+    }
+
+    protected function findOverrideFromPage(): ?Post
+    {
+        return $this->repository->findFooterOverrideFromPage();
+    }
+
+    protected function findDefault(): ?Post
+    {
+        return $this->repository->findDefaultFooter();
+    }
+
+    public function registerBlockPatterns(): void
+    {
+        /*
+         * Priority needs to be 11 or higher since we are removing all
+         * default WordPress block patterns in Sitchco\Cleanup.php
+         * at priority 10.
+         *
+         * Feature: removeDefaultBlockPatterns
+         */
+        add_action('init', [FooterBlockPatterns::class, 'init'], 11);
+    }
 }

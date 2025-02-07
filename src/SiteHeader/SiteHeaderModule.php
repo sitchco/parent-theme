@@ -2,41 +2,33 @@
 
 namespace Sitchco\Parent\SiteHeader;
 
-use Sitchco\Framework\Core\Module;
-use Sitchco\Parent\ContentPartial\ContentPartialModule;
-use Sitchco\Parent\ContentPartial\ContentPartialRepository;
+use Sitchco\Parent\ContentPartial\ContentPartialSiteModule;
+use Timber\Post;
 
 /**
- * Class SiteHeaderModule
- * Handles setting the header content within the Timber context.
+ * class SiteHeaderModule
+ * @package Sitchco\Parent\SiteHeader
  */
-class SiteHeaderModule extends Module
+class SiteHeaderModule extends ContentPartialSiteModule
 {
-    const DEPENDENCIES = [
-        ContentPartialModule::class
-    ];
-
-    public const FEATURES = [
-        'registerBlockPatterns'
-    ];
-
-    protected ContentPartialRepository $repository;
-
-    public function __construct(ContentPartialRepository $repository)
+    protected function getTemplateArea(): string
     {
-        $this->repository = $repository;
+        return 'header';
     }
 
-    public function init(): void
+    protected function getContextKey(): string
     {
-        add_filter('timber/context', [$this, 'setContext']);
+        return 'site_header';
     }
 
-    public function setContext(array $context): array
+    protected function findOverrideFromPage(): ?Post
     {
-        $header = $this->repository->findHeaderFromPage() ?? $this->repository->findDefaultHeader();
-        $context['site_header'] = $header->post_name ? ['name' => $header->post_name, 'content' => $header?->content()] : null;
-        return $context;
+        return $this->repository->findHeaderOverrideFromPage();
+    }
+
+    protected function findDefault(): ?Post
+    {
+        return $this->repository->findDefaultHeader();
     }
 
     public function registerBlockPatterns(): void
