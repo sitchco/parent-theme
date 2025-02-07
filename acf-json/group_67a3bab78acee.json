@@ -1,10 +1,10 @@
 {
     "key": "group_67a3bab78acee",
-    "title": "Header Options",
+    "title": "Page Options",
     "fields": [
         {
             "key": "field_67a3bab7a3938",
-            "label": "Set Header Partial",
+            "label": "Override Header",
             "name": "header_partial",
             "aria-label": "",
             "type": "post_object",
@@ -23,10 +23,39 @@
                 "publish"
             ],
             "taxonomy": "",
-            "return_format": "object",
+            "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
             "allow_in_bindings": 1,
+            "bidirectional": 0,
+            "ui": 1,
+            "bidirectional_target": []
+        },
+        {
+            "key": "field_67a6437827191",
+            "label": "Override Footer",
+            "name": "footer_partial",
+            "aria-label": "",
+            "type": "post_object",
+            "instructions": "Override theme footer default. Set footer default <a href=\"https:\/\/soundcheck.test\/wp\/wp-admin\/edit.php?post_type=content-partial\" target=\"_blank\">here.<\/a>",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "post_type": [
+                "content-partial"
+            ],
+            "post_status": [
+                "publish"
+            ],
+            "taxonomy": "",
+            "return_format": "id",
+            "multiple": 0,
+            "allow_null": 1,
+            "allow_in_bindings": 0,
             "bidirectional": 0,
             "ui": 1,
             "bidirectional_target": []
@@ -50,5 +79,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1738883177
+    "modified": 1738949564
 }

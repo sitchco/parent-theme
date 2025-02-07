@@ -58,7 +58,15 @@
             "type": "true_false",
             "instructions": "Determine if the header will overlay the content of the page.",
             "required": 0,
-            "conditional_logic": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_670827901b8e8",
+                        "operator": "==",
+                        "value": "header"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "",
                 "class": "",
@@ -79,7 +87,15 @@
             "type": "true_false",
             "instructions": "Determine if the header will stick to the top of the viewport on scroll.",
             "required": 0,
-            "conditional_logic": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_670827901b8e8",
+                        "operator": "==",
+                        "value": "header"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "",
                 "class": "",
@@ -111,5 +127,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1738874846
+    "modified": 1738951513
 }
