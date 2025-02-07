@@ -1,7 +1,7 @@
 <header class="site-header">
     <div class="site-header__container">
         {% if site_header %}
-            {{ site_header }}
+            {{ site_header['content'] }}
         {% else %}
             {# Default to the Default #}
             <a href="/"><img src="" alt=""/></a>
