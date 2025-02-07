@@ -13,6 +13,13 @@ class Theme extends Site
     {
         add_action('after_setup_theme', [$this, 'theme_supports']);
         parent::__construct();
+        // TODO: temporary shim
+        add_filter('acf/settings/load_json', function($paths) {
+            $parent_path = get_template_directory() . '/acf-json';
+            array_unshift($paths, $parent_path);
+
+            return $paths;
+        });
     }
 
     public function theme_supports()
