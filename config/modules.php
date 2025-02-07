@@ -1,6 +1,7 @@
 <?php
 
 use Sitchco\Parent\SiteHeader\SiteHeaderModule;
+use Sitchco\Parent\SiteFooter\SiteFooterModule;
 use Sitchco\Integration\Wordpress\Cleanup;
 
 return [
@@ -8,5 +9,6 @@ return [
         'disableGutenbergBlockCss' => false,
         'removeGutenbergStyles' => false
     ],
-    SiteHeaderModule::class => true
+    SiteHeaderModule::class => true,
+    SiteFooterModule::class =>true
 ];

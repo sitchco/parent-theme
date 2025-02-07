@@ -24,8 +24,8 @@
     </main>
 </div>
 
-{% block footer %}
-    {% include 'partials/footer.twig' %}
+{% block site_footer %}
+    {% include 'partials/site-footer.twig' %}
 {% endblock %}
 {{ function('wp_footer') }}
 {% do action('get_footer') %}

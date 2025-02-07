@@ -1,0 +1,10 @@
+<footer class="site-footer">
+    <div class="site-footer__container">
+        {% if site_footer %}
+            {{ site_footer['content'] }}
+        {% else %}
+            {# Default to the Default #}
+            Footer Default
+        {% endif %}
+    </div>
+</footer>
