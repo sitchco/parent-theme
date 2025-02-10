@@ -2,44 +2,47 @@
 
 namespace Sitchco\Parent\SiteFooter;
 
-use Sitchco\Parent\ContentPartial\ContentPartialSiteModule;
-use Timber\Post;
+use Sitchco\Framework\Core\Module;
+use Sitchco\Parent\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\ContentPartial\ContentPartialService;
 
-/**
- * class SiteFooterModule
- * @package Sitchco\Parent\SiteFooter
- */
-class SiteFooterModule extends ContentPartialSiteModule
+class SiteFooterModule extends Module
 {
-    protected function getTemplateArea(): string
+    const DEPENDENCIES = [
+        ContentPartialModule::class
+    ];
+
+    public const FEATURES = [
+        'registerBlockPatterns'
+    ];
+
+    protected ContentPartialService $contentService;
+
+    public function __construct(ContentPartialService $contentService)
     {
-        return 'footer';
+        $this->contentService = $contentService;
     }
 
-    protected function getContextKey(): string
+    public function init(): void
     {
-        return 'site_footer';
+        add_filter('timber/context', [$this, 'setContext']);
+        add_filter('acf/fields/post_object/query/name=footer_partial', [$this, 'filterFooterPartialPostObject'], 10, 3);
     }
 
-    protected function findOverrideFromPage(): ?Post
+    public function setContext(array $context): array
     {
-        return $this->repository->findFooterOverrideFromPage();
+        $footer = $this->contentService->findOverrideFromPage('footer') ?? $this->contentService->findDefault('footer');
+        $context['site_footer'] = $footer?->post_name ? ['name' => $footer->post_name, 'content' => $footer?->content()] : null;
+        return $context;
     }
 
-    protected function findDefault(): ?Post
+    public function filterFooterPartialPostObject($args, $field, $post_id): array
     {
-        return $this->repository->findDefaultFooter();
+        return $this->contentService->filterPartialPostObject('footer', $args);
     }
 
     public function registerBlockPatterns(): void
     {
-        /*
-         * Priority needs to be 11 or higher since we are removing all
-         * default WordPress block patterns in Sitchco\Cleanup.php
-         * at priority 10.
-         *
-         * Feature: removeDefaultBlockPatterns
-         */
         add_action('init', [FooterBlockPatterns::class, 'init'], 11);
     }
 }

@@ -2,44 +2,47 @@
 
 namespace Sitchco\Parent\SiteHeader;
 
-use Sitchco\Parent\ContentPartial\ContentPartialSiteModule;
-use Timber\Post;
+use Sitchco\Framework\Core\Module;
+use Sitchco\Parent\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\ContentPartial\ContentPartialService;
 
-/**
- * class SiteHeaderModule
- * @package Sitchco\Parent\SiteHeader
- */
-class SiteHeaderModule extends ContentPartialSiteModule
+class SiteHeaderModule extends Module
 {
-    protected function getTemplateArea(): string
+    const DEPENDENCIES = [
+        ContentPartialModule::class
+    ];
+
+    public const FEATURES = [
+        'registerBlockPatterns'
+    ];
+
+    protected ContentPartialService $contentService;
+
+    public function __construct(ContentPartialService $contentService)
     {
-        return 'header';
+        $this->contentService = $contentService;
     }
 
-    protected function getContextKey(): string
+    public function init(): void
     {
-        return 'site_header';
+        add_filter('timber/context', [$this, 'setContext']);
+        add_filter('acf/fields/post_object/query/name=header_partial', [$this, 'filterHeaderPartialPostObject'], 10, 3);
     }
 
-    protected function findOverrideFromPage(): ?Post
+    public function setContext(array $context): array
     {
-        return $this->repository->findHeaderOverrideFromPage();
+        $header = $this->contentService->findOverrideFromPage('header') ?? $this->contentService->findDefault('header');
+        $context['site_header'] = $header?->post_name ? ['name' => $header->post_name, 'content' => $header?->content()] : null;
+        return $context;
     }
 
-    protected function findDefault(): ?Post
+    public function filterHeaderPartialPostObject($args, $field, $post_id): array
     {
-        return $this->repository->findDefaultHeader();
+        return $this->contentService->filterPartialPostObject('header', $args);
     }
 
     public function registerBlockPatterns(): void
     {
-        /*
-         * Priority needs to be 11 or higher since we are removing all
-         * default WordPress block patterns in Sitchco\Cleanup.php
-         * at priority 10.
-         *
-         * Feature: removeDefaultBlockPatterns
-         */
         add_action('init', [HeaderBlockPatterns::class, 'init'], 11);
     }
 }
