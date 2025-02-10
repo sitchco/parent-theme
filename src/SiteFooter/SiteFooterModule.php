@@ -6,6 +6,10 @@ use Sitchco\Framework\Core\Module;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\ContentPartial\ContentPartialService;
 
+/**
+ * class SiteFooterModule
+ * @package Sitchco\Parent\SiteFooter
+ */
 class SiteFooterModule extends Module
 {
     const DEPENDENCIES = [
