@@ -36,12 +36,14 @@ class ContentPartialRepository extends RepositoryBase
     public function findDefaultPartial(string $value): ?Post
     {
         return $this->findOne([
-            'meta_query' => [
+            'tax_query' => [
                 [
-                    'key' => 'template_area',
-                    'value' => $value,
-                    'compare' => '='
-                ],
+                    'taxonomy' => ContentPartialPost::TAXONOMY,
+                    'field' => 'slug',
+                    'terms' => $value,
+                ]
+            ],
+            'meta_query' => [
                 [
                     'key' => 'is_default',
                     'value' => '1',

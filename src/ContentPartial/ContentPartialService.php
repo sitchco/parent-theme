@@ -17,11 +17,11 @@ class ContentPartialService
         $this->repository = $repository;
     }
 
-    public function findOverrideFromPage(string $area): ?Post
+    public function findOverrideFromPage(string $area, ?int $page_id = null): ?Post
     {
         return match ($area) {
-            'header' => $this->repository->findHeaderOverrideFromPage(),
-            'footer' => $this->repository->findFooterOverrideFromPage(),
+            'header' => $this->repository->findHeaderOverrideFromPage($page_id),
+            'footer' => $this->repository->findFooterOverrideFromPage($page_id),
             default => null,
         };
     }
