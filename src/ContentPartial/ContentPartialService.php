@@ -69,11 +69,16 @@ class ContentPartialService
     public function ensureTaxonomyTermExists(string $termSlug, string $termName = ''): void
     {
         add_action('acf/init', function () use ($termSlug, $termName) {
-            $taxonomy = ContentPartialPost::TAXONOMY;
-            if (taxonomy_exists($taxonomy) && !term_exists($termSlug, $taxonomy)) {
-                $termName = !empty($termName) ? $termName : ucfirst($termSlug);
-                wp_insert_term($termName, $taxonomy, ['slug' => $termSlug]);
-            }
+            $this->insertTaxonomyTerm($termSlug, $termName);
         });
+    }
+
+    public function insertTaxonomyTerm(string $termSlug, ?string $termName = null): void
+    {
+        $taxonomy = ContentPartialPost::TAXONOMY;
+        if (taxonomy_exists($taxonomy) && !term_exists($termSlug, $taxonomy)) {
+            $termName = !empty($termName) ? $termName : ucfirst($termSlug);
+            wp_insert_term($termName, $taxonomy, ['slug' => $termSlug]);
+        }
     }
 }
