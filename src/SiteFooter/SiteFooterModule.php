@@ -4,6 +4,7 @@ namespace Sitchco\Parent\SiteFooter;
 
 use Sitchco\Framework\Core\Module;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\ContentPartial\ContentPartialService;
 
 /**
@@ -29,20 +30,8 @@ class SiteFooterModule extends Module
 
     public function init(): void
     {
-        add_filter('timber/context', [$this, 'setContext']);
-        add_filter('acf/fields/post_object/query/name=footer_partial', [$this, 'filterFooterPartialPostObject'], 10, 3);
-    }
-
-    public function setContext(array $context): array
-    {
-        $footer = $this->contentService->findOverrideFromPage('footer') ?? $this->contentService->findDefault('footer');
-        $context['site_footer'] = $footer?->post_name ? ['name' => $footer->post_name, 'content' => $footer?->content()] : null;
-        return $context;
-    }
-
-    public function filterFooterPartialPostObject($args, $field, $post_id): array
-    {
-        return $this->contentService->filterPartialPostObject('footer', $args);
+        $this->contentService->registerContentFilters('footer');
+        $this->contentService->ensureTaxonomyTermExists('footer');
     }
 
     public function registerBlockPatterns(): void

@@ -49,7 +49,7 @@
     "publicly_queryable": false,
     "show_ui": true,
     "show_in_menu": true,
-    "admin_menu_parent": "themes.php",
+    "admin_menu_parent": "",
     "show_in_admin_bar": false,
     "show_in_nav_menus": false,
     "show_in_rest": true,

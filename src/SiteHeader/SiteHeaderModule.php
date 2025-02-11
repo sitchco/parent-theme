@@ -5,6 +5,7 @@ namespace Sitchco\Parent\SiteHeader;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\ContentPartial\ContentPartialService;
+use Sitchco\Parent\ContentPartial\ContentPartialPost;
 
 /**
  * class SiteHeaderModule
@@ -29,20 +30,8 @@ class SiteHeaderModule extends Module
 
     public function init(): void
     {
-        add_filter('timber/context', [$this, 'setContext']);
-        add_filter('acf/fields/post_object/query/name=header_partial', [$this, 'filterHeaderPartialPostObject'], 10, 3);
-    }
-
-    public function setContext(array $context): array
-    {
-        $header = $this->contentService->findOverrideFromPage('header') ?? $this->contentService->findDefault('header');
-        $context['site_header'] = $header?->post_name ? ['name' => $header->post_name, 'content' => $header?->content()] : null;
-        return $context;
-    }
-
-    public function filterHeaderPartialPostObject($args, $field, $post_id): array
-    {
-        return $this->contentService->filterPartialPostObject('header', $args);
+        $this->contentService->registerContentFilters('header');
+        $this->contentService->ensureTaxonomyTermExists('header');
     }
 
     public function registerBlockPatterns(): void

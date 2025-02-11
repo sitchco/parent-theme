@@ -16,4 +16,5 @@ use Sitchco\Model\PostBase;
 class ContentPartialPost extends PostBase
 {
     const POST_TYPE = 'content-partial';
+    const TAXONOMY = 'template-area';
 }

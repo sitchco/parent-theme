@@ -7,7 +7,7 @@
             "label": "Template Area",
             "name": "template_area",
             "aria-label": "",
-            "type": "radio",
+            "type": "taxonomy",
             "instructions": "",
             "required": 1,
             "conditional_logic": 0,
@@ -16,18 +16,17 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "header": "Header",
-                "footer": "Footer",
-                "block": "Block"
-            },
-            "default_value": "",
-            "return_format": "value",
-            "allow_null": 0,
-            "other_choice": 0,
-            "allow_in_bindings": 0,
-            "layout": "vertical",
-            "save_other_choice": 0
+            "taxonomy": "template-area",
+            "add_term": 0,
+            "save_terms": 1,
+            "load_terms": 1,
+            "return_format": "id",
+            "field_type": "select",
+            "allow_null": 1,
+            "allow_in_bindings": 1,
+            "bidirectional": 0,
+            "multiple": 0,
+            "bidirectional_target": []
         },
         {
             "key": "field_67082ad24265d",
@@ -69,5 +68,5 @@
     "active": true,
     "description": "CPT: Content Partial",
     "show_in_rest": 0,
-    "modified": 1739224525
+    "modified": 1739296711
 }
