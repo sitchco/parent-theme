@@ -5,6 +5,8 @@ namespace Sitchco\Parent;
 use Timber\Site;
 
 /**
+ * class Theme
+ * @package Sitchco\Parent
  * @see https://github.com/timber/starter-theme/blob/2.x/src/StarterSite.php
  */
 class Theme extends Site
@@ -21,9 +23,11 @@ class Theme extends Site
 
             return $paths;
         });
+        add_filter('should_load_remote_block_patterns', '__return_false');
+        add_action('init', [$this, 'remove_core_block_patterns']);
     }
 
-    public function theme_supports()
+    public function theme_supports(): void
     {
         add_theme_support('align-wide');
         add_theme_support('body-open');
@@ -52,11 +56,21 @@ class Theme extends Site
         add_theme_support('menus');
     }
 
-    public function after_opening_body()
+    public function after_opening_body(): void
     {
         $sprite = get_theme_file_path('dist/images/sprite.svg');
         if (file_exists($sprite)) {
             echo file_get_contents($sprite);
+        }
+    }
+
+    public function remove_core_block_patterns(): void
+    {
+        $registry = \WP_Block_Patterns_Registry::get_instance();
+        $patterns = $registry->get_all_registered();
+
+        foreach ($patterns as $pattern) {
+            $registry->unregister($pattern['name']);
         }
     }
 }
