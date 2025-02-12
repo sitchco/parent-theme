@@ -13,6 +13,7 @@ class Theme extends Site
     {
         add_action('after_setup_theme', [$this, 'theme_supports']);
         parent::__construct();
+        add_action('wp_body_open', [$this, 'after_opening_body']);
         // TODO: temporary shim
         add_filter('acf/settings/load_json', function($paths) {
             $parent_path = get_template_directory() . '/acf-json';
@@ -49,5 +50,13 @@ class Theme extends Site
             'audio'
         ]);
         add_theme_support('menus');
+    }
+
+    public function after_opening_body()
+    {
+        $sprite = get_theme_file_path('dist/images/sprite.svg');
+        if (file_exists($sprite)) {
+            echo file_get_contents($sprite);
+        }
     }
 }
