@@ -86,12 +86,6 @@
             "location": ""
         }
     },
-    "listing_screen_columns": {
-        "row-0": {
-            "name": "",
-            "label": "",
-            "sortable": "0"
-        }
-    },
-    "modified": 1739401082
+    "listing_screen_columns": "",
+    "modified": 1739402476
 }
