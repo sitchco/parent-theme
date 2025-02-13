@@ -37,11 +37,11 @@ class ContentPartialService
 
     public function filterPartialPostObject(string $area, array $args): array
     {
-        $args['meta_query'] = [
+        $args['tax_query'] = [
             [
-                'key' => 'template_area',
-                'value' => $area,
-                'compare' => '='
+                'taxonomy' => ContentPartialPost::TAXONOMY,
+                'terms' => $area,
+                'field' => 'slug'
             ]
         ];
         return $args;
@@ -60,7 +60,7 @@ class ContentPartialService
             return $this->setContext($context, $area);
         });
 
-        $acfFieldName = $acfFieldName ?? $area . '_partial';
+        $acfFieldName = $acfFieldName ?: $area . '_partial';
         add_filter("acf/fields/post_object/query/name={$acfFieldName}", function ($args, $field, $post_id) use ($area) {
             return $this->filterPartialPostObject($area, $args);
         }, 10, 3);
