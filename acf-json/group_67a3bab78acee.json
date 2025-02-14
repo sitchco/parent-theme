@@ -22,7 +22,9 @@
             "post_status": [
                 "publish"
             ],
-            "taxonomy": "",
+            "taxonomy": [
+                "template-area:header"
+            ],
             "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
@@ -51,7 +53,9 @@
             "post_status": [
                 "publish"
             ],
-            "taxonomy": "",
+            "taxonomy": [
+                "template-area:footer"
+            ],
             "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
@@ -79,5 +83,5 @@
     "active": true,
     "description": "CPT: Page",
     "show_in_rest": 0,
-    "modified": 1739296597
+    "modified": 1739561064
 }

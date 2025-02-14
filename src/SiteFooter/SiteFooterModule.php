@@ -4,7 +4,6 @@ namespace Sitchco\Parent\SiteFooter;
 
 use Sitchco\Framework\Core\Module;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
-use Sitchco\Parent\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\ContentPartial\ContentPartialService;
 
 /**

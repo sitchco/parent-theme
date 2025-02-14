@@ -5,7 +5,6 @@ namespace Sitchco\Parent\SiteHeader;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\ContentPartial\ContentPartialService;
-use Sitchco\Parent\ContentPartial\ContentPartialPost;
 
 /**
  * class SiteHeaderModule

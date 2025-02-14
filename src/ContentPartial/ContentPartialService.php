@@ -54,22 +54,22 @@ class ContentPartialService
         return $context;
     }
 
-    public function registerContentFilters(string $area, string $acfFieldName = ''): void
+    public function registerContentFilters(string $area): void
     {
         add_filter('timber/context', function ($context) use ($area) {
             return $this->setContext($context, $area);
         });
-
-        $acfFieldName = $acfFieldName ?: $area . '_partial';
-        add_filter("acf/fields/post_object/query/name={$acfFieldName}", function ($args, $field, $post_id) use ($area) {
-            return $this->filterPartialPostObject($area, $args);
-        }, 10, 3);
     }
 
     public function ensureTaxonomyTermExists(string $termSlug, string $termName = ''): void
     {
-        add_action('acf/init', function () use ($termSlug, $termName) {
-            $this->insertTaxonomyTerm($termSlug, $termName);
+        add_action('admin_init', function() use ($termSlug, $termName) {
+            add_action('current_screen', function () use ($termSlug, $termName) {
+                if (get_current_screen()->post_type !== ContentPartialPost::POST_TYPE) {
+                    return;
+                }
+                $this->insertTaxonomyTerm($termSlug, $termName);
+            });
         });
     }
 
