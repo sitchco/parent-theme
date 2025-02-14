@@ -7,31 +7,12 @@ use Sitchco\Repository\RepositoryBase;
 use Timber\Post;
 
 /**
- * Repository for Content Partials
+ * class ContentPartialRepository
+ * @package Sitchco\Parent\ContentPartial
  */
 class ContentPartialRepository extends RepositoryBase
 {
     protected string $model_class = ContentPartialPost::class;
-
-    public function findDefaultHeader(): ?Post
-    {
-        return $this->findDefaultPartial('header');
-    }
-
-    public function findDefaultFooter(): ?Post
-    {
-        return $this->findDefaultPartial('footer');
-    }
-
-    public function findHeaderOverrideFromPage(?int $page_id = null): ?Post
-    {
-        return $this->findPartialOverrideFromPage('header', $page_id);
-    }
-
-    public function findFooterOverrideFromPage(?int $page_id = null): ?Post
-    {
-        return $this->findPartialOverrideFromPage('footer', $page_id);
-    }
 
     public function findDefaultPartial(string $value): ?Post
     {
@@ -60,8 +41,8 @@ class ContentPartialRepository extends RepositoryBase
             return null;
         }
 
-        $property = $name . "_partial";
         $page = (new PageRepository())->findById($page_id);
+        $property = $name . "_partial";
         if (!$page || empty($header_partial_id = $page->$property)) {
             return null;
         }

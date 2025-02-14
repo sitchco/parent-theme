@@ -7,6 +7,8 @@ use Sitchco\Utils\BlockPattern;
 /**
  * class ContentPartialBlockPatterns
  * @package Sitchco\Parent\ContentPartial
+ *
+ * TODO: this should get folded into Module (this is a temporary class)
  */
 class ContentPartialBlockPatterns
 {

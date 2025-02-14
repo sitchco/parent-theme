@@ -23,6 +23,6 @@ class ContentPartialBlockModule extends Module
 
     public function init(): void
     {
-        $this->contentService->ensureTaxonomyTermExists('block');
+        $this->contentService->addModule('block', $this);
     }
 }

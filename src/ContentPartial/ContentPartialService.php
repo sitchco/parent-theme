@@ -2,7 +2,7 @@
 
 namespace Sitchco\Parent\ContentPartial;
 
-use Timber\Post;
+use Sitchco\Framework\Core\Module;
 
 /**
  * class ContentPartialService
@@ -10,75 +10,47 @@ use Timber\Post;
  */
 class ContentPartialService
 {
-    protected ContentPartialRepository $repository;
+    protected array $registeredModules = [];
 
-    public function __construct(ContentPartialRepository $repository)
+    public function __construct()
     {
-        $this->repository = $repository;
+        $this->init();
     }
 
-    public function findOverrideFromPage(string $area, ?int $page_id = null): ?Post
+    public function init(): void
     {
-        return match ($area) {
-            'header' => $this->repository->findHeaderOverrideFromPage($page_id),
-            'footer' => $this->repository->findFooterOverrideFromPage($page_id),
-            default => null,
-        };
+        if (is_admin()) {
+            add_action('current_screen', [$this, 'ensureTaxonomyTermExists']);
+        }
+        add_filter('timber/context', [$this, 'setContext']);
     }
 
-    public function findDefault(string $area): ?Post
+    public function addModule(string $templateAreaName, Module $module): void
     {
-        return match ($area) {
-            'header' => $this->repository->findDefaultHeader(),
-            'footer' => $this->repository->findDefaultFooter(),
-            default => null,
-        };
+        $this->registeredModules[$templateAreaName] = $module;
     }
 
-    public function filterPartialPostObject(string $area, array $args): array
+    public function setContext(array $context): array
     {
-        $args['tax_query'] = [
-            [
-                'taxonomy' => ContentPartialPost::TAXONOMY,
-                'terms' => $area,
-                'field' => 'slug'
-            ]
-        ];
-        return $args;
-    }
-
-    public function setContext(array $context, string $area): array
-    {
-        $content = $this->findOverrideFromPage($area) ?? $this->findDefault($area);
-        $context["site_{$area}"] = $content?->post_name ? ['name' => $content->post_name, 'content' => $content?->content()] : null;
+        foreach($this->registeredModules as $templateArea => $module) {
+            if (!method_exists($module, 'getContext')) {
+                continue;
+            }
+            $context["site_{$templateArea}"] = $module->getContext($templateArea);
+        }
         return $context;
     }
 
-    public function registerContentFilters(string $area): void
+    public function ensureTaxonomyTermExists(\WP_Screen $currentScreen): void
     {
-        add_filter('timber/context', function ($context) use ($area) {
-            return $this->setContext($context, $area);
-        });
-    }
-
-    public function ensureTaxonomyTermExists(string $termSlug, string $termName = ''): void
-    {
-        add_action('admin_init', function() use ($termSlug, $termName) {
-            add_action('current_screen', function () use ($termSlug, $termName) {
-                if (get_current_screen()->post_type !== ContentPartialPost::POST_TYPE) {
-                    return;
-                }
-                $this->insertTaxonomyTerm($termSlug, $termName);
-            });
-        });
-    }
-
-    public function insertTaxonomyTerm(string $termSlug, ?string $termName = null): void
-    {
+        if ($currentScreen->post_type !== ContentPartialPost::POST_TYPE) {
+            return;
+        }
         $taxonomy = ContentPartialPost::TAXONOMY;
-        if (taxonomy_exists($taxonomy) && !term_exists($termSlug, $taxonomy)) {
-            $termName = !empty($termName) ? $termName : ucfirst($termSlug);
-            wp_insert_term($termName, $taxonomy, ['slug' => $termSlug]);
+        foreach(array_keys($this->registeredModules) as $templateArea) {
+            if (taxonomy_exists($taxonomy) && !term_exists($templateArea, $taxonomy)) {
+                wp_insert_term(ucfirst($templateArea), $taxonomy, ['slug' => $templateArea]);
+            }
         }
     }
 }

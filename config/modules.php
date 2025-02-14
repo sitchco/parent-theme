@@ -1,5 +1,6 @@
 <?php
 
+use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\ContentPartial\ContentPartialBlockModule;
@@ -10,7 +11,8 @@ return [
         'disableGutenbergBlockCss' => false,
         'removeGutenbergStyles' => false
     ],
+    ContentPartialModule::class => true,
+    ContentPartialBlockModule::class => true,
     SiteHeaderModule::class => true,
     SiteFooterModule::class =>true,
-    ContentPartialBlockModule::class => true
 ];
