@@ -2,6 +2,7 @@
 
 use Sitchco\Parent\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\SiteFooter\SiteFooterModule;
+use Sitchco\Parent\ContentPartial\ContentPartialBlockModule;
 use Sitchco\Integration\Wordpress\Cleanup;
 
 return [
@@ -10,5 +11,6 @@ return [
         'removeGutenbergStyles' => false
     ],
     SiteHeaderModule::class => true,
-    SiteFooterModule::class =>true
+    SiteFooterModule::class =>true,
+    ContentPartialBlockModule::class => true
 ];
