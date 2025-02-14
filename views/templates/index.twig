@@ -1,16 +1,28 @@
 {% extends 'layouts/base.twig' %}
 
 {% block content %}
-    <h2>{{ foo }}</h2>
-    {% for post in posts %}
-        {% include ['partials/tease-' ~ post.type ~ '.twig', 'partials/tease.twig'] %}
-    {% endfor %}
+    {% if posts %}
+        {% for post in posts %}
+            <article class="{{ function('post_class', post) }}">
+                <header>
+                    <h2><a href="{{ post.link }}">{{ post.title }}</a></h2>
+                </header>
+                <div>
+                    {{ post.excerpt }}
+                </div>
+            </article>
+        {% endfor %}
 
-    {% include 'partials/pagination.twig' with {
-        pagination: posts.pagination({
-            show_all: false,
-            mid_size: 3,
-            end_size: 2
-        })
-    } %}
+        {% include 'partials/pagination.twig' with {
+            pagination: posts.pagination({
+                show_all: false,
+                mid_size: 3,
+                end_size: 2
+            })
+        } %}
+    {% else %}
+        <section>
+            <h2>Sorry, no results were found</h2>
+        </section>
+    {% endif %}
 {% endblock %}

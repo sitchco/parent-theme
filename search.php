@@ -8,12 +8,12 @@
 
 use Timber\Timber;
 
-$templates = array( 'templates/search.twig', 'templates/archive.twig', 'templates/index.twig' );
+$templates = ['templates/search.twig', 'templates/archive.twig', 'templates/index.twig'];
 
 $context = Timber::context(
-	[
-		'title' => 'Search results for ' . get_search_query(),
-	]
+    [
+        'title' => 'Search results for ' . get_search_query(),
+    ]
 );
 
-Timber::render( $templates, $context );
+Timber::render($templates, $context);
