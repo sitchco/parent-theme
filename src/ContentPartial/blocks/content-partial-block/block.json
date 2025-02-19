@@ -1,0 +1,44 @@
+{
+  "name": "sitchco/content-partial-block",
+  "title": "Content Partial Block",
+  "description": "A Gutenberg block for displaying content partials using ACF.",
+  "category": "layout",
+  "icon": "admin-page",
+  "keywords": [
+    "content",
+    "partial",
+    "acf"
+  ],
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "content-partial-block.php"
+  },
+  "supports": {
+    "anchor": true,
+    "align": true,
+    "background": {
+      "backgroundImage": true,
+      "backgroundSize": true
+    },
+    "color": {
+      "gradients": true
+    },
+    "dimensions": {
+      "aspectRatio": true,
+      "minHeight": true
+    },
+    "renaming": false,
+    "shadow": true,
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "textAlign": true
+    }
+  },
+  "editorStyle": "file:./content-partial-block.scss"
+}
