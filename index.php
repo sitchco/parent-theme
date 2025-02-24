@@ -20,5 +20,5 @@ if (is_home()) {
 }
 
 $context = Timber::context();
-$context['posts'] = Timber::get_posts();
+$context['posts'] = new Sitchco\Collection\Collection(Timber::get_posts());
 Timber::render($templates, $context);
