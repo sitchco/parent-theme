@@ -18,7 +18,6 @@ class ContentPartialModule extends Module
     {
         // TODO temporary shim to register content partial block block.json
         add_action('init', function () {
-            error_log(get_template_directory() . '/src/ContentPartial/blocks/content-partial-block/block.json');
             register_block_type(get_template_directory() . '/src/ContentPartial/blocks/content-partial-block/block.json');
         });
     }
