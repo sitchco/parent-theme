@@ -3,6 +3,8 @@
 namespace Sitchco\Parent\Tests\Support;
 
 use Sitchco\Framework\Core\Module;
+use Sitchco\Parent\ContentPartial\ContentPartialRepository;
+use Sitchco\Parent\ContentPartial\ContentPartialService;
 
 class ModuleTester extends Module
 {
@@ -12,10 +14,18 @@ class ModuleTester extends Module
 
     const FEATURES = [];
 
+    protected ContentPartialService $contentService;
+
     public bool $initialized = false;
+
+    public function __construct(ContentPartialService $contentService)
+    {
+        $this->contentService = $contentService;
+    }
 
     public function init(): void
     {
         $this->initialized = true;
+        $this->contentService->addModule('sidebar', $this);
     }
 }

@@ -1,10 +1,10 @@
 <?php
 
-use Sitchco\Parent\ContentPartial\ContentPartialModule;
-use Sitchco\Parent\SiteHeader\SiteHeaderModule;
-use Sitchco\Parent\SiteFooter\SiteFooterModule;
-use Sitchco\Parent\ContentPartial\ContentPartialBlockModule;
 use Sitchco\Integration\Wordpress\Cleanup;
+use Sitchco\Parent\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\ContentPartialBlock\ContentPartialBlockModule;
+use Sitchco\Parent\SiteFooter\SiteFooterModule;
+use Sitchco\Parent\SiteHeader\SiteHeaderModule;
 
 return [
     Cleanup::class => [

@@ -21,11 +21,11 @@ class ContentPartialServiceTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->service = new ContentPartialService();
-        $this->repository = new ContentPartialRepository();
+        $this->service = $this->container->get(ContentPartialService::class);
+        $this->repository = $this->container->get(ContentPartialRepository::class);
 
         // Create a default content partial with a taxonomy term
-        $this->standardHeaderId = self::factory()->post->create([
+        $this->standardHeaderId = $this->factory()->post->create([
             'post_title' => 'Standard Header',
             'post_type'  => ContentPartialPost::POST_TYPE,
             'meta_input' => ['is_default' => '1']
@@ -54,9 +54,8 @@ class ContentPartialServiceTest extends TestCase
         $this->assertNull(term_exists($termSlug, $taxonomy));
 
         $Module = $this->container->get(ModuleTester::class);
-
-        // Register a new module, which should create the term
-        $this->service->addModule($termSlug, $Module);
+        // Register the new module, which should create the term
+        $Module->init();
 
         // Simulate running ensureTaxonomyTermExists in a real admin context
         global $current_screen;
