@@ -29,6 +29,11 @@ class Admin extends Module
     {
         add_filter('show_admin_bar', '__return_false');
         add_action('admin_menu', fn() => remove_menu_page('edit.php'));
+        add_action('wp_enqueue_scripts', function() {
+            if (is_single() && comments_open() && get_option('thread_comments')) {
+                wp_enqueue_script('comment-reply');
+            }
+        });
         $this->page_order = new PageOrder();
     }
 
@@ -71,6 +76,7 @@ class Admin extends Module
     public function removeComments(): void
     {
         add_action('admin_menu', fn() => remove_menu_page('edit-comments.php'));
+        wp_dequeue_script('comment-reply');
     }
 
     /**
