@@ -5,6 +5,7 @@ use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\ContentPartialBlock\ContentPartialBlockModule;
 use Sitchco\Parent\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\SiteHeader\SiteHeaderModule;
+use Sitchco\Parent\Admin;
 
 return [
     Cleanup::class => [
@@ -15,4 +16,5 @@ return [
     ContentPartialBlockModule::class => true,
     SiteHeaderModule::class => true,
     SiteFooterModule::class =>true,
+    Admin::class => true,
 ];
