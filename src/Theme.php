@@ -2,6 +2,9 @@
 
 namespace Sitchco\Parent;
 
+use Sitchco\Support\Svg;
+use Sitchco\Utils\Hooks;
+use Sitchco\Utils\Template;
 use Timber\Site;
 
 /**
@@ -20,6 +23,9 @@ class Theme extends Site
     const ADDITIONAL_THEME_SUPPORT = [];
 
     // TODO: are we moving away from EXTENSIONS?
+    const EXTENSIONS = [
+        Svg::class
+    ];
 
     /**
      * Theme constructor.
@@ -28,6 +34,7 @@ class Theme extends Site
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
         parent::__construct();
+        add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
         add_action('wp_body_open', [$this, 'afterOpeningBody']);
         // TODO: temporary shim
         add_filter('acf/settings/load_json', function($paths) {
@@ -38,6 +45,8 @@ class Theme extends Site
         });
         add_filter('should_load_remote_block_patterns', '__return_false');
         add_action('init', [$this, 'removeCoreBlockPatterns']);
+        add_action('sitchco/after_save_permalinks', [$this, 'resetMetaBoxLocations']);
+        add_filter('body_class', [$this, 'cleanupBodyClass']);
 
         // TODO: is there a better place to put this? somewhere inside of sitchco-core/src/rest?
         if (!empty(static::API_PREFIX)) {
@@ -47,6 +56,16 @@ class Theme extends Site
         // TODO: is there a better place to put this?
         if (!empty(static::RENAME_DEFAULT_POST_TYPE)) {
             add_filter('post_type_labels_post', [$this, 'renameDefaultPostType']);
+        }
+
+        // TODO: is there a better place to put this?
+        foreach (static::EXTENSIONS as $extension) {
+            if (class_exists($extension)) {
+                $extension = new $extension;
+                if (method_exists($extension, 'register')) {
+                    $extension->register();
+                }
+            }
         }
     }
 
@@ -93,6 +112,23 @@ class Theme extends Site
     }
 
     /**
+     * @throws \JsonException
+     */
+    public function assets(): void
+    {
+        wp_enqueue_style(Hooks::name('theme/css'), Template::getAssetPath('styles/main.css'), false, null);
+        wp_enqueue_script(Hooks::name('theme/js'), Template::getAssetPath('scripts/main.js'), ['jquery'], null, [
+            'in_footer' => true
+        ]);
+        $js_vars = apply_filters('global_js_vars', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
+        ]);
+        wp_localize_script(Hooks::name('theme/js'), 'sit', $js_vars);
+        wp_dequeue_style('classic-theme-styles');
+    }
+
+    /**
      * Outputs SVG sprite after the opening body tag
      * @return void
      */
@@ -130,4 +166,38 @@ class Theme extends Site
             return str_ireplace('Post', static::RENAME_DEFAULT_POST_TYPE, $l);
         }, (array) $labels);
     }
+
+    /**
+     * @return void
+     */
+    public function resetMetaBoxLocations(): void
+    {
+        $users = get_users();
+        foreach ($users as $user) {
+            $user_meta = get_user_meta($user->ID);
+            foreach ($user_meta as $meta_key => $meta_value) {
+                if (str_starts_with($meta_key, 'meta-box-order')) {
+                    delete_user_meta($user->ID, $meta_key);
+                }
+            }
+        }
+    }
+
+    /**
+     * Update the body class
+     *
+     * @param array $classes
+     * @return array
+     */
+    public function cleanupBodyClass(array $classes): array
+    {
+        $home_id_class = 'page-id-' . get_option('page_on_front');
+        $remove_classes = [
+            'page-template-default',
+            $home_id_class
+        ];
+
+        return array_diff($classes, $remove_classes);
+    }
+
 }
