@@ -27,6 +27,10 @@ class Theme extends Site
         Svg::class
     ];
 
+    const POST_TYPE_IMAGE_DIMENSIONS = [];
+
+    const POST_TYPE_IMAGE_DIMENSIONS_MESSAGE = '<p>Preferred Dimensions: %d x %d pixels</p>';
+
     /**
      * Theme constructor.
      */
@@ -47,6 +51,7 @@ class Theme extends Site
         add_action('init', [$this, 'removeCoreBlockPatterns']);
         add_action('sitchco/after_save_permalinks', [$this, 'resetMetaBoxLocations']);
         add_filter('body_class', [$this, 'cleanupBodyClass']);
+        add_filter('admin_post_thumbnail_html', [$this, 'adminPostThumbnailHtml'], 10, 2);
 
         // TODO: is there a better place to put this? somewhere inside of sitchco-core/src/rest?
         if (!empty(static::API_PREFIX)) {
@@ -200,4 +205,20 @@ class Theme extends Site
         return array_diff($classes, $remove_classes);
     }
 
+    /**
+     * Add custom dimensions message to featured image for various post types
+     *
+     * @param $content
+     * @param $post_id
+     * @return string
+     */
+    public function adminPostThumbnailHtml($content, $post_id): string
+    {
+        $post = get_post($post_id);
+        if (isset(static::POST_TYPE_IMAGE_DIMENSIONS[$post->post_type])) {
+            $dimensions = static::POST_TYPE_IMAGE_DIMENSIONS[$post->post_type];
+            $content = vsprintf(static::POST_TYPE_IMAGE_DIMENSIONS_MESSAGE, $dimensions) . $content;
+        }
+        return $content;
+    }
 }
