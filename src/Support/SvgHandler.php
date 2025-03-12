@@ -16,6 +16,7 @@ class SvgHandler
         add_filter('wp_check_filetype_and_ext', [$this, 'checkFileType'], 10, 3);
         add_filter('wp_generate_attachment_metadata', [$this, 'generateAttachmentMetadata'], 10, 2);
         add_action('admin_init', [$this, 'svgCheck']);
+        add_action('wp_body_open', [$this, 'addSvgSprite']);
     }
 
     /**
@@ -118,6 +119,19 @@ class SvgHandler
             if (isset($updated_metadata['width']) && isset($updated_metadata['height'])) {
                 wp_update_attachment_metadata($attachment_id, $updated_metadata);
             }
+        }
+    }
+
+    /**
+     * Outputs SVG sprite after the opening body tag
+     *
+     * @return void
+     */
+    public function addSvgSprite(): void
+    {
+        $sprite = get_theme_file_path('dist/images/sprite.svg');
+        if (file_exists($sprite)) {
+            echo file_get_contents($sprite);
         }
     }
 }
