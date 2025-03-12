@@ -4,7 +4,8 @@ namespace Sitchco\Parent;
 
 use JsonException;
 use Sitchco\Framework\Core\Module;
-use Sitchco\Support\PageOrder;
+use Sitchco\Parent\Support\PageOrder;
+use Sitchco\Parent\Support\SvgHandler;
 use Sitchco\Utils\Hooks;
 use Sitchco\Utils\Template;
 
@@ -18,7 +19,8 @@ use Sitchco\Utils\Template;
  */
 class Admin extends Module
 {
-    protected PageOrder $page_order;
+    protected PageOrder $pageOrder;
+    protected SvgHandler $svgHandler;
 
     const FEATURES = [
         'adminEnqueueScripts',
@@ -44,7 +46,13 @@ class Admin extends Module
                 wp_enqueue_script('comment-reply');
             }
         });
-        $this->page_order = new PageOrder();
+        // TODO: no use of DI here?
+        $this->pageOrder = new PageOrder();
+        $this->pageOrder->init();
+
+        // TODO: no use of DI here?
+        $this->svgHandler = new SvgHandler();
+        $this->svgHandler->init();
     }
 
     /**
@@ -107,7 +115,7 @@ class Admin extends Module
      */
     public function removeCustomPageSorting(): void
     {
-        $this->page_order->disable();
+        $this->pageOrder->disable();
     }
 
     /**

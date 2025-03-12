@@ -2,7 +2,6 @@
 
 namespace Sitchco\Parent;
 
-use Sitchco\Support\Svg;
 use Sitchco\Utils\Hooks;
 use Sitchco\Utils\Template;
 use Timber\Site;
@@ -21,11 +20,6 @@ class Theme extends Site
     const NAV_MENUS = [];
 
     const ADDITIONAL_THEME_SUPPORT = [];
-
-    // TODO: are we moving away from EXTENSIONS?
-    const EXTENSIONS = [
-        Svg::class
-    ];
 
     const POST_TYPE_IMAGE_DIMENSIONS = [];
 
@@ -47,30 +41,20 @@ class Theme extends Site
 
             return $paths;
         });
+        // TODO: review these actions/filters to see if we can find a home for them outside of theme.php
         add_filter('should_load_remote_block_patterns', '__return_false');
         add_action('init', [$this, 'removeCoreBlockPatterns']);
         add_action('sitchco/after_save_permalinks', [$this, 'resetMetaBoxLocations']);
         add_filter('body_class', [$this, 'cleanupBodyClass']);
         add_filter('admin_post_thumbnail_html', [$this, 'adminPostThumbnailHtml'], 10, 2);
+        add_filter('wp_targeted_link_rel', [$this, 'removeNoReferrerFromLinks']);
 
-        // TODO: is there a better place to put this? somewhere inside of sitchco-core/src/rest?
         if (!empty(static::API_PREFIX)) {
             add_filter('rest_url_prefix', function () { return static::API_PREFIX; });
         }
 
-        // TODO: is there a better place to put this?
         if (!empty(static::RENAME_DEFAULT_POST_TYPE)) {
             add_filter('post_type_labels_post', [$this, 'renameDefaultPostType']);
-        }
-
-        // TODO: is there a better place to put this?
-        foreach (static::EXTENSIONS as $extension) {
-            if (class_exists($extension)) {
-                $extension = new $extension;
-                if (method_exists($extension, 'register')) {
-                    $extension->register();
-                }
-            }
         }
     }
 
@@ -220,5 +204,16 @@ class Theme extends Site
             $content = vsprintf(static::POST_TYPE_IMAGE_DIMENSIONS_MESSAGE, $dimensions) . $content;
         }
         return $content;
+    }
+
+    /**
+     * Remove noreferrer attribute from links
+     *
+     * @param $rel_values
+     * @return array|string|null
+     */
+    public function removeNoReferrerFromLinks($rel_values): array|string|null
+    {
+        return preg_replace('/noreferrer\s*/i', '', $rel_values);
     }
 }
