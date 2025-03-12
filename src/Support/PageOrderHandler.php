@@ -10,9 +10,8 @@ use WP_Query;
  * @package Sitchco\Support
  *
  * TODO: create a test class for this!
- * TODO: does this belong in parent theme?
  */
-class PageOrder
+class PageOrderHandler
 {
     protected string $check_sort_transient = 'sit_page_sort';
 

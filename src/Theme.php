@@ -16,46 +16,91 @@ class Theme extends Site
 {
     const API_PREFIX = '';
     const RENAME_DEFAULT_POST_TYPE = '';
-
     const NAV_MENUS = [];
-
     const ADDITIONAL_THEME_SUPPORT = [];
-
-    const POST_TYPE_IMAGE_DIMENSIONS = [];
-
-    const POST_TYPE_IMAGE_DIMENSIONS_MESSAGE = '<p>Preferred Dimensions: %d x %d pixels</p>';
 
     /**
      * Theme constructor.
      */
     public function __construct()
     {
-        add_action('after_setup_theme', [$this, 'themeSupports']);
         parent::__construct();
-        add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
-        add_action('wp_body_open', [$this, 'afterOpeningBody']);
-        // TODO: temporary shim
-        add_filter('acf/settings/load_json', function($paths) {
-            $parent_path = get_template_directory() . '/acf-json';
-            array_unshift($paths, $parent_path);
 
-            return $paths;
-        });
-        // TODO: review these actions/filters to see if we can find a home for them outside of theme.php
-        add_filter('should_load_remote_block_patterns', '__return_false');
-        add_action('init', [$this, 'removeCoreBlockPatterns']);
-        add_action('sitchco/after_save_permalinks', [$this, 'resetMetaBoxLocations']);
+        // frontend related filters, perhaps another opportunity for a ThemeFrontEnd module?
+        add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
         add_filter('body_class', [$this, 'cleanupBodyClass']);
-        add_filter('admin_post_thumbnail_html', [$this, 'adminPostThumbnailHtml'], 10, 2);
         add_filter('wp_targeted_link_rel', [$this, 'removeNoReferrerFromLinks']);
 
+        // filters/action hooks that are dependant upon a non-boolean constants
+        add_action('after_setup_theme', [$this, 'themeSupports']);
         if (!empty(static::API_PREFIX)) {
-            add_filter('rest_url_prefix', function () { return static::API_PREFIX; });
+            add_filter('rest_url_prefix', function () {
+                return static::API_PREFIX;
+            });
         }
-
         if (!empty(static::RENAME_DEFAULT_POST_TYPE)) {
-            add_filter('post_type_labels_post', [$this, 'renameDefaultPostType']);
+            add_filter('post_type_labels_post', [$this, 'renamePostLabels']);
         }
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function assets(): void
+    {
+        wp_enqueue_style(Hooks::name('theme/css'), Template::getAssetPath('styles/main.css'), false, null);
+        wp_enqueue_script(Hooks::name('theme/js'), Template::getAssetPath('scripts/main.js'), ['jquery'], null, [
+            'in_footer' => true
+        ]);
+        $js_vars = apply_filters('global_js_vars', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
+        ]);
+        wp_localize_script(Hooks::name('theme/js'), 'sit', $js_vars);
+        wp_dequeue_style('classic-theme-styles');
+    }
+
+    /**
+     * Update the body class
+     *
+     * @param array $classes
+     * @return array
+     */
+    public function cleanupBodyClass(array $classes): array
+    {
+        $home_id_class = 'page-id-' . get_option('page_on_front');
+        $remove_classes = [
+            'page-template-default',
+            $home_id_class
+        ];
+
+        return array_diff($classes, $remove_classes);
+    }
+
+    /**
+     * Renames the default 'post' post type.
+     *
+     * TODO: all labels change except the menu_name, what could be the conflict?
+     *
+     * @param $labels
+     * @return object
+     */
+    public function renamePostLabels($labels): object
+    {
+        return (object) array_map(function ($l) {
+            return str_ireplace('Post', static::RENAME_DEFAULT_POST_TYPE, $l);
+        }, (array) $labels);
+    }
+
+    /**
+     * Remove noreferrer attribute from links
+     *
+     * @param $rel_values
+     * @return array|string|null
+     */
+    public function removeNoReferrerFromLinks($rel_values): array|string|null
+    {
+        return preg_replace('/noreferrer\s*/i', '', $rel_values);
     }
 
     /**
@@ -95,125 +140,8 @@ class Theme extends Site
             array_map('add_theme_support', static::ADDITIONAL_THEME_SUPPORT);
         }
 
-        if (empty(static::NAV_MENUS)) {
+        if (!empty(static::NAV_MENUS)) {
             register_nav_menus(static::NAV_MENUS);
         }
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    public function assets(): void
-    {
-        wp_enqueue_style(Hooks::name('theme/css'), Template::getAssetPath('styles/main.css'), false, null);
-        wp_enqueue_script(Hooks::name('theme/js'), Template::getAssetPath('scripts/main.js'), ['jquery'], null, [
-            'in_footer' => true
-        ]);
-        $js_vars = apply_filters('global_js_vars', [
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
-        ]);
-        wp_localize_script(Hooks::name('theme/js'), 'sit', $js_vars);
-        wp_dequeue_style('classic-theme-styles');
-    }
-
-    /**
-     * Outputs SVG sprite after the opening body tag
-     * @return void
-     */
-    public function afterOpeningBody(): void
-    {
-        $sprite = get_theme_file_path('dist/images/sprite.svg');
-        if (file_exists($sprite)) {
-            echo file_get_contents($sprite);
-        }
-    }
-
-    /**
-     * Removes all core block patterns.
-     * @return void
-     */
-    public function removeCoreBlockPatterns(): void
-    {
-        $registry = \WP_Block_Patterns_Registry::get_instance();
-        $patterns = $registry->get_all_registered();
-
-        foreach ($patterns as $pattern) {
-            $registry->unregister($pattern['name']);
-        }
-    }
-
-    /**
-     * Renames the default 'post' post type.
-     *
-     * @param $labels
-     * @return object
-     */
-    public function renameDefaultPostType($labels): object
-    {
-        return (object) array_map(function ($l) {
-            return str_ireplace('Post', static::RENAME_DEFAULT_POST_TYPE, $l);
-        }, (array) $labels);
-    }
-
-    /**
-     * @return void
-     */
-    public function resetMetaBoxLocations(): void
-    {
-        $users = get_users();
-        foreach ($users as $user) {
-            $user_meta = get_user_meta($user->ID);
-            foreach ($user_meta as $meta_key => $meta_value) {
-                if (str_starts_with($meta_key, 'meta-box-order')) {
-                    delete_user_meta($user->ID, $meta_key);
-                }
-            }
-        }
-    }
-
-    /**
-     * Update the body class
-     *
-     * @param array $classes
-     * @return array
-     */
-    public function cleanupBodyClass(array $classes): array
-    {
-        $home_id_class = 'page-id-' . get_option('page_on_front');
-        $remove_classes = [
-            'page-template-default',
-            $home_id_class
-        ];
-
-        return array_diff($classes, $remove_classes);
-    }
-
-    /**
-     * Add custom dimensions message to featured image for various post types
-     *
-     * @param $content
-     * @param $post_id
-     * @return string
-     */
-    public function adminPostThumbnailHtml($content, $post_id): string
-    {
-        $post = get_post($post_id);
-        if (isset(static::POST_TYPE_IMAGE_DIMENSIONS[$post->post_type])) {
-            $dimensions = static::POST_TYPE_IMAGE_DIMENSIONS[$post->post_type];
-            $content = vsprintf(static::POST_TYPE_IMAGE_DIMENSIONS_MESSAGE, $dimensions) . $content;
-        }
-        return $content;
-    }
-
-    /**
-     * Remove noreferrer attribute from links
-     *
-     * @param $rel_values
-     * @return array|string|null
-     */
-    public function removeNoReferrerFromLinks($rel_values): array|string|null
-    {
-        return preg_replace('/noreferrer\s*/i', '', $rel_values);
     }
 }

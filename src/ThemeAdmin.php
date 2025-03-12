@@ -4,31 +4,34 @@ namespace Sitchco\Parent;
 
 use JsonException;
 use Sitchco\Framework\Core\Module;
-use Sitchco\Parent\Support\PageOrder;
+use Sitchco\Parent\Support\BlockPatternHandler;
+use Sitchco\Parent\Support\PageOrderHandler;
 use Sitchco\Parent\Support\SvgHandler;
 use Sitchco\Utils\Hooks;
 use Sitchco\Utils\Template;
 
 /**
- * Class Admin
+ * Class ThemeAdmin
  *
  * Handles administrative functionality for the theme, including enqueuing scripts,
  * managing the admin bar, enabling/disabling features, and more.
  *
  * @package Sitchco\Parent
  */
-class Admin extends Module
+class ThemeAdmin extends Module
 {
-    protected PageOrder $pageOrder;
+    protected PageOrderHandler $pageOrder;
     protected SvgHandler $svgHandler;
 
     const FEATURES = [
-        'adminEnqueueScripts',
+        'enableAdminEnqueueScripts',
         'enableAdminEditorStyle',
         'enableAdminBar',
         'enableDefaultPostType',
-        'removeComments',
-        'removeCustomPageSorting',
+        'disableComments',
+        'disableCustomPageSorting',
+        'disableUserMetaBoxOrder',
+        'disableCoreBlockPatterns',
     ];
 
     /**
@@ -46,11 +49,18 @@ class Admin extends Module
                 wp_enqueue_script('comment-reply');
             }
         });
-        // TODO: no use of DI here?
-        $this->pageOrder = new PageOrder();
-        $this->pageOrder->init();
+
+        // TODO: temporary shim
+        add_filter('acf/settings/load_json', function ($paths) {
+            $parent_path = get_template_directory() . '/acf-json';
+            array_unshift($paths, $parent_path);
+
+            return $paths;
+        });
 
         // TODO: no use of DI here?
+        $this->pageOrder = new PageOrderHandler();
+        $this->pageOrder->init();
         $this->svgHandler = new SvgHandler();
         $this->svgHandler->init();
     }
@@ -58,7 +68,7 @@ class Admin extends Module
     /**
      * Enqueues admin scripts and styles.
      */
-    public function adminEnqueueScripts(): void
+    public function enableAdminEnqueueScripts(): void
     {
         add_action('admin_enqueue_scripts', [$this, 'adminAssets'], 100);
     }
@@ -104,7 +114,7 @@ class Admin extends Module
     /**
      * Removes the comments menu and disables comment-reply scripts.
      */
-    public function removeComments(): void
+    public function disableComments(): void
     {
         add_action('admin_menu', fn() => remove_menu_page('edit-comments.php'));
         wp_dequeue_script('comment-reply');
@@ -113,7 +123,7 @@ class Admin extends Module
     /**
      * Disables custom page sorting functionality.
      */
-    public function removeCustomPageSorting(): void
+    public function disableCustomPageSorting(): void
     {
         $this->pageOrder->disable();
     }
@@ -127,5 +137,52 @@ class Admin extends Module
     {
         wp_enqueue_style(Hooks::name('parent-theme/admin/css'), Template::getAssetPath('styles/admin.css'), false, null);
         wp_enqueue_script(Hooks::name('parent-theme/admin/js'), Template::getAssetPath('scripts/admin.js'));
+    }
+
+    /**
+     * Disables the user meta box order functionality.
+     *
+     * This method hooks into the `after_save_permalinks` action to trigger the deletion
+     * of user meta box locations for all users.
+     *
+     * @return void
+     */
+    public function disableUserMetaBoxOrder(): void
+    {
+        add_action(Hooks::name('after_save_permalinks'), [$this, 'deleteUserMetaBoxLocations']);
+    }
+
+    /**
+     * Deletes user meta box locations for all users.
+     *
+     * This method iterates through all users and removes any user meta keys that start with
+     * 'meta-box-order', effectively resetting the meta box order for all users.
+     *
+     * @return void
+     */
+    public function deleteUserMetaBoxLocations(): void
+    {
+        $users = get_users();
+        foreach ($users as $user) {
+            $user_meta = get_user_meta($user->ID);
+            foreach ($user_meta as $meta_key => $meta_value) {
+                if (str_starts_with($meta_key, 'meta-box-order')) {
+                    delete_user_meta($user->ID, $meta_key);
+                }
+            }
+        }
+    }
+
+    /**
+     * Disables core block patterns.
+     *
+     * This method initializes an instance of `BlockPatternHandler` and calls its
+     * `removeCorePatterns` method to disable core block patterns.
+     *
+     * @return void
+     */
+    public function disableCoreBlockPatterns(): void
+    {
+        (new BlockPatternHandler())->removeCorePatterns();
     }
 }
