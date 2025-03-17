@@ -2,6 +2,7 @@
 
 namespace Sitchco\Parent\Support;
 
+use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Hooks;
 use WP_Query;
 
@@ -11,7 +12,7 @@ use WP_Query;
  *
  * TODO: create a test class for this!
  */
-class PageOrderHandler
+class PageOrderHandler extends Module
 {
     protected string $check_sort_transient = 'sit_page_sort';
 
@@ -20,18 +21,6 @@ class PageOrderHandler
         add_action('admin_init', [$this, 'checkSortOrder']);
         add_action('save_post', [$this, 'flagSortOrder'], 10, 2);
         add_action('current_screen', [$this, 'checkCurrentScreen']);
-    }
-
-    /**
-     * Disables the PageOrder functionality by removing all hooks.
-     *
-     * @return void
-     */
-    public function disable(): void
-    {
-        remove_action('admin_init', [$this, 'checkSortOrder']);
-        remove_action('save_post', [$this, 'flagSortOrder'], 10);
-        remove_action('current_screen', [$this, 'checkCurrentScreen']);
     }
 
     /**

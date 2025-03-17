@@ -2,9 +2,9 @@
 
 namespace Sitchco\Parent;
 
+use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Hooks;
-use Sitchco\Utils\Template;
-use Timber\Site;
+use JsonException;
 
 /**
  * Class Theme
@@ -12,35 +12,31 @@ use Timber\Site;
  * @package Sitchco\Parent
  * @see https://github.com/timber/starter-theme/blob/2.x/src/StarterSite.php
  */
-class Theme extends Site
+class Theme extends Module
 {
-    const API_PREFIX = '';
-    const RENAME_DEFAULT_POST_TYPE = '';
-    const NAV_MENUS = [];
-    const ADDITIONAL_THEME_SUPPORT = [];
+    const FEATURES = [
+        'enableAdminEditorStyle',
+        'enableAdminBar',
+        'enableUserMetaBoxReorder'
+    ];
 
     /**
      * Theme constructor.
      */
-    public function __construct()
+    public function init(): void
     {
-        parent::__construct();
-
-        // frontend related filters, perhaps another opportunity for a ThemeFrontEnd module?
         add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
-        add_filter('body_class', [$this, 'cleanupBodyClass']);
-        add_filter('wp_targeted_link_rel', [$this, 'removeNoReferrerFromLinks']);
-
-        // filters/action hooks that are dependant upon a non-boolean constants
+        add_action('admin_enqueue_scripts', [$this, 'adminAssets'], 100);
         add_action('after_setup_theme', [$this, 'themeSupports']);
-        if (!empty(static::API_PREFIX)) {
-            add_filter('rest_url_prefix', function () {
-                return static::API_PREFIX;
-            });
-        }
-        if (!empty(static::RENAME_DEFAULT_POST_TYPE)) {
-            add_filter('post_type_labels_post', [$this, 'renamePostLabels']);
-        }
+        add_action('wp_body_open', [$this, 'addSvgSprite']);
+
+        // TODO: temporary shim
+        add_filter('acf/settings/load_json', function ($paths) {
+            $parent_path = get_template_directory() . '/acf-json';
+            array_unshift($paths, $parent_path);
+
+            return $paths;
+        });
     }
 
     /**
@@ -48,8 +44,8 @@ class Theme extends Site
      */
     public function assets(): void
     {
-        wp_enqueue_style(Hooks::name('theme/css'), Template::getAssetPath('styles/main.css'), false, null);
-        wp_enqueue_script(Hooks::name('theme/js'), Template::getAssetPath('scripts/main.js'), ['jquery'], null, [
+        wp_enqueue_style(Hooks::name('theme/css'), ThemeUtil::getAssetPath('styles/main.css'), false, null);
+        wp_enqueue_script(Hooks::name('theme/js'), ThemeUtil::getAssetPath('scripts/main.js'), ['jquery'], null, [
             'in_footer' => true
         ]);
         $js_vars = apply_filters('global_js_vars', [
@@ -57,50 +53,21 @@ class Theme extends Site
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
         ]);
         wp_localize_script(Hooks::name('theme/js'), 'sit', $js_vars);
-        wp_dequeue_style('classic-theme-styles');
+
+        if (is_single() && comments_open() && get_option('thread_comments')) {
+            wp_enqueue_script('comment-reply');
+        }
     }
 
     /**
-     * Update the body class
+     * Enqueues admin assets (CSS and JS).
      *
-     * @param array $classes
-     * @return array
+     * @throws JsonException If there is an issue with JSON encoding/decoding.
      */
-    public function cleanupBodyClass(array $classes): array
+    public function adminAssets(): void
     {
-        $home_id_class = 'page-id-' . get_option('page_on_front');
-        $remove_classes = [
-            'page-template-default',
-            $home_id_class
-        ];
-
-        return array_diff($classes, $remove_classes);
-    }
-
-    /**
-     * Renames the default 'post' post type.
-     *
-     * TODO: all labels change except the menu_name, what could be the conflict?
-     *
-     * @param $labels
-     * @return object
-     */
-    public function renamePostLabels($labels): object
-    {
-        return (object) array_map(function ($l) {
-            return str_ireplace('Post', static::RENAME_DEFAULT_POST_TYPE, $l);
-        }, (array) $labels);
-    }
-
-    /**
-     * Remove noreferrer attribute from links
-     *
-     * @param $rel_values
-     * @return array|string|null
-     */
-    public function removeNoReferrerFromLinks($rel_values): array|string|null
-    {
-        return preg_replace('/noreferrer\s*/i', '', $rel_values);
+        wp_enqueue_style(Hooks::name('parent-theme/admin/css'), ThemeUtil::getAssetPath('styles/admin.css'), false, null);
+        wp_enqueue_script(Hooks::name('parent-theme/admin/js'), ThemeUtil::getAssetPath('scripts/admin.js'));
     }
 
     /**
@@ -136,12 +103,68 @@ class Theme extends Site
         add_theme_support('menus');
         add_theme_support('editor-style');
 
-        if (!empty(static::ADDITIONAL_THEME_SUPPORT)) {
-            array_map('add_theme_support', static::ADDITIONAL_THEME_SUPPORT);
-        }
+        register_nav_menus([
+            'primary_navigation' => 'Primary Navigation',
+            'footer_navigation' => 'Footer Navigation',
+        ]);
+    }
 
-        if (!empty(static::NAV_MENUS)) {
-            register_nav_menus(static::NAV_MENUS);
+    /**
+     * Outputs SVG sprite after the opening body tag
+     *
+     * @return void
+     */
+    public function addSvgSprite(): void
+    {
+        $sprite = get_theme_file_path('dist/images/sprite.svg');
+        if (file_exists($sprite)) {
+            echo file_get_contents($sprite);
         }
+    }
+
+    // FEATURES
+
+    /**
+     * Enables the admin editor style.
+     *
+     * @throws JsonException If there is an issue with JSON encoding/decoding.
+     */
+    public function enableAdminEditorStyle(): void
+    {
+        if (!current_theme_supports('editor-style')) {
+            add_theme_support('editor-style');
+        }
+        add_editor_style(ThemeUtil::getAssetPath('styles/admin-editor.css'));
+    }
+
+    /**
+     * Enables the admin bar.
+     */
+    public function enableAdminBar(): void
+    {
+        add_filter('show_admin_bar', '__return_true');
+    }
+
+    /**
+     * Disables the user meta box order functionality.
+     *
+     * This method hooks into the `after_save_permalinks` action to trigger the deletion
+     * of user meta box locations for all users.
+     *
+     * @return void
+     */
+    public function enableUserMetaBoxReorder(): void
+    {
+        add_action(Hooks::name('after_save_permalinks'), function(): void {
+            $users = get_users();
+            foreach ($users as $user) {
+                $user_meta = get_user_meta($user->ID);
+                foreach ($user_meta as $meta_key => $meta_value) {
+                    if (str_starts_with($meta_key, 'meta-box-order')) {
+                        delete_user_meta($user->ID, $meta_key);
+                    }
+                }
+            }
+        });
     }
 }
