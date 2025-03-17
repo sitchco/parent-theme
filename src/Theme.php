@@ -37,6 +37,12 @@ class Theme extends Module
 
             return $paths;
         });
+
+        // Useful Timber filters (for reference)
+//        add_filter('timber/context', [$this, 'addToContext']);
+//        add_filter('timber/twig/filters', [$this, 'addFiltersToTwig']);
+//        add_filter('timber/twig/functions', [$this, 'addFunctionsToTwig']);
+//        add_filter('timber/twig/environment/options', [$this, 'updateTwigEnvironmentOptions']);
     }
 
     /**
@@ -155,7 +161,7 @@ class Theme extends Module
      */
     public function enableUserMetaBoxReorder(): void
     {
-        add_action(Hooks::name('after_save_permalinks'), function(): void {
+        add_action(Hooks::name('after_save_permalinks'), function (): void {
             $users = get_users();
             foreach ($users as $user) {
                 $user_meta = get_user_meta($user->ID);
@@ -167,4 +173,83 @@ class Theme extends Module
             }
         });
     }
+
+    // USEFUL TIMBER CONTEXT
+
+//    /**
+//     * This is where you add some context.
+//     *
+//     * @param array $context context['this'] Being the Twig's {{ this }}
+//     */
+//    public function addToContext(array $context): array
+//    {
+//        $context['foo']   = 'bar';
+//        $context['stuff'] = 'I am a value set in your functions.php file';
+//        $context['notes'] = 'These values are available everytime you call Timber::context();';
+//        $context['menu']  = Timber::get_menu( 'primary_navigation' );
+//        $context['site']  = $this;
+//
+//        return $context;
+//    }
+//
+//    /**
+//     * This would return 'foo bar!'.
+//     *
+//     * @param string $text being 'foo', then returned 'foo bar!'
+//     */
+//    public function myfoo(string $text ): string
+//    {
+//        $text .= ' bar!';
+//        return $text;
+//    }
+//
+//    /**
+//     * This is where you can add your own functions to twig.
+//     *
+//     * @link https://timber.github.io/docs/v2/hooks/filters/#timber/twig/filters
+//     * @param array $filters an array of Twig filters.
+//     */
+//    public function addFiltersToTwig(array $filters ): array
+//    {
+//        $additional_filters = [
+//            'myfoo' => [
+//                'callable' => [ $this, 'myfoo' ],
+//            ],
+//        ];
+//
+//        return array_merge( $filters, $additional_filters );
+//    }
+//
+//
+//    /**
+//     * This is where you can add your own functions to twig.
+//     *
+//     * @link https://timber.github.io/docs/v2/hooks/filters/#timber/twig/functions
+//     * @param array $functions an array of existing Twig functions.
+//     */
+//    public function addFunctionsToTwig(array $functions): array
+//    {
+//        $additional_functions = [
+//            'get_theme_mod' => [
+//                'callable' => 'get_theme_mod',
+//            ],
+//        ];
+//
+//        return array_merge( $functions, $additional_functions );
+//    }
+//
+//    /**
+//     * Updates Twig environment options.
+//     *
+//     * @see https://twig.symfony.com/doc/2.x/api.html#environment-options
+//     *
+//     * @param array $options an array of environment options
+//     *
+//     * @return array
+//     */
+//    public function updateTwigEnvironmentOptions(array $options): array
+//    {
+//        // $options['autoescape'] = true;
+//        return $options;
+//    }
 }
