@@ -3,9 +3,10 @@
 //use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\ContentPartialBlock\ContentPartialBlockModule;
+use Sitchco\Parent\PageOrder\PageOrderModule;
 use Sitchco\Parent\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\SiteHeader\SiteHeaderModule;
-use Sitchco\Parent\Support\PageOrderHandler;
+use Sitchco\Parent\Theme;
 
 return [
     // TODO: it seems we are turning off all features when we override this way.
@@ -16,5 +17,6 @@ return [
     ContentPartialBlockModule::class => true,
     SiteHeaderModule::class => true,
     SiteFooterModule::class =>true,
-    PageOrderHandler::class => true,
+    PageOrderModule::class => true,
+    Theme::class => true
 ];

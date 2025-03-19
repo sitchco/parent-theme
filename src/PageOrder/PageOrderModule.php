@@ -1,18 +1,18 @@
 <?php
 
-namespace Sitchco\Parent\Support;
+namespace Sitchco\Parent\PageOrder;
 
 use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Hooks;
 use WP_Query;
 
 /**
- * Class PageOrder
- * @package Sitchco\Support
+ * Class PageOrderModule
+ * @package Sitchco\Parent\PageOrder
  *
  * TODO: create a test class for this!
  */
-class PageOrderHandler extends Module
+class PageOrderModule extends Module
 {
     protected string $check_sort_transient = 'sit_page_sort';
 

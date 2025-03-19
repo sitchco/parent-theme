@@ -11,6 +11,8 @@ use JsonException;
  *
  * @package Sitchco\Parent
  * @see https://github.com/timber/starter-theme/blob/2.x/src/StarterSite.php
+ *
+ * TODO: Needs tests
  */
 class Theme extends Module
 {
