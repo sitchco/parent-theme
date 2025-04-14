@@ -9,13 +9,15 @@ use Sitchco\Parent\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\Theme;
 
 return [
-    Cleanup::class => [
-        'disableGutenbergStyles' => false,
-    ],
-    ContentPartialModule::class => true,
-    ContentPartialBlockModule::class => true,
-    SiteHeaderModule::class => true,
-    SiteFooterModule::class =>true,
-    PageOrderModule::class => true,
-    Theme::class => true
+    'modules' => [
+        Cleanup::class => [
+            'disableGutenbergStyles' => false,
+        ],
+        ContentPartialModule::class,
+        ContentPartialBlockModule::class,
+        SiteHeaderModule::class,
+        SiteFooterModule::class,
+        PageOrderModule::class,
+        Theme::class
+    ]
 ];
