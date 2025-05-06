@@ -2,7 +2,7 @@
   "name": "sitchco/content-partial-block",
   "title": "Content Partial Block",
   "description": "A Gutenberg block for displaying content partials using ACF.",
-  "category": "layout",
+  "category": "sitchco",
   "icon": "admin-page",
   "keywords": [
     "content",
