@@ -2,9 +2,9 @@
 
 namespace Sitchco\Parent;
 
+use JsonException;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Hooks;
-use JsonException;
 
 /**
  * Class Theme
@@ -60,7 +60,7 @@ class Theme extends Module
             'ajax_url' => admin_url('admin-ajax.php'),
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
         ]);
-        wp_localize_script(Hooks::name('theme/js'), 'sit', $js_vars);
+        wp_localize_script(Hooks::name('theme/js'), 'sitchco', $js_vars);
 
         if (is_single() && comments_open() && get_option('thread_comments')) {
             wp_enqueue_script('comment-reply');
