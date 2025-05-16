@@ -90,124 +90,124 @@ return [
         'core/comments-pagination',
         'core/comments-pagination-previous',
         'core/post-content' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-author' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-author-biography' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-author-name' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/avatar' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
 
         'core/post-date' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-excerpt' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-featured-image' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/loginout' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-pagination-next' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-no-results' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-pagination-numbers' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-pagination' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-navigation-link' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-template' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-terms' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-pagination-previous' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-title' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/query-total' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/read-more' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/template-part' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/term-description' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         'core/post-title' => [
-            'allowPostType' => [
-                'patterns'
+            'allowContext' => [
+                'core/edit-site'
             ]
         ],
         /** Embeds */
