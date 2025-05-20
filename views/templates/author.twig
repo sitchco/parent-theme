@@ -1,32 +1,32 @@
 {% extends 'layouts/base.twig' %}
 
 {% block content %}
-    <div class="author-profile max-w-3xl mx-auto py-10">
+    <div class="author-profile">
         <header class="author-header text-center">
             {% if author.avatar %}
-                <img src="{{ author.avatar }}" alt="{{ author.name }}" class="rounded-full w-24 h-24 mx-auto">
+                <img src="{{ author.avatar }}" alt="{{ author.name }}">
             {% endif %}
-            <h1 class="text-3xl font-bold mt-4">{{ author.name }}</h1>
+            <h1>{{ author.name }}</h1>
 
             {% if author.description %}
-                <p class="text-gray-600 mt-2">{{ author.description }}</p>
+                <p>{{ author.description }}</p>
             {% endif %}
 
             {# Optional: Display author social links if available #}
             {% if author.meta('twitter') or author.meta('linkedin') or author.meta('website') %}
-                <div class="author-social mt-4 flex justify-center space-x-4">
+                <div class="author-social">
                     {% if author.meta('twitter') %}
-                        <a href="https://twitter.com/{{ author.meta('twitter') }}" target="_blank" class="text-blue-500 hover:underline">
+                        <a href="https://twitter.com/{{ author.meta('twitter') }}" target="_blank">
                             Twitter
                         </a>
                     {% endif %}
                     {% if author.meta('linkedin') %}
-                        <a href="{{ author.meta('linkedin') }}" target="_blank" class="text-blue-700 hover:underline">
+                        <a href="{{ author.meta('linkedin') }}" target="_blank">
                             LinkedIn
                         </a>
                     {% endif %}
                     {% if author.meta('website') %}
-                        <a href="{{ author.meta('website') }}" target="_blank" class="text-gray-700 hover:underline">
+                        <a href="{{ author.meta('website') }}" target="_blank">
                             Website
                         </a>
                     {% endif %}
@@ -36,16 +36,16 @@
 
         {# Display author's latest posts #}
         {% if posts %}
-            <section class="author-posts mt-10">
-                <h2 class="text-2xl font-semibold border-b pb-2 mb-4">Latest Posts by {{ author.name }}</h2>
+            <section class="author-posts">
+                <h2>Latest Posts by {{ author.name }}</h2>
 
                 {% for post in posts %}
-                    <article class="mb-6 border-b pb-4">
-                        <h3 class="text-xl font-bold">
-                            <a href="{{ post.link }}" class="text-blue-600 hover:underline">{{ post.title }}</a>
+                    <article>
+                        <h3>
+                            <a href="{{ post.link }}">{{ post.title }}</a>
                         </h3>
-                        <p class="text-gray-600 text-sm">{{ post.date }}</p>
-                        <p class="mt-2">{{ post.excerpt }}</p>
+                        <p>{{ post.date }}</p>
+                        <p>{{ post.excerpt }}</p>
                     </article>
                 {% endfor %}
 
@@ -59,7 +59,7 @@
                 } %}
             </section>
         {% else %}
-            <p class="text-gray-600 text-center mt-10">This author has not published any posts yet.</p>
+            <p>This author has not published any posts yet.</p>
         {% endif %}
     </div>
 {% endblock %}

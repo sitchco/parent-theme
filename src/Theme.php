@@ -10,7 +10,6 @@ class Theme extends Module
 {
     const FEATURES = [
         'enableAdminEditorStyle',
-        'enableAdminBar',
         'enableUserMetaBoxReorder'
     ];
 
@@ -20,29 +19,18 @@ class Theme extends Module
     public function init(): void
     {
         add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
-//        add_action('admin_enqueue_scripts', [$this, 'adminAssets'], 100);
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
     }
 
-    /**
-     * @throws \JsonException
-     */
     public function assets(): void
     {
-        wp_enqueue_style(Hooks::name('theme/css'), ThemeUtil::getAssetPath('styles/main.css'), false, null);
-        wp_enqueue_script(Hooks::name('theme/js'), ThemeUtil::getAssetPath('scripts/main.js'), ['jquery'], null, [
-            'in_footer' => true
-        ]);
+        wp_enqueue_style(Hooks::name('block-library'), get_template_directory_uri() . '/assets/styles/block-library.css', false, null);
         $js_vars = apply_filters('global_js_vars', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
         ]);
         wp_localize_script(Hooks::name('theme/js'), 'sitchco', $js_vars);
-
-        if (is_single() && comments_open() && get_option('thread_comments')) {
-            wp_enqueue_script('comment-reply');
-        }
     }
 
     /**
@@ -121,14 +109,6 @@ class Theme extends Module
             add_theme_support('editor-style');
         }
         add_editor_style(ThemeUtil::getAssetPath('styles/admin-editor.css'));
-    }
-
-    /**
-     * Enables the admin bar.
-     */
-    public function enableAdminBar(): void
-    {
-        add_filter('show_admin_bar', '__return_true');
     }
 
     /**
