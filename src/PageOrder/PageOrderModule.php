@@ -2,7 +2,7 @@
 
 namespace Sitchco\Parent\PageOrder;
 
-use Sitchco\Framework\Core\Module;
+use Sitchco\Framework\Module;
 use Sitchco\Utils\Hooks;
 use WP_Query;
 

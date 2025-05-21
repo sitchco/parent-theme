@@ -2,7 +2,7 @@
 
 namespace Sitchco\Parent\ContentPartialBlock;
 
-use Sitchco\Framework\Core\Module;
+use Sitchco\Framework\Module;
 use Sitchco\Parent\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\ContentPartial\ContentPartialService;
 

@@ -3,7 +3,7 @@
 namespace Sitchco\Parent;
 
 use JsonException;
-use Sitchco\Framework\Core\Module;
+use Sitchco\Framework\Module;
 use Sitchco\Utils\Hooks;
 
 class Theme extends Module
