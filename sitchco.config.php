@@ -5,7 +5,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
 use Sitchco\Parent\Modules\PageOrder\PageOrderModule;
 use Sitchco\Modules\Wordpress\Cleanup;
-use Sitchco\Parent\Modules\Theme;
+use Sitchco\Parent\Modules\Theme\Theme;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
 
