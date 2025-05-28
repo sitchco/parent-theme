@@ -1,13 +1,13 @@
 <?php
 
-use Sitchco\Integration\Wordpress\Cleanup;
-use Sitchco\Parent\ContentPartial\ContentPartialModule;
-use Sitchco\Parent\ContentPartial\ContentPartialPost;
-use Sitchco\Parent\ContentPartialBlock\ContentPartialBlockModule;
-use Sitchco\Parent\PageOrder\PageOrderModule;
-use Sitchco\Parent\SiteFooter\SiteFooterModule;
-use Sitchco\Parent\SiteHeader\SiteHeaderModule;
-use Sitchco\Parent\Theme;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
+use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
+use Sitchco\Parent\Modules\PageOrder\PageOrderModule;
+use Sitchco\Modules\Wordpress\Cleanup;
+use Sitchco\Parent\Modules\Theme;
+use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
+use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
 
 return [
     'modules' => [

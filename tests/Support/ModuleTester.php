@@ -2,9 +2,8 @@
 
 namespace Sitchco\Parent\Tests\Support;
 
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
-use Sitchco\Parent\ContentPartial\ContentPartialRepository;
-use Sitchco\Parent\ContentPartial\ContentPartialService;
 
 class ModuleTester extends Module
 {

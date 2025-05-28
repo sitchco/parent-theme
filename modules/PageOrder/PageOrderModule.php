@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Parent\PageOrder;
+namespace Sitchco\Parent\Modules\PageOrder;
 
 use Sitchco\Framework\Module;
 use Sitchco\Utils\Hooks;

@@ -1,8 +1,8 @@
 <?php
 
-namespace Sitchco\Parent\SiteHeader;
+namespace Sitchco\Parent\Modules\SiteHeader;
 
-use Sitchco\Parent\ContentPartial\ContentPartialBlockPatterns;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialBlockPatterns;
 
 /**
  * class HeaderBlockPatterns

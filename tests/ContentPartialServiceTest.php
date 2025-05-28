@@ -2,11 +2,11 @@
 
 namespace Sitchco\Parent\Tests;
 
-use Sitchco\Parent\ContentPartial\ContentPartialPost;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialRepository;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Tests\Support\TestCase;
-use Sitchco\Parent\ContentPartial\ContentPartialService;
-use Sitchco\Parent\ContentPartial\ContentPartialRepository;
 
 /**
  * class ContentPartialServiceTest

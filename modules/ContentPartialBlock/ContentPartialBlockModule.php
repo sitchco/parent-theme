@@ -1,10 +1,10 @@
 <?php
 
-namespace Sitchco\Parent\ContentPartialBlock;
+namespace Sitchco\Parent\Modules\ContentPartialBlock;
 
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
-use Sitchco\Parent\ContentPartial\ContentPartialModule;
-use Sitchco\Parent\ContentPartial\ContentPartialService;
 
 /**
  * class ContentPartialBlockModule

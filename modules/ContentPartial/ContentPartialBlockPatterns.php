@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Parent\ContentPartial;
+namespace Sitchco\Parent\Modules\ContentPartial;
 
 use Sitchco\Utils\BlockPattern;
 

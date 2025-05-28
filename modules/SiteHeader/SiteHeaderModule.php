@@ -1,17 +1,17 @@
 <?php
 
-namespace Sitchco\Parent\SiteFooter;
+namespace Sitchco\Parent\Modules\SiteHeader;
 
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialRepository;
+use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
-use Sitchco\Parent\ContentPartial\ContentPartialModule;
-use Sitchco\Parent\ContentPartial\ContentPartialRepository;
-use Sitchco\Parent\ContentPartial\ContentPartialService;
 
 /**
- * class SiteFooterModule
- * @package Sitchco\Parent\SiteFooter
+ * class SiteHeaderModule
+ * @package Sitchco\Parent\SiteHeader
  */
-class SiteFooterModule extends Module
+class SiteHeaderModule extends Module
 {
     const DEPENDENCIES = [
         ContentPartialModule::class
@@ -32,7 +32,7 @@ class SiteFooterModule extends Module
 
     public function init(): void
     {
-        $this->contentService->addModule('footer', $this);
+        $this->contentService->addModule('header', $this);
     }
 
     // TODO: create trait to abstract this between SiteHeader/SiteFooter modules
@@ -44,6 +44,6 @@ class SiteFooterModule extends Module
 
     public function registerBlockPatterns(): void
     {
-        add_action('init', [FooterBlockPatterns::class, 'init'], 11);
+        add_action('init', [HeaderBlockPatterns::class, 'init'], 11);
     }
 }

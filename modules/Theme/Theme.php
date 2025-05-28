@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Parent;
+namespace Sitchco\Parent\Modules\Theme;
 
 use JsonException;
 use Sitchco\Framework\Module;
@@ -8,6 +8,8 @@ use Sitchco\Utils\Hooks;
 
 class Theme extends Module
 {
+    const HOOK_SUFFIX = 'theme';
+
     const FEATURES = [
         'enableAdminEditorStyle',
         'enableUserMetaBoxReorder'
@@ -25,12 +27,12 @@ class Theme extends Module
 
     public function assets(): void
     {
-        wp_enqueue_style(Hooks::name('block-library'), get_template_directory_uri() . '/assets/styles/block-library.css', false, null);
-        $js_vars = apply_filters('global_js_vars', [
+        wp_enqueue_style(static::hookName('block-library'), $this->styleUrl('block-library.css'), false, null);
+        $js_vars = apply_filters(static::hookName('global-js-vars'), [
             'ajax_url' => admin_url('admin-ajax.php'),
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
         ]);
-        wp_localize_script(Hooks::name('theme/js'), 'sitchco', $js_vars);
+        wp_localize_script(static::hookName('js'), 'sitchcoTheme', $js_vars);
     }
 
     /**
@@ -40,8 +42,8 @@ class Theme extends Module
      */
     public function adminAssets(): void
     {
-        wp_enqueue_style(Hooks::name('parent-theme/admin/css'), ThemeUtil::getAssetPath('styles/admin.css'), false, null);
-        wp_enqueue_script(Hooks::name('parent-theme/admin/js'), ThemeUtil::getAssetPath('scripts/admin.js'));
+        wp_enqueue_style(static::hookName('admin-css'), $this->styleUrl('styles/admin.css'), false, null);
+        wp_enqueue_script(static::hookName('admin-js'), $this->scriptUrl('scripts/admin.js'));
     }
 
     /**
@@ -90,8 +92,8 @@ class Theme extends Module
      */
     public function addSvgSprite(): void
     {
-        $sprite = get_theme_file_path('dist/images/sprite.svg');
-        if (file_exists($sprite)) {
+        $sprite = $this->path('dist/images/sprite.svg');
+        if ($sprite->exists()) {
             echo file_get_contents($sprite);
         }
     }
@@ -108,7 +110,7 @@ class Theme extends Module
         if (!current_theme_supports('editor-style')) {
             add_theme_support('editor-style');
         }
-        add_editor_style(ThemeUtil::getAssetPath('styles/admin-editor.css'));
+        add_editor_style($this->styleUrl('admin-editor.css'));
     }
 
     /**
