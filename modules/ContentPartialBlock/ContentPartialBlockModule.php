@@ -7,8 +7,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
 
 /**
- * class ContentPartialBlockModule
- * @package Sitchco\Parent\SiteHeader
+ * class ContentPartialBlockModulenamespace SitchcoParentModulesSiteHeader;
  */
 class ContentPartialBlockModule extends Module
 {

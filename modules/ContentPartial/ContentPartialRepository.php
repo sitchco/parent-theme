@@ -7,8 +7,7 @@ use Sitchco\Repository\RepositoryBase;
 use Timber\Post;
 
 /**
- * class ContentPartialRepository
- * @package Sitchco\Parent\ContentPartial
+ * class ContentPartialRepositorynamespace SitchcoParentModulesSiteHeader;
  */
 class ContentPartialRepository extends RepositoryBase
 {

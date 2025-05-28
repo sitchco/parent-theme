@@ -3,6 +3,7 @@
 namespace Sitchco\Parent\Modules\Theme;
 
 use JsonException;
+use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
 use Sitchco\Utils\Hooks;
 
@@ -15,9 +16,6 @@ class Theme extends Module
         'enableUserMetaBoxReorder'
     ];
 
-    /**
-     * Theme constructor.
-     */
     public function init(): void
     {
         add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
@@ -37,8 +35,6 @@ class Theme extends Module
 
     /**
      * Enqueues admin assets (CSS and JS).
-     *
-     * @throws JsonException If there is an issue with JSON encoding/decoding.
      */
     public function adminAssets(): void
     {
@@ -48,7 +44,6 @@ class Theme extends Module
 
     /**
      * Adds theme supports.
-     * @return void
      */
     public function themeSupports(): void
     {
@@ -87,8 +82,6 @@ class Theme extends Module
 
     /**
      * Outputs SVG sprite after the opening body tag
-     *
-     * @return void
      */
     public function addSvgSprite(): void
     {
@@ -102,8 +95,6 @@ class Theme extends Module
 
     /**
      * Enables the admin editor style.
-     *
-     * @throws JsonException If there is an issue with JSON encoding/decoding.
      */
     public function enableAdminEditorStyle(): void
     {
@@ -116,14 +107,12 @@ class Theme extends Module
     /**
      * Disables the user meta box order functionality.
      *
-     * This method hooks into the `after_save_permalinks` action to trigger the deletion
+     * This method hooks into the Save Permalinks async event hook to trigger the deletion
      * of user meta box locations for all users.
-     *
-     * @return void
      */
     public function enableUserMetaBoxReorder(): void
     {
-        add_action(Hooks::name('after_save_permalinks'), function (): void {
+        add_action(SavePermalinksRequestEvent::hookName(), function() use (&$processed) {
             $users = get_users();
             foreach ($users as $user) {
                 $user_meta = get_user_meta($user->ID);
@@ -134,9 +123,5 @@ class Theme extends Module
                 }
             }
         });
-    }
-    public function getAcfJsonPaths(): array
-    {
-        return [get_template_directory() . '/acf-json'];
     }
 }

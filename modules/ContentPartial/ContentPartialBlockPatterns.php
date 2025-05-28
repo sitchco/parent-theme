@@ -5,8 +5,7 @@ namespace Sitchco\Parent\Modules\ContentPartial;
 use Sitchco\Utils\BlockPattern;
 
 /**
- * class ContentPartialBlockPatterns
- * @package Sitchco\Parent\ContentPartial
+ * class ContentPartialBlockPatternsnamespace SitchcoParentModulesSiteHeader;
  *
  * TODO: this should get folded into Module (this is a temporary class)
  */

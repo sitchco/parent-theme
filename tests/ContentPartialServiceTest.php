@@ -9,8 +9,7 @@ use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Tests\Support\TestCase;
 
 /**
- * class ContentPartialServiceTest
- * @package Sitchco\Parent\Tests
+ * class ContentPartialServiceTestnamespace SitchcoParentModulesSiteHeader;
  */
 class ContentPartialServiceTest extends TestCase
 {

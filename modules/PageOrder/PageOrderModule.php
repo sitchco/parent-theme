@@ -3,50 +3,45 @@
 namespace Sitchco\Parent\Modules\PageOrder;
 
 use Sitchco\Framework\Module;
-use Sitchco\Utils\Hooks;
 use WP_Query;
+use WP_Screen;
 
 /**
  * Class PageOrderModule
- * @package Sitchco\Parent\PageOrder
- *
- * TODO: create a test class for this!
  */
 class PageOrderModule extends Module
 {
-    protected string $check_sort_transient = 'sit_page_sort';
+    public const HOOK_SUFFIX = 'page-order';
+
+    public const CHECK_SORT_TRANSIENT = 'sit_page_sort';
+
 
     public function init(): void
     {
         add_action('admin_init', [$this, 'checkSortOrder']);
-        add_action('save_post', [$this, 'flagSortOrder'], 10, 2);
+        add_action('save_post_page', [$this, 'flagSortOrder']);
+        add_action('save_post_nav_menu_item', [$this, 'flagSortOrder']);
         add_action('current_screen', [$this, 'checkCurrentScreen']);
     }
 
     /**
      * Flags the need to sort pages when a page or nav menu item is saved.
-     *
-     * @param int|string|null $post_id The ID of the post being saved, or 'force' to manually trigger sorting.
-     * @param \WP_Post|null $post The post object being saved.
-     * @return void
      */
-    public function flagSortOrder(int|string $post_id = null, \WP_Post $post = null): void
+    public function flagSortOrder(): void
     {
-        if ($post_id === 'force' || ($post instanceof \WP_Post && ($post->post_type === 'page' || $post->post_type === 'nav_menu_item'))) {
-            set_transient($this->check_sort_transient, 1);
-        }
+        set_transient(static::CHECK_SORT_TRANSIENT, 1);
     }
+
 
     /**
      * Checks the current screen and flags sorting if on the page order admin screen.
      *
-     * @param \WP_Screen $screen The current screen object.
-     * @return void
+     * @param WP_Screen $screen The current screen object.
      */
-    public function checkCurrentScreen(\WP_Screen $screen): void
+    public function checkCurrentScreen(WP_Screen $screen): void
     {
         if ($screen->id === 'pages_page_order-page') {
-            $this->flagSortOrder('force');
+            $this->flagSortOrder();
         }
     }
 
@@ -60,18 +55,16 @@ class PageOrderModule extends Module
         if (defined('DOING_AJAX') && DOING_AJAX) {
             return;
         }
-        if (get_transient($this->check_sort_transient)) {
-            delete_transient($this->check_sort_transient);
+        if (get_transient(static::CHECK_SORT_TRANSIENT)) {
+            delete_transient(static::CHECK_SORT_TRANSIENT);
             $this->sortPagesByMenuOrder();
         }
     }
 
     /**
      * Sorts pages based on their order in specified menus.
-     *
-     * @return void
      */
-    public function sortPagesByMenuOrder(): void
+    protected function sortPagesByMenuOrder(): void
     {
         $menu_order = $this->getPageOrderFromMenus();
         $this->updatePageOrder($menu_order);
@@ -85,28 +78,28 @@ class PageOrderModule extends Module
      * Menu priority filters use a strpos match against the menu slug, so 'header' would match 'header-nav' and 'utility-header' etc.
      *
      * Set items from the primary nav at the beginning of the page list:
-     * add_filter('backstage/page_autosort_high_menu_priorities', fn() => ['primary']);
+     * add_filter('sitchco/page-order/autosort/high-menu-priorities', fn() => ['primary']);
      *
      * Set items from the footer nav at the end of the page list:
-     * add_filter('backstage/page_autosort_menu_priorities', fn() => ['footer']);
+     * add_filter('sitchco/page-order/autosort/menu-priorities', fn() => ['footer']);
      *
      * Sort the items that don't exist in any matched nav menu descending by publish date:
-     * add_filter('backstage/page_autosort_default', fn() => ['orderby' => 'date', 'order' => 'DESC']);
+     * add_filter('sitchco/page-order/autosort/default-query', fn() => ['orderby' => 'date', 'order' => 'DESC']);
      *
      * @return array An array of page IDs in the desired order.
      */
     protected function getPageOrderFromMenus(): array
     {
-        $highPageIDs = $this->getPageIDsFromMenuList(apply_filters(Hooks::name('page_autosort_high_menu_priorities'), [
+        $highPageIDs = $this->getPageIDsFromMenuList(apply_filters(static::hookName('autosort', 'high-menu-priorities'), [
             'primary'
         ]));
-        $lowPageIDs = $this->getPageIDsFromMenuList(apply_filters(Hooks::name('page_autosort_menu_priorities'), [
+        $lowPageIDs = $this->getPageIDsFromMenuList(apply_filters(static::hookName('autosort', 'menu-priorities'), [
             'header',
             'footer',
         ]));
         $lowPageIDs = array_values(array_diff($lowPageIDs, $highPageIDs));
 
-        $query_args = array_merge(apply_filters(Hooks::name('page_autosort_default'), [
+        $query_args = array_merge(apply_filters(static::hookName('autosort', 'default-query'), [
             'orderby' => 'menu_order',
             'order' => 'ASC',
         ]), [

@@ -5,8 +5,7 @@ namespace Sitchco\Parent\Modules\ContentPartial;
 use Sitchco\Framework\Module;
 
 /**
- * class ContentPartialModule
- * @package Sitchco\Parent\ContentPartial
+ * class ContentPartialModulenamespace SitchcoParentModulesSiteHeader;
  */
 class ContentPartialModule extends Module
 {

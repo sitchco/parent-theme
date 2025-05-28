@@ -5,8 +5,7 @@ namespace Sitchco\Parent\Support;
 use JsonException;
 
 /**
- * Class JsonManifest
- * @package Sitchco\Parent\Support
+ * Class JsonManifestnamespace SitchcoParentModulesSiteHeader;
  */
 class JsonManifest
 {

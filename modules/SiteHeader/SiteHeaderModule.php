@@ -8,8 +8,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
 
 /**
- * class SiteHeaderModule
- * @package Sitchco\Parent\SiteHeader
+ * class SiteHeaderModulenamespace SitchcoParentModulesSiteHeader;
  */
 class SiteHeaderModule extends Module
 {
