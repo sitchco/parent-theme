@@ -1,0 +1,3 @@
+{% set skip_content_classes = skip_content_classes|default('wp-block-button__link wp-element-button') %}
+{% set skip_content_label = skip_content_label|default('Skip to Content') %}
+<a class="{{ skip_content_classes }} skip-to-content" href="#main">{{ _e(skip_content_label) }}</a>

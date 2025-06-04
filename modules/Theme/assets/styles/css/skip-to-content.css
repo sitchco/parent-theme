@@ -1,0 +1,35 @@
+
+.skip-to-content {
+    position: absolute;
+    display: inline-block;
+    left: -999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    z-index: -999;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    opacity: 0;
+    transition: transform 250ms, opacity 250ms;
+    transform: translateX(-100%);
+}
+
+.skip-to-content::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+.skip-to-content:focus, .skip-to-content:active {
+    position: absolute;
+    overflow: auto;
+    height: auto;
+    width: auto;
+    z-index: 9999;
+    outline: 0;
+    top: 5px;
+    transform: translateX(0);
+    left: 3px;
+    opacity: 1;
+}
+

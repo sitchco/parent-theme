@@ -10,13 +10,13 @@ class Theme extends Module
     const HOOK_SUFFIX = 'theme';
 
     const FEATURES = [
-        'enableAdminEditorStyle',
         'enableUserMetaBoxReorder'
     ];
 
     public function init(): void
     {
         add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
+        add_action('enqueue_block_editor_assets', [$this, 'enqueueAdminStyles']);
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
     }
@@ -29,6 +29,11 @@ class Theme extends Module
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
         ]);
         wp_localize_script(static::hookName('js'), 'sitchcoTheme', $js_vars);
+    }
+
+    public function enqueueAdminStyles(): void
+    {
+        wp_enqueue_style(static::hookName('admin-block-editor'), $this->styleUrl('admin-editor.css'), false, null);
     }
 
     /**
@@ -92,18 +97,7 @@ class Theme extends Module
     // FEATURES
 
     /**
-     * Enables the admin editor style.
-     */
-    public function enableAdminEditorStyle(): void
-    {
-        if (!current_theme_supports('editor-style')) {
-            add_theme_support('editor-style');
-        }
-        add_editor_style($this->styleUrl('admin-editor.css'));
-    }
-
-    /**
-     * Disables the user meta box order functionality.
+     * Enables the user meta box order reset.
      *
      * This method hooks into the Save Permalinks async event hook to trigger the deletion
      * of user meta box locations for all users.
