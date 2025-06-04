@@ -7,7 +7,9 @@
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialRepository;
 
-$additional_attributes = [];
+$additional_attributes = [
+    'class' => 'wp-site-blocks'
+];
 if (!empty($block['anchor'])) {
     $additional_attributes['id'] = $block['anchor'];
 }

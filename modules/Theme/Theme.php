@@ -2,10 +2,8 @@
 
 namespace Sitchco\Parent\Modules\Theme;
 
-use JsonException;
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
-use Sitchco\Utils\Hooks;
 
 class Theme extends Module
 {
@@ -25,7 +23,7 @@ class Theme extends Module
 
     public function assets(): void
     {
-        wp_enqueue_style(static::hookName('block-library'), $this->styleUrl('block-library.css'), false, null);
+        wp_enqueue_style(static::hookName('core'), $this->styleUrl('core.css'), false, null);
         $js_vars = apply_filters(static::hookName('global-js-vars'), [
             'ajax_url' => admin_url('admin-ajax.php'),
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))

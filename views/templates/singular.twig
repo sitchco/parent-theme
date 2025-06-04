@@ -1,14 +1,9 @@
 {% extends 'layouts/base.twig' %}
 
 {% block content %}
-    <div>
-        <article class="{{ function('post_class') }}" id="post-{{ post.id }}">
-            <header>
-                <h1>{{ post.title }}</h1>
-            </header>
-            <div>
-                {{ post.content }}
-            </div>
-        </article>
-    </div>
+    <article {{ function('post_class') }} id="post-{{ post.id }}">
+        <div class="wp-site-blocks is-layout-constrained">
+            {{ post.content }}
+        </div>
+    </article>
 {% endblock %}

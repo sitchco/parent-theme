@@ -3,7 +3,7 @@
 {% block content %}
     {% if posts %}
         {% for post in posts %}
-            <article class="{{ function('post_class', post) }}">
+            <article {{ function('post_class', post) }}>
                 <header>
                     <h2><a href="{{ post.link }}">{{ post.title }}</a></h2>
                 </header>
