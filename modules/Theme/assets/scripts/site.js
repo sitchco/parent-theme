@@ -1,5 +1,13 @@
-jQuery( document ).ready( function( $ ) {
+function logHello() {
+    console.log('Hello from parent theme');
+}
 
-  // Your JavaScript goes here
+function onDocumentReady() {
+    logHello();
+}
 
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onDocumentReady);
+} else {
+    onDocumentReady();
+}
