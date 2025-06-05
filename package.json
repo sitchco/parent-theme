@@ -1,0 +1,25 @@
+{
+    "name": "sitchco-parent-theme",
+    "version": "1.0.0",
+    "description": "Project root using sitchco module builder",
+    "private": true,
+    "scripts": {
+        "build": "module-builder build",
+        "dev": "module-builder dev",
+        "lint": "sitchco-lint",
+        "format": "sitchco-format",
+        "test": "pnpm --filter @sitchco/module-builder test",
+        "clean": "module-builder clean && find . -type d -name node_modules -prune -exec rm -rf {} \\;",
+        "reset": "pnpm clean && pnpm install"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@eslint/js": "^9.23.0",
+        "@sitchco/dev-scripts": "workspace:*",
+        "@sitchco/eslint-config": "workspace:*",
+        "@sitchco/module-builder": "workspace:*",
+        "@sitchco/prettier-config": "workspace:*"
+    }
+}
