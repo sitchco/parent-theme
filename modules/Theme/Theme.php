@@ -76,7 +76,6 @@ class Theme extends Module
         ]);
         add_theme_support('menus');
         add_theme_support('editor-style');
-        add_theme_support('wp-block-styles');
 
         register_nav_menus([
             'primary_navigation' => 'Primary Navigation',
