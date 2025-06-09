@@ -10,7 +10,9 @@
     -moz-user-select: none;
     -ms-user-select: none;
     opacity: 0;
-    transition: transform 250ms, opacity 250ms;
+    transition:
+        transform 250ms,
+        opacity 250ms;
     transform: translateX(-100%);
 
     &::-moz-focus-inner {
@@ -18,7 +20,8 @@
         padding: 0;
     }
 
-    &:focus, &:active {
+    &:focus,
+    &:active {
         position: absolute;
         overflow: auto;
         height: auto;
