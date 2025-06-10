@@ -15,13 +15,13 @@ class Theme extends Module
 
     public function init(): void
     {
-        add_action('wp_enqueue_scripts', [$this, 'assets'], 100);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueAssets'], 100);
         add_action('enqueue_block_editor_assets', [$this, 'enqueueAdminStyles']);
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
     }
 
-    public function assets(): void
+    public function enqueueAssets(): void
     {
         wp_enqueue_style(static::hookName('core'), $this->styleUrl('core.css'), false, null);
         $js_vars = apply_filters(static::hookName('global-js-vars'), [
