@@ -19,6 +19,10 @@ class Theme extends Module
         add_action('enqueue_block_editor_assets', [$this, 'enqueueAdminStyles']);
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
+        add_action( 'enqueue_block_assets', [$this, 'enqueueBlockAssets']);
+        if(wp_get_environment_type() === 'local') {
+            add_filter('the_content', [$this, 'contentFilterWarning']);
+        }
     }
 
     public function enqueueAssets(): void
@@ -34,6 +38,18 @@ class Theme extends Module
     public function enqueueAdminStyles(): void
     {
         wp_enqueue_style(static::hookName('admin-block-editor'), $this->styleUrl('admin-editor.css'), false, null);
+    }
+
+    public function enqueueBlockAssets(): void
+    {
+        wp_enqueue_block_style(
+            'core/heading',
+            [
+                'handle' => 'demo-heading-block-styles',
+                'src'    => get_theme_file_uri( '/modules/Theme/block-styles/core/heading.css' ),
+                'path'   => get_theme_file_path( '/modules/Theme/block-styles/core/heading.css' )
+            ]
+        );
     }
 
     /**
@@ -115,5 +131,17 @@ class Theme extends Module
                 }
             }
         });
+    }
+
+    public function contentFilterWarning($content)
+    {
+        if (! did_action('wp_head')) {
+            error_log('Warning! You have applied the_content filter too early!');
+            add_action('wp_body_open', function () {
+                echo "<div style=\"background: #fad0d0;border:1px solid #962121; color:#962121; border-radius: 12px;min-height: 30vh;display: flex;align-items: center;justify-content: center; margin: 30px;\"><p>Warning! You have applied the_content filter too early!</p></div>";
+            });
+        }
+
+        return $content;
     }
 }
