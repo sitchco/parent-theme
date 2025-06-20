@@ -1,5 +1,2 @@
 packages:
   - ../../mu-plugins/sitchco-core/packages/build-tools/*
-  - ../../mu-plugins/sitchco-core/packages/shared/*
-onlyBuiltDependencies:
-  - esbuild
