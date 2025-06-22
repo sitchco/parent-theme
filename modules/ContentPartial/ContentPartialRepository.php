@@ -39,13 +39,7 @@ class ContentPartialRepository extends RepositoryBase
         if (!$page_id) {
             return null;
         }
-
-        $page = (new PageRepository())->findById($page_id);
-        $property = $name . "_partial";
-        if (!$page || empty($header_partial_id = $page->$property)) {
-            return null;
-        }
-
+        $header_partial_id = get_field("{$name}_partial", $page_id);
         return $this->findById($header_partial_id);
     }
 }

@@ -25,6 +25,6 @@ class ModuleTester extends Module
     public function init(): void
     {
         $this->initialized = true;
-        $this->contentService->addModule('sidebar', $this);
+        $this->contentService->addTemplateArea('sidebar');
     }
 }

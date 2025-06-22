@@ -24,6 +24,6 @@ class ContentPartialBlockModule extends Module
 
     public function init(): void
     {
-        $this->contentService->addModule('block', $this);
+        $this->contentService->addTemplateArea('block', false);
     }
 }

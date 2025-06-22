@@ -3,39 +3,53 @@
 namespace Sitchco\Parent\Modules\ContentPartial;
 
 use Sitchco\Framework\Module;
+use Sitchco\Support\FilePath;
+use Sitchco\Utils\BlockPattern;
 
 /**
  * class ContentPartialServicenamespace SitchcoParentModulesSiteHeader;
  */
 class ContentPartialService
 {
-    protected array $registeredModules = [];
+    /**
+     * @var array<string, bool>
+     */
+    protected array $templateAreas = [];
 
-    public function __construct()
+    /**
+     * @var array<string, FilePath>
+     */
+    protected array $blockPatternPaths = [];
+
+    protected ContentPartialRepository $repository;
+
+    public function __construct(ContentPartialRepository $repository)
     {
-        $this->init();
+        $this->repository = $repository;
     }
 
-    public function init(): void
+    public function addTemplateArea(string $templateAreaName, bool $hasContext = true): void
     {
-        if (is_admin()) {
-            add_action('current_screen', [$this, 'ensureTaxonomyTermExists']);
-        }
-        add_filter('timber/context', [$this, 'setContext']);
+        $this->templateAreas[$templateAreaName] = $hasContext;
     }
 
-    public function addModule(string $templateAreaName, Module $module): void
+    public function addBlockPatterns(string $templateAreaName, FilePath $path): void
     {
-        $this->registeredModules[$templateAreaName] = $module;
+        $this->blockPatternPaths[$templateAreaName] = $path->append('block-patterns');
     }
 
     public function setContext(array $context): array
     {
-        foreach($this->registeredModules as $templateArea => $module) {
-            if (!method_exists($module, 'getContext')) {
+        foreach($this->templateAreas as $templateArea => $hasContext) {
+            if (!$hasContext) {
                 continue;
             }
-            $context["site_{$templateArea}"] = $module->getContext($templateArea);
+            $partial = $this->repository->findPartialOverrideFromPage($templateArea) ??
+                $this->repository->findDefaultPartial($templateArea);
+            if (!$partial instanceof ContentPartialPost) {
+                continue;
+            }
+            $context["site_{$templateArea}"] = $partial;
         }
         return $context;
     }
@@ -46,10 +60,21 @@ class ContentPartialService
             return;
         }
         $taxonomy = ContentPartialPost::TAXONOMY;
-        foreach(array_keys($this->registeredModules) as $templateArea) {
+        foreach(array_keys($this->templateAreas) as $templateArea) {
             if (taxonomy_exists($taxonomy) && !term_exists($templateArea, $taxonomy)) {
                 wp_insert_term(ucfirst($templateArea), $taxonomy, ['slug' => $templateArea]);
             }
+        }
+    }
+
+    public function registerBlockPatterns(\WP_Screen $currentScreen): void
+    {
+        if ($currentScreen->id !== ContentPartialPost::POST_TYPE) {
+            return;
+        }
+        foreach ($this->blockPatternPaths as $filePath) {
+            $filesToRegister = $filePath->glob('*');
+            array_walk($filesToRegister, [BlockPattern::class, 'registerFile']);
         }
     }
 }
