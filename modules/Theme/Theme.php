@@ -135,8 +135,9 @@ class Theme extends Module
 
     public function contentFilterWarning($content)
     {
-        if (! did_action('wp_head')) {
+        if (!(did_action('wp_head') || is_admin() || wp_doing_ajax() || wp_is_serving_rest_request())) {
             error_log('Warning! You have applied the_content filter too early!');
+            error_log(var_export(wp_debug_backtrace_summary(), true));
             add_action('wp_body_open', function () {
                 echo "<div style=\"background: #fad0d0;border:1px solid #962121; color:#962121; border-radius: 12px;min-height: 30vh;display: flex;align-items: center;justify-content: center; margin: 30px;\"><p>Warning! You have applied the_content filter too early!</p></div>";
             });
