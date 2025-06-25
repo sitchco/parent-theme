@@ -1,2 +1,5 @@
 packages:
   - ../../mu-plugins/sitchco-core/packages/build-tools/*
+
+onlyBuiltDependencies:
+  - esbuild
