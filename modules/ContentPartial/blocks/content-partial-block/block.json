@@ -11,7 +11,7 @@
     ],
     "acf": {
         "mode": "preview",
-        "renderTemplate": "content-partial-block.php"
+        "renderTemplate": "block.php"
     },
     "supports": {
         "anchor": true,

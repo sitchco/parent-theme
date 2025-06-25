@@ -28,6 +28,6 @@ class ContentPartialModule extends Module
             add_action('current_screen', [$this->contentService, 'ensureTaxonomyTermExists']);
             add_action('current_screen', [$this->contentService, 'registerBlockPatterns']);
         }
-        add_filter('timber/context', [$this->contentService, 'setContext']);
+        add_action('init', [$this->contentService, 'setContext']);
     }
 }

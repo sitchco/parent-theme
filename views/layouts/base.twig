@@ -6,11 +6,11 @@
 
 <body class="{{ body_class }}">
 {{ function('wp_body_open') }}
-{% block skitp_to_content %}
+{% block skip_to_content %}
     {% include 'elements/skip-to-content.twig' %}
 {% endblock %}
 {% block site_header %}
-    {% include 'partials/site-header.twig' %}
+    {{ include_with_context('partials/site-header.twig') }}
 {% endblock %}
 <div class="wrap" role="document">
     <main id="main">
@@ -23,7 +23,7 @@
 </div>
 
 {% block site_footer %}
-    {% include 'partials/site-footer.twig' %}
+    {{ include_with_context('partials/site-footer.twig') }}
 {% endblock %}
 {{ function('wp_footer') }}
 {% do action('get_footer') %}

@@ -4,7 +4,9 @@ namespace Sitchco\Parent\Modules\ContentPartial;
 
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
+use Sitchco\Support\HookName;
 use Sitchco\Utils\BlockPattern;
+use Sitchco\Utils\Hooks;
 
 /**
  * class ContentPartialServicenamespace SitchcoParentModulesSiteHeader;
@@ -38,9 +40,9 @@ class ContentPartialService
         $this->blockPatternPaths[$templateAreaName] = $path->append('block-patterns');
     }
 
-    public function setContext(array $context): array
+    public function setContext(): void
     {
-        foreach($this->templateAreas as $templateArea => $hasContext) {
+        foreach ($this->templateAreas as $templateArea => $hasContext) {
             if (!$hasContext) {
                 continue;
             }
@@ -49,9 +51,14 @@ class ContentPartialService
             if (!$partial instanceof ContentPartialPost) {
                 continue;
             }
-            $context["site_{$templateArea}"] = $partial;
+            add_filter(
+                Hooks::name('theme', 'template-context', "partials/site-{$templateArea}"),
+                function ($context) use ($partial, $templateArea) {
+                    $context["site_{$templateArea}"] = $partial;
+                    return $context;
+                }
+            );
         }
-        return $context;
     }
 
     public function ensureTaxonomyTermExists(\WP_Screen $currentScreen): void

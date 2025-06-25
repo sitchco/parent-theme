@@ -4,10 +4,16 @@ namespace Sitchco\Parent\Modules\Theme;
 
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
+use Timber;
+use Twig\TwigFunction;
 
 class Theme extends Module
 {
     const HOOK_SUFFIX = 'theme';
+
+    const DEPENDENCIES = [
+        \Sitchco\Modules\Timber::class
+    ];
 
     const FEATURES = [
         'enableUserMetaBoxReorder'
@@ -23,6 +29,12 @@ class Theme extends Module
         if(wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
+        add_filter('timber/twig/functions', function ($functions) {
+            $functions['include_with_context'] = [
+                'callable' => [$this, 'includeWithContext'],
+            ];
+            return $functions;
+        });
     }
 
     public function enqueueAssets(): void
@@ -108,6 +120,16 @@ class Theme extends Module
         if ($sprite->exists()) {
             echo file_get_contents($sprite);
         }
+    }
+
+    public function includeWithContext(string $template, array $additional_context = []): bool|string
+    {
+        $context = Timber::context();
+        $context = array_merge($context, $additional_context);
+        $template_key = str_replace('.twig', '', $template);
+        $hookName = static::hookName('template-context', $template_key);
+        $context = apply_filters($hookName, $context, $template_key);
+        return Timber::compile($template, $context);
     }
 
     // FEATURES
