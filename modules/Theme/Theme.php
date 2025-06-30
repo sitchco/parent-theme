@@ -39,7 +39,7 @@ class Theme extends Module
 
     public function enqueueAssets(): void
     {
-        wp_enqueue_style(static::hookName('core'), $this->styleUrl('core.css'), false, null);
+        $this->enqueueStyle(static::hookName('core'), $this->styleUrl('core.css'), );
         $js_vars = apply_filters(static::hookName('global-js-vars'), [
             'ajax_url' => admin_url('admin-ajax.php'),
             'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
@@ -49,12 +49,12 @@ class Theme extends Module
 
     public function enqueueAdminStyles(): void
     {
-        wp_enqueue_style(static::hookName('admin-block-editor'), $this->styleUrl('admin-editor.css'), false, null);
+        $this->enqueueStyle(static::hookName('admin-block-editor'), $this->styleUrl('admin-editor.css'));
     }
 
     public function enqueueBlockAssets(): void
     {
-        wp_enqueue_block_style(
+        $this->enqueueBlockStyle(
             'core/heading',
             [
                 'handle' => 'demo-heading-block-styles',
@@ -69,8 +69,8 @@ class Theme extends Module
      */
     public function adminAssets(): void
     {
-        wp_enqueue_style(static::hookName('admin-css'), $this->styleUrl('styles/admin.css'), false, null);
-        wp_enqueue_script(static::hookName('admin-js'), $this->scriptUrl('scripts/admin.js'));
+        $this->enqueueStyle(static::hookName('admin-css'), $this->styleUrl('styles/admin.css'));
+        $this->enqueueScript(static::hookName('admin-js'), $this->scriptUrl('scripts/admin.js'));
     }
 
     /**
