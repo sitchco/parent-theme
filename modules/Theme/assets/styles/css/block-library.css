@@ -2,6 +2,6 @@
     padding: var(--wp--style--block-gap);
 }
 
-:where (.wp-block-column.has-background) {
+:where(.wp-block-column.has-background) {
     padding: var(--wp--style--block-gap);
 }
