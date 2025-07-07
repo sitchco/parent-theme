@@ -9,13 +9,9 @@ use Sitchco\Framework\Module;
 
 class SiteFooterModule extends Module
 {
-    const DEPENDENCIES = [
-        ContentPartialModule::class
-    ];
+    const DEPENDENCIES = [ContentPartialModule::class];
 
-    public const FEATURES = [
-        'registerBlockPatterns'
-    ];
+    public const FEATURES = ['registerBlockPatterns'];
 
     protected ContentPartialService $contentService;
 

@@ -1,56 +1,50 @@
 {
-  "key": "group_67b645892c0bf",
-  "title": "Content Partial Block",
-  "fields": [
-    {
-      "key": "field_67b64589b862c",
-      "label": "Select Block",
-      "name": "block",
-      "aria-label": "",
-      "type": "post_object",
-      "instructions": "",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "post_type": [
-        "content-partial"
-      ],
-      "post_status": [
-        "publish"
-      ],
-      "taxonomy": [
-        "template-area:block"
-      ],
-      "return_format": "id",
-      "multiple": 0,
-      "allow_null": 0,
-      "allow_in_bindings": 0,
-      "bidirectional": 0,
-      "ui": 1,
-      "bidirectional_target": []
-    }
-  ],
-  "location": [
-    [
-      {
-        "param": "block",
-        "operator": "==",
-        "value": "sitchco\/content-partial-block"
-      }
-    ]
-  ],
-  "menu_order": 0,
-  "position": "normal",
-  "style": "default",
-  "label_placement": "top",
-  "instruction_placement": "label",
-  "hide_on_screen": "",
-  "active": true,
-  "description": "Gutenberg Block: Content Partial Block",
-  "show_in_rest": 0,
-  "modified": 1739998672
+    "key": "group_67b645892c0bf",
+    "title": "Content Partial Block",
+    "fields": [
+        {
+            "key": "field_67b64589b862c",
+            "label": "Select Block",
+            "name": "block",
+            "aria-label": "",
+            "type": "post_object",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "post_type": ["content-partial"],
+            "post_status": ["publish"],
+            "taxonomy": ["template-area:block"],
+            "return_format": "id",
+            "multiple": 0,
+            "allow_null": 0,
+            "allow_in_bindings": 0,
+            "bidirectional": 0,
+            "ui": 1,
+            "bidirectional_target": []
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "block",
+                "operator": "==",
+                "value": "sitchco\/content-partial-block"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Gutenberg Block: Content Partial Block",
+    "show_in_rest": 0,
+    "modified": 1739998672
 }

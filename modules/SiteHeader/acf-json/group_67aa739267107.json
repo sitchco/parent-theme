@@ -1,67 +1,67 @@
 {
-  "key": "group_67aa739267107",
-  "title": "Header Options",
-  "fields": [
-    {
-      "key": "field_67a51d74e6ef4",
-      "label": "Overlay Content",
-      "name": "is_overlaid",
-      "aria-label": "",
-      "type": "true_false",
-      "instructions": "Determine if the header will overlay the content of the page.",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "message": "",
-      "default_value": 0,
-      "allow_in_bindings": 0,
-      "ui_on_text": "Overlay",
-      "ui_off_text": "Separate",
-      "ui": 1
-    },
-    {
-      "key": "field_67a51ebce6ef5",
-      "label": "Sticky",
-      "name": "is_sticky",
-      "aria-label": "",
-      "type": "true_false",
-      "instructions": "Determine if the header will stick to the top of the viewport on scroll.",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "message": "",
-      "default_value": 0,
-      "allow_in_bindings": 0,
-      "ui_on_text": "Stick",
-      "ui_off_text": "Non-Stick",
-      "ui": 1
-    }
-  ],
-  "location": [
-    [
-      {
-        "param": "post_type",
-        "operator": "==",
-        "value": "content-partial"
-      }
-    ]
-  ],
-  "menu_order": 1,
-  "position": "side",
-  "style": "default",
-  "label_placement": "top",
-  "instruction_placement": "label",
-  "hide_on_screen": "",
-  "active": true,
-  "description": "CPT: Content Partial",
-  "show_in_rest": 0,
-  "modified": 1739224579
+    "key": "group_67aa739267107",
+    "title": "Header Options",
+    "fields": [
+        {
+            "key": "field_67a51d74e6ef4",
+            "label": "Overlay Content",
+            "name": "is_overlaid",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Determine if the header will overlay the content of the page.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "default_value": 0,
+            "allow_in_bindings": 0,
+            "ui_on_text": "Overlay",
+            "ui_off_text": "Separate",
+            "ui": 1
+        },
+        {
+            "key": "field_67a51ebce6ef5",
+            "label": "Sticky",
+            "name": "is_sticky",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Determine if the header will stick to the top of the viewport on scroll.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "default_value": 0,
+            "allow_in_bindings": 0,
+            "ui_on_text": "Stick",
+            "ui_off_text": "Non-Stick",
+            "ui": 1
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "content-partial"
+            }
+        ]
+    ],
+    "menu_order": 1,
+    "position": "side",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "CPT: Content Partial",
+    "show_in_rest": 0,
+    "modified": 1739224579
 }

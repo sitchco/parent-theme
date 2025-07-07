@@ -46,35 +46,23 @@ return [
         'core/tag-cloud',
         'core/categories',
         'core/page-list' => [
-            'allowPostType' => [
-                ContentPartialPost::POST_TYPE
-            ]
+            'allowPostType' => [ContentPartialPost::POST_TYPE],
         ],
         'core/social-links' => [
-            'allowPostType' => [
-                ContentPartialPost::POST_TYPE
-            ]
+            'allowPostType' => [ContentPartialPost::POST_TYPE],
         ],
         /** Theme */
         'core/navigation' => [
-            'allowPostType' => [
-                ContentPartialPost::POST_TYPE
-            ]
+            'allowPostType' => [ContentPartialPost::POST_TYPE],
         ],
         'core/site-logo' => [
-            'allowPostType' => [
-                ContentPartialPost::POST_TYPE
-            ]
+            'allowPostType' => [ContentPartialPost::POST_TYPE],
         ],
         'core/site-tagline' => [
-            'allowPostType' => [
-                ContentPartialPost::POST_TYPE
-            ]
+            'allowPostType' => [ContentPartialPost::POST_TYPE],
         ],
         'core/site-title' => [
-            'allowPostType' => [
-                ContentPartialPost::POST_TYPE
-            ]
+            'allowPostType' => [ContentPartialPost::POST_TYPE],
         ],
 
         'core/comments-title',
@@ -90,125 +78,77 @@ return [
         'core/comments-pagination',
         'core/comments-pagination-previous',
         'core/post-content' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-author' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-author-biography' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-author-name' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/avatar' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
 
         'core/post-date' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-excerpt' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-featured-image' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/loginout' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-pagination-next' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-no-results' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-pagination-numbers' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-pagination' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-navigation-link' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-template' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-terms' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-pagination-previous' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-title' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/query-total' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/read-more' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/template-part' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/term-description' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         'core/post-title' => [
-            'allowContext' => [
-                'core/edit-site'
-            ]
+            'allowContext' => ['core/edit-site'],
         ],
         /** Embeds */
         'variation;core/embed;wordpress',
@@ -237,6 +177,6 @@ return [
         'variation;core/embed;wolfram-cloud',
         'variation;core/embed;pinterest',
         'variation;core/embed;amazon-kindle',
-        'variation;core/embed;twitter'
+        'variation;core/embed;twitter',
     ],
 ];

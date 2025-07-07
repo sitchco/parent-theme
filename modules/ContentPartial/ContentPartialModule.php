@@ -9,9 +9,7 @@ use Sitchco\Framework\Module;
  */
 class ContentPartialModule extends Module
 {
-    public const POST_CLASSES = [
-        ContentPartialPost::class,
-    ];
+    public const POST_CLASSES = [ContentPartialPost::class];
 
     protected ContentPartialService $contentService;
     protected ContentPartialRepository $repository;

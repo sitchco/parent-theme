@@ -7,9 +7,9 @@
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialRepository;
 
-render_twig_block_with_context($block, function(array $block) {
+render_twig_block_with_context($block, function (array $block) {
     $wrapper_attributes = [
-        'class' => 'wp-site-blocks'
+        'class' => 'wp-site-blocks',
     ];
     if (!empty($block['anchor'])) {
         $wrapper_attributes['id'] = $block['anchor'];

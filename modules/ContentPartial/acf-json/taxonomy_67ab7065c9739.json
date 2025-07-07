@@ -4,9 +4,7 @@
     "menu_order": 0,
     "active": true,
     "taxonomy": "template-area",
-    "object_type": [
-        "content-partial"
-    ],
+    "object_type": ["content-partial"],
     "advanced_configuration": 1,
     "import_source": "",
     "import_date": "",

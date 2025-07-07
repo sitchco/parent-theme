@@ -11,13 +11,9 @@ class Theme extends Module
 {
     const HOOK_SUFFIX = 'theme';
 
-    const DEPENDENCIES = [
-        \Sitchco\Modules\Timber::class
-    ];
+    const DEPENDENCIES = [\Sitchco\Modules\Timber::class];
 
-    const FEATURES = [
-        'enableUserMetaBoxReorder'
-    ];
+    const FEATURES = ['enableUserMetaBoxReorder'];
 
     public function init(): void
     {
@@ -25,8 +21,8 @@ class Theme extends Module
         add_action('enqueue_block_editor_assets', [$this, 'enqueueAdminStyles']);
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
-        add_action( 'enqueue_block_assets', [$this, 'enqueueBlockAssets']);
-        if(wp_get_environment_type() === 'local') {
+        add_action('enqueue_block_assets', [$this, 'enqueueBlockAssets']);
+        if (wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
         add_filter('timber/twig/functions', function ($functions) {
@@ -39,10 +35,10 @@ class Theme extends Module
 
     public function enqueueAssets(): void
     {
-        $this->enqueueStyle(static::hookName('core'), $this->styleUrl('core.css'), );
+        $this->enqueueStyle(static::hookName('core'), $this->styleUrl('core.css'));
         $js_vars = apply_filters(static::hookName('global-js-vars'), [
             'ajax_url' => admin_url('admin-ajax.php'),
-            'api_url' => trailingslashit(home_url(rest_get_url_prefix()))
+            'api_url' => trailingslashit(home_url(rest_get_url_prefix())),
         ]);
         wp_localize_script(static::hookName('js'), 'sitchcoTheme', $js_vars);
     }
@@ -54,14 +50,11 @@ class Theme extends Module
 
     public function enqueueBlockAssets(): void
     {
-        $this->enqueueBlockStyle(
-            'core/heading',
-            [
-                'handle' => 'demo-heading-block-styles',
-                'src'    => get_theme_file_uri( '/modules/Theme/block-styles/core/heading.css' ),
-                'path'   => get_theme_file_path( '/modules/Theme/block-styles/core/heading.css' )
-            ]
-        );
+        $this->enqueueBlockStyle('core/heading', [
+            'handle' => 'demo-heading-block-styles',
+            'src' => get_theme_file_uri('/modules/Theme/block-styles/core/heading.css'),
+            'path' => get_theme_file_path('/modules/Theme/block-styles/core/heading.css'),
+        ]);
     }
 
     /**
@@ -89,19 +82,11 @@ class Theme extends Module
             'gallery',
             'caption',
             'script',
-            'style'
+            'style',
         ]);
         add_theme_support('responsive-embeds');
         add_theme_support('automatic-feed-links');
-        add_theme_support('post-formats', [
-            'aside',
-            'image',
-            'video',
-            'quote',
-            'link',
-            'gallery',
-            'audio'
-        ]);
+        add_theme_support('post-formats', ['aside', 'image', 'video', 'quote', 'link', 'gallery', 'audio']);
         add_theme_support('menus');
         add_theme_support('editor-style');
 
@@ -142,7 +127,7 @@ class Theme extends Module
      */
     public function enableUserMetaBoxReorder(): void
     {
-        add_action(SavePermalinksRequestEvent::hookName(), function() use (&$processed) {
+        add_action(SavePermalinksRequestEvent::hookName(), function () use (&$processed) {
             $users = get_users();
             foreach ($users as $user) {
                 $user_meta = get_user_meta($user->ID);
