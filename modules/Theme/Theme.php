@@ -116,16 +116,6 @@ class Theme extends Module
         }
     }
 
-    public function includeWithContext(string $template, array $additional_context = []): bool|string
-    {
-        $context = Timber::context();
-        $context = array_merge($context, $additional_context);
-        $template_key = str_replace('.twig', '', $template);
-        $hookName = static::hookName('template-context', $template_key);
-        $context = apply_filters($hookName, $context, $template_key);
-        return Timber::compile($template, $context);
-    }
-
     // FEATURES
 
     /**
