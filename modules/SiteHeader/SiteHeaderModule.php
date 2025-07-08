@@ -9,13 +9,9 @@ use Sitchco\Framework\Module;
 
 class SiteHeaderModule extends Module
 {
-    const DEPENDENCIES = [
-        ContentPartialModule::class
-    ];
+    const DEPENDENCIES = [ContentPartialModule::class];
 
-    public const FEATURES = [
-        'registerBlockPatterns'
-    ];
+    public const FEATURES = ['registerBlockPatterns'];
 
     protected ContentPartialService $contentService;
 
@@ -32,6 +28,5 @@ class SiteHeaderModule extends Module
     public function registerBlockPatterns(): void
     {
         $this->contentService->addBlockPatterns('header', $this->path());
-
     }
 }

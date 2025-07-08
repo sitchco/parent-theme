@@ -21,13 +21,13 @@ class ContentPartialRepository extends RepositoryBase
                     'taxonomy' => ContentPartialPost::TAXONOMY,
                     'field' => 'slug',
                     'terms' => $value,
-                ]
+                ],
             ],
             'meta_query' => [
                 [
                     'key' => 'is_default',
                     'value' => '1',
-                    'compare' => '='
+                    'compare' => '=',
                 ],
             ],
         ]);

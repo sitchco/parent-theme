@@ -26,8 +26,8 @@ class ContentPartialServiceTest extends TestCase
         // Create a default content partial with a taxonomy term
         $this->standardHeaderId = $this->factory()->post->create([
             'post_title' => 'Standard Header',
-            'post_type'  => ContentPartialPost::POST_TYPE,
-            'meta_input' => ['is_default' => '1']
+            'post_type' => ContentPartialPost::POST_TYPE,
+            'meta_input' => ['is_default' => '1'],
         ]);
 
         wp_set_object_terms($this->standardHeaderId, 'header', ContentPartialPost::TAXONOMY);

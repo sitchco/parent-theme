@@ -4,16 +4,17 @@
     "description": "Project root using sitchco module builder",
     "private": true,
     "scripts": {
-        "build": "module-builder build",
-        "dev": "module-builder dev",
-        "lint": "sitchco-lint",
-        "format": "sitchco-format"
+        "build": "sitchco build",
+        "dev": "sitchco dev",
+        "lint": "sitchco lint",
+        "format": "sitchco format",
+        "clean": "sitchco clean"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@sitchco/dev-scripts": "workspace:*",
-        "@sitchco/module-builder": "workspace:*"
+        "@sitchco/cli": "workspace:*",
+        "@sitchco/eslint-config": "workspace:*"
     }
 }

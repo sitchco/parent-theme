@@ -11,9 +11,7 @@ use Sitchco\Framework\Module;
  */
 class ContentPartialBlockModule extends Module
 {
-    const DEPENDENCIES = [
-        ContentPartialModule::class
-    ];
+    const DEPENDENCIES = [ContentPartialModule::class];
 
     protected ContentPartialService $contentService;
 

@@ -1,5 +1,5 @@
 <?php
 
-return array (
-  'content-partial-block' => 'content-partial-block',
-);
+return [
+    'content-partial-block' => 'content-partial-block',
+];

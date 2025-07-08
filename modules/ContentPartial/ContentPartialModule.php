@@ -7,9 +7,7 @@ use Sitchco\Modules\Timber;
 
 class ContentPartialModule extends Module
 {
-    public const POST_CLASSES = [
-        ContentPartialPost::class,
-    ];
+    public const POST_CLASSES = [ContentPartialPost::class];
 
     public const DEPENDENCIES = [
         Timber::class

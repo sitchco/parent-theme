@@ -4,11 +4,7 @@
     "description": "A Gutenberg block for displaying content partials using ACF.",
     "category": "sitchco",
     "icon": "admin-page",
-    "keywords": [
-        "content",
-        "partial",
-        "acf"
-    ],
+    "keywords": ["content", "partial", "acf"],
     "acf": {
         "mode": "preview",
         "renderCallback": "Sitchco\\Modules\\Timber::blockRenderCallback"

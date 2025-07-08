@@ -61,13 +61,8 @@
     "rename_capabilities": false,
     "singular_capability_name": "post",
     "plural_capability_name": "posts",
-    "supports": [
-        "title",
-        "editor"
-    ],
-    "taxonomies": [
-        "template-area"
-    ],
+    "supports": ["title", "editor"],
+    "taxonomies": ["template-area"],
     "has_archive": false,
     "has_archive_slug": "",
     "rewrite": {

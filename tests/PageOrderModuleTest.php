@@ -26,5 +26,4 @@ class PageOrderModuleTest extends TestCase
         $this->assertEquals(1, get_transient(PageOrderModule::CHECK_SORT_TRANSIENT));
         delete_transient(PageOrderModule::CHECK_SORT_TRANSIENT);
     }
-
 }

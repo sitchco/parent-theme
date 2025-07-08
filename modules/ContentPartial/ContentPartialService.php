@@ -47,7 +47,8 @@ class ContentPartialService
             if (!$hasContext) {
                 continue;
             }
-            $partial = $this->repository->findPartialOverrideFromPage($templateArea) ??
+            $partial =
+                $this->repository->findPartialOverrideFromPage($templateArea) ??
                 $this->repository->findDefaultPartial($templateArea);
             if (!$partial instanceof ContentPartialPost) {
                 continue;
@@ -62,7 +63,7 @@ class ContentPartialService
             return;
         }
         $taxonomy = ContentPartialPost::TAXONOMY;
-        foreach(array_keys($this->templateAreas) as $templateArea) {
+        foreach (array_keys($this->templateAreas) as $templateArea) {
             if (taxonomy_exists($taxonomy) && !term_exists($templateArea, $taxonomy)) {
                 wp_insert_term(ucfirst($templateArea), $taxonomy, ['slug' => $templateArea]);
             }

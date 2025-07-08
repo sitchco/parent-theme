@@ -15,7 +15,6 @@ class PageOrderModule extends Module
 
     public const CHECK_SORT_TRANSIENT = 'sit_page_sort';
 
-
     public function init(): void
     {
         add_action('admin_init', [$this, 'checkSortOrder']);
@@ -31,7 +30,6 @@ class PageOrderModule extends Module
     {
         set_transient(static::CHECK_SORT_TRANSIENT, 1);
     }
-
 
     /**
      * Checks the current screen and flags sorting if on the page order admin screen.
@@ -90,24 +88,26 @@ class PageOrderModule extends Module
      */
     protected function getPageOrderFromMenus(): array
     {
-        $highPageIDs = $this->getPageIDsFromMenuList(apply_filters(static::hookName('autosort', 'high-menu-priorities'), [
-            'primary'
-        ]));
-        $lowPageIDs = $this->getPageIDsFromMenuList(apply_filters(static::hookName('autosort', 'menu-priorities'), [
-            'header',
-            'footer',
-        ]));
+        $highPageIDs = $this->getPageIDsFromMenuList(
+            apply_filters(static::hookName('autosort', 'high-menu-priorities'), ['primary'])
+        );
+        $lowPageIDs = $this->getPageIDsFromMenuList(
+            apply_filters(static::hookName('autosort', 'menu-priorities'), ['header', 'footer'])
+        );
         $lowPageIDs = array_values(array_diff($lowPageIDs, $highPageIDs));
 
-        $query_args = array_merge(apply_filters(static::hookName('autosort', 'default-query'), [
-            'orderby' => 'menu_order',
-            'order' => 'ASC',
-        ]), [
-            'post_type' => 'page',
-            'posts_per_page' => -1,
-            'post__not_in' => array_values(array_merge($highPageIDs, $lowPageIDs)), // Exclude pages found in menus
-            'post_status' => 'any'
-        ]);
+        $query_args = array_merge(
+            apply_filters(static::hookName('autosort', 'default-query'), [
+                'orderby' => 'menu_order',
+                'order' => 'ASC',
+            ]),
+            [
+                'post_type' => 'page',
+                'posts_per_page' => -1,
+                'post__not_in' => array_values(array_merge($highPageIDs, $lowPageIDs)), // Exclude pages found in menus
+                'post_status' => 'any',
+            ]
+        );
         $query = new WP_Query($query_args);
 
         return array_values(array_merge($highPageIDs, wp_list_pluck($query->posts, 'ID') ?: [], $lowPageIDs));
@@ -124,18 +124,13 @@ class PageOrderModule extends Module
         global $wpdb;
         foreach ($page_order as $order => $page_id) {
             // Get the current menu_order value
-            $current_order = $wpdb->get_var($wpdb->prepare(
-                "SELECT menu_order FROM $wpdb->posts WHERE ID = %d",
-                $page_id
-            ));
+            $current_order = $wpdb->get_var(
+                $wpdb->prepare("SELECT menu_order FROM $wpdb->posts WHERE ID = %d", $page_id)
+            );
 
             // Update only if the order has changed
             if ($current_order != $order) {
-                $wpdb->update(
-                    $wpdb->posts,
-                    ['menu_order' => $order],
-                    ['ID' => $page_id]
-                );
+                $wpdb->update($wpdb->posts, ['menu_order' => $order], ['ID' => $page_id]);
                 clean_post_cache($page_id);
             }
         }
@@ -162,8 +157,10 @@ class PageOrderModule extends Module
             }
         }
         $pageIDs = array_map(function ($menu) {
-            $items = array_filter(wp_get_nav_menu_items($menu->term_id),
-                fn($item) => 'post_type' === $item->type && 'page' === $item->object);
+            $items = array_filter(
+                wp_get_nav_menu_items($menu->term_id),
+                fn($item) => 'post_type' === $item->type && 'page' === $item->object
+            );
 
             return array_map(fn($item) => $item->object_id, $items);
         }, $menuList);
