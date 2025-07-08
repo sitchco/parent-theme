@@ -1,7 +1,7 @@
 :where(.wp-block-columns.has-background) {
-    padding: var(--wp--style--block-gap);
+    padding: var(--wp--custom--grid-gutter);
 }
 
 :where(.wp-block-column.has-background) {
-    padding: var(--wp--style--block-gap);
+    padding: var(--wp--custom--grid-gutter);
 }
