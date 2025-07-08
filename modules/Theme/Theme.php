@@ -29,12 +29,6 @@ class Theme extends Module
         if(wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
-        add_filter('timber/twig/functions', function ($functions) {
-            $functions['include_with_context'] = [
-                'callable' => [$this, 'includeWithContext'],
-            ];
-            return $functions;
-        });
     }
 
     public function enqueueAssets(): void

@@ -11,7 +11,7 @@
     ],
     "acf": {
         "mode": "preview",
-        "renderTemplate": "block.php"
+        "renderCallback": "acf_block_render_callback"
     },
     "supports": {
         "anchor": true,
