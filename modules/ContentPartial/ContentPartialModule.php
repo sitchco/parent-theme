@@ -3,14 +3,14 @@
 namespace Sitchco\Parent\Modules\ContentPartial;
 
 use Sitchco\Framework\Module;
-use Sitchco\Modules\Timber;
+use Sitchco\Modules\TimberModule;
 
 class ContentPartialModule extends Module
 {
     public const POST_CLASSES = [ContentPartialPost::class];
 
     public const DEPENDENCIES = [
-        Timber::class
+        TimberModule::class
     ];
 
     protected ContentPartialService $contentService;

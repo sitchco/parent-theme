@@ -4,14 +4,13 @@ namespace Sitchco\Parent\Modules\Theme;
 
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
-use Timber;
-use Twig\TwigFunction;
+use Sitchco\Modules\TimberModule;
 
 class Theme extends Module
 {
     const HOOK_SUFFIX = 'theme';
 
-    const DEPENDENCIES = [\Sitchco\Modules\Timber::class];
+    const DEPENDENCIES = [TimberModule::class];
 
     const FEATURES = ['enableUserMetaBoxReorder'];
 

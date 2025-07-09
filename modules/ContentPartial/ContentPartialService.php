@@ -2,12 +2,9 @@
 
 namespace Sitchco\Parent\Modules\ContentPartial;
 
-use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
-use Sitchco\Support\HookName;
 use Sitchco\Utils\BlockPattern;
-use Sitchco\Utils\Hooks;
-use Sitchco\Utils\Timber;
+use Sitchco\Utils\TimberUtil;
 
 /**
  * class ContentPartialServicenamespace SitchcoParentModulesSiteHeader;
@@ -53,7 +50,7 @@ class ContentPartialService
             if (!$partial instanceof ContentPartialPost) {
                 continue;
             }
-            Timber::addContext("partials/site-{$templateArea}", ["site_{$templateArea}" => $partial]);
+            TimberUtil::addContext("partials/site-{$templateArea}", ["site_{$templateArea}" => $partial]);
         }
     }
 
