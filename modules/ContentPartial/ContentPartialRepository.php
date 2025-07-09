@@ -2,7 +2,6 @@
 
 namespace Sitchco\Parent\Modules\ContentPartial;
 
-use Sitchco\Repository\PageRepository;
 use Sitchco\Repository\RepositoryBase;
 use Timber\Post;
 

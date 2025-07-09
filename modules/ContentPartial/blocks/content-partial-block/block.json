@@ -7,7 +7,7 @@
     "keywords": ["content", "partial", "acf"],
     "acf": {
         "mode": "preview",
-        "renderTemplate": "block.php"
+        "renderCallback": "Sitchco\\Modules\\TimberModule::blockRenderCallback"
     },
     "supports": {
         "anchor": true,
