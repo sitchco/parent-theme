@@ -3,7 +3,7 @@
     "version": 3,
     "settings": {
         "appearanceTools": false,
-        "useRootPaddingAwareAlignments": false,
+        "useRootPaddingAwareAlignments": true,
         "border": {
             "color": false,
             "radius": false,
@@ -135,25 +135,21 @@
             }
         },
         "custom": {
+            "blockGapDefault": "var:preset|spacing|20",
             "gridGutter": "var:preset|spacing|50"
         }
     },
     "styles": {
         "spacing": {
-            "blockGap": "var:preset|spacing|20",
+            "blockGap": "var:custom|block-gap-default",
             "padding": {
                 "top": "0px",
-                "right": "0px",
+                "right": "var:custom|grid-gutter",
                 "bottom": "0px",
-                "left": "0px"
+                "left": "var:custom|grid-gutter"
             }
         },
         "blocks": {
-            "core/group": {
-                "spacing": {
-                    "blockGap": "var:custom|grid-gutter"
-                }
-            },
             "core/columns": {
                 "spacing": {
                     "blockGap": "var:custom|grid-gutter"

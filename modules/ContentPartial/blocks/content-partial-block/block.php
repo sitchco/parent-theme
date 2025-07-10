@@ -8,7 +8,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialRepository;
 
 $wrapper_attributes = [
-    'class' => 'wp-site-blocks'
+    'class' => 'wp-block-group has-global-padding is-layout-constrained wp-block-group-is-layout-constrained',
 ];
 if (!empty($block['anchor'])) {
     $wrapper_attributes['id'] = $block['anchor'];
