@@ -20,4 +20,3 @@ if ($post instanceof ContentPartialPost) {
     $context['partial_post'] = $post;
     $context['wrapper_attributes'] = $wrapper_attributes;
 }
-

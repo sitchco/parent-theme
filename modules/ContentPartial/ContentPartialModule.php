@@ -9,9 +9,7 @@ class ContentPartialModule extends Module
 {
     public const POST_CLASSES = [ContentPartialPost::class];
 
-    public const DEPENDENCIES = [
-        TimberModule::class
-    ];
+    public const DEPENDENCIES = [TimberModule::class];
 
     protected ContentPartialService $contentService;
     protected ContentPartialRepository $repository;

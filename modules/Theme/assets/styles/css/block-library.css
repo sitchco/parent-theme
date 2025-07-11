@@ -1,7 +1,20 @@
 :where(.wp-block-columns.has-background) {
-    padding: var(--wp--custom--grid-gutter);
+    padding: var(--wp--custom--grid-gutter-default);
 }
 
 :where(.wp-block-column.has-background) {
-    padding: var(--wp--custom--grid-gutter);
+    padding: var(--wp--custom--grid-gutter-default);
+}
+
+:where(.wp-block-group.has-background) {
+    padding: var(--wp--custom--grid-gutter-default);
+}
+
+:where(article.has-global-padding) {
+    > :first-child:not(.alignfull) {
+        margin-block-start: var(--wp--custom--grid-gutter-default);
+    }
+    > :last-child:not(.alignfull) {
+        margin-block-end: var(--wp--custom--grid-gutter-default);
+    }
 }

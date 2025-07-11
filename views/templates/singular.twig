@@ -1,9 +1,7 @@
 {% extends 'layouts/base.twig' %}
 
 {% block content %}
-    <article {{ function('post_class') }} id="post-{{ post.id }}">
-        <div class="wp-site-blocks has-global-padding is-layout-constrained">
-            {{ post.content }}
-        </div>
+    <article {{ function('post_class', 'wp-site-blocks has-global-padding is-layout-constrained') }} id="post-{{ post.id }}">
+        {{ post.content }}
     </article>
 {% endblock %}

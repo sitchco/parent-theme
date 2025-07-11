@@ -76,11 +76,6 @@
             "customFontSize": false,
             "defaultFontSizes": false,
             "dropCap": false,
-            "fluid": {
-                "minFontSize": "13px",
-                "maxViewportWidth": "1600px",
-                "minViewportWidth": "320px"
-            },
             "fontStyle": true,
             "fontWeight": true,
             "letterSpacing": true,
@@ -102,7 +97,7 @@
             },
             "core/cover": {
                 "color": {
-                    "background": false
+                    "background": true
                 }
             },
             "core/columns": {
@@ -135,34 +130,39 @@
             }
         },
         "custom": {
-            "blockGapDefault": "var:preset|spacing|20",
-            "gridGutter": "var:preset|spacing|50"
+            "contentSpaceDefault": "var:preset|spacing|30",
+            "gridGutterDefault": "var:preset|spacing|50"
         }
     },
     "styles": {
         "spacing": {
-            "blockGap": "var:custom|block-gap-default",
+            "blockGap": "var:custom|content-space-default",
             "padding": {
                 "top": "0px",
-                "right": "var:custom|grid-gutter",
+                "right": "var:custom|grid-gutter-default",
                 "bottom": "0px",
-                "left": "var:custom|grid-gutter"
+                "left": "var:custom|grid-gutter-default"
             }
         },
         "blocks": {
             "core/columns": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter"
+                    "blockGap": "var:custom|grid-gutter-default"
                 }
             },
             "core/row": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter"
+                    "blockGap": "var:custom|grid-gutter-default"
                 }
             },
             "core/stack": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter"
+                    "blockGap": "var:custom|grid-gutter-default"
+                }
+            },
+            "core/cover": {
+                "color": {
+                    "background": "var:preset|color|black"
                 }
             }
         }
