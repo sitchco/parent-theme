@@ -47,22 +47,28 @@ return [
         'core/categories',
         'core/page-list' => [
             'allowPostType' => [ContentPartialPost::POST_TYPE],
+            'allowContext' => ['core/edit-site'],
         ],
         'core/social-links' => [
             'allowPostType' => [ContentPartialPost::POST_TYPE],
+            'allowContext' => ['core/edit-site'],
         ],
         /** Theme */
         'core/navigation' => [
             'allowPostType' => [ContentPartialPost::POST_TYPE],
+            'allowContext' => ['core/edit-site'],
         ],
         'core/site-logo' => [
             'allowPostType' => [ContentPartialPost::POST_TYPE],
+            'allowContext' => ['core/edit-site'],
         ],
         'core/site-tagline' => [
             'allowPostType' => [ContentPartialPost::POST_TYPE],
+            'allowContext' => ['core/edit-site'],
         ],
         'core/site-title' => [
             'allowPostType' => [ContentPartialPost::POST_TYPE],
+            'allowContext' => ['core/edit-site'],
         ],
 
         'core/comments-title',

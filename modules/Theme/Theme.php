@@ -43,10 +43,10 @@ class Theme extends Module
 
     public function enqueueBlockAssets(): void
     {
-        $this->enqueueBlockStyle('core/heading', [
-            'handle' => 'demo-heading-block-styles',
-            'src' => get_theme_file_uri('/modules/Theme/block-styles/core/heading.css'),
-            'path' => get_theme_file_path('/modules/Theme/block-styles/core/heading.css'),
+        $this->enqueueBlockStyle('core/media-text', [
+            'handle' => static::hookName('core/media-text'),
+            'src' => $this->styleUrl('block-media-text.css'),
+            'path' => $this->path('assets/styles/block-media-text.css'),
         ]);
     }
 
