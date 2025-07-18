@@ -5,8 +5,6 @@
  * Methods for TimberHelper can be found in the /lib sub-directory
  */
 
-namespace App;
-
 use Timber\Timber;
 
 $context = Timber::context();

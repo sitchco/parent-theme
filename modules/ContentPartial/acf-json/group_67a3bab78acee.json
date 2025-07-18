@@ -8,7 +8,7 @@
             "name": "header_partial",
             "aria-label": "",
             "type": "post_object",
-            "instructions": "Override theme header default. Set header default <a href=\"https:\/\/soundcheck.test\/wp\/wp-admin\/edit.php?post_type=content-partial\" target=\"_blank\">here.<\/a>",
+            "instructions": "Override theme header default. Set header default <a href=\"\/wp-admin\/edit.php?post_type=content-partial\" target=\"_blank\">here.<\/a>",
             "required": 0,
             "conditional_logic": 0,
             "wrapper": {
@@ -33,7 +33,7 @@
             "name": "footer_partial",
             "aria-label": "",
             "type": "post_object",
-            "instructions": "Override theme footer default. Set footer default <a href=\"https:\/\/soundcheck.test\/wp\/wp-admin\/edit.php?post_type=content-partial\" target=\"_blank\">here.<\/a>",
+            "instructions": "Override theme footer default. Set footer default <a href=\"\/wp-admin\/edit.php?post_type=content-partial\" target=\"_blank\">here.<\/a>",
             "required": 0,
             "conditional_logic": 0,
             "wrapper": {
@@ -71,5 +71,5 @@
     "active": true,
     "description": "CPT: Page",
     "show_in_rest": 0,
-    "modified": 1739561064
+    "modified": 1739562064
 }

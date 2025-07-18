@@ -196,8 +196,6 @@ importers:
         specifier: '*'
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.0.3)(@vitest/ui@3.2.4)(sass-embedded@1.89.2)(terser@5.41.0)
 
-  ../../mu-plugins/sitchco-core/packages/build-tools/publisher: {}
-
 packages:
 
   '@ampproject/remapping@2.3.0':

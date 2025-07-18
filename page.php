@@ -1,7 +1,5 @@
 <?php
 
-namespace App;
-
 use Timber\Timber;
 
 $context = Timber::context();
