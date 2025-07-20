@@ -80,11 +80,6 @@ class Theme extends Module
         add_theme_support('post-formats', ['aside', 'image', 'video', 'quote', 'link', 'gallery', 'audio']);
         add_theme_support('menus');
         add_theme_support('editor-style');
-
-        register_nav_menus([
-            'primary_navigation' => 'Primary Navigation',
-            'footer_navigation' => 'Footer Navigation',
-        ]);
     }
 
     /**
