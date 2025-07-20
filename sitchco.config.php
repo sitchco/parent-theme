@@ -1,10 +1,10 @@
 <?php
 
+use Sitchco\Modules\PageOrder;
 use Sitchco\Modules\Wordpress\Cleanup;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
-use Sitchco\Parent\Modules\PageOrder\PageOrderModule;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\Modules\Theme\Theme;
@@ -18,7 +18,6 @@ return [
         ContentPartialBlockModule::class,
         SiteHeaderModule::class,
         SiteFooterModule::class,
-        PageOrderModule::class,
         Theme::class,
     ],
     'disallowedBlocks' => [
