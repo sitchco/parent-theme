@@ -21,9 +21,9 @@ class Theme extends Module
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle(static::hookName('core'), $assets->styleUrl('core.css'));
+            $assets->enqueueStyle('core','core.css');
             $assets->inlineScriptData(
-                static::hookName('core'),
+                'core',
                 'sitchcoTheme',
                 apply_filters(static::hookName('global-js-vars'), [
                     'ajax_url' => admin_url('admin-ajax.php'),
@@ -32,15 +32,11 @@ class Theme extends Module
             );
         });
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle(static::hookName('admin-block-editor'), $assets->styleUrl('admin-editor.css'));
-            $assets->enqueueScript(static::hookName('editor-preview'), $assets->scriptUrl('editor-preview.js'), ['sitchco/ui-framework']);
+            $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
+            $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
         });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
-            $assets->enqueueBlockStyle('core/media-text', [
-                'handle' => static::hookName('core/media-text'),
-                'src' => $assets->styleUrl('block-media-text.css'),
-                'path' => $this->path('assets/styles/block-media-text.css'),
-            ]);
+            $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
     }
 

@@ -1,14 +1,11 @@
+let viteClientScripts = []
+
 function cloneViteClientsIntoIframe(iframe) {
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
 
     const existing = doc.querySelector('[data-injected-vite-client]');
     if (existing) return; // Already injected
-
-    // Find all vite clients in the main editor page
-    const viteClientScripts = Array.from(
-        document.querySelectorAll('script[type="module"][src*="@vite/client"]')
-    );
 
     viteClientScripts.forEach((script, index) => {
         const clone = doc.createElement('script');
@@ -22,7 +19,13 @@ function cloneViteClientsIntoIframe(iframe) {
 // Observe when Gutenberg adds/replaces the preview iframe
 function observeBlockPreviewIframes() {
     const container = document.querySelector('.editor-visual-editor');
-    if (!container) return;
+    // Find all vite clients in the main editor page
+    viteClientScripts = Array.from(
+        document.querySelectorAll('script[type="module"][src*="@vite/client"]')
+    );
+    if (!(container && viteClientScripts.length)) {
+        return;
+    }
 
     const observer = new MutationObserver(sitchco.util.debounce(() => {
         const iframe = document.querySelector('iframe[name=editor-canvas]');
