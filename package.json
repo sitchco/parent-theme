@@ -14,7 +14,12 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@sitchco/cli": "workspace:*",
-        "@sitchco/eslint-config": "workspace:*"
+        "@sitchco/cli": "^2.0.6",
+        "@sitchco/eslint-config": "^1.0.1"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "esbuild"
+        ]
     }
 }
