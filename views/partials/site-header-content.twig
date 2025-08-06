@@ -1,7 +1,7 @@
 {% set header_classes = [
     'site-header',
     site_header.is_overlaid ? 'site-header--overlay',
-    site_header.is_sticky ? 'site-header--is-sticky',
+    site_header.is_sticky ? 'site-header--sticky',
 ] %}
 
 <header class="{{ header_classes|join(' ')|trim }}">
