@@ -113,6 +113,13 @@
             "core/button": {
                 "border": {
                     "radius": false
+                },
+                "spacing": {
+                    "margin": false,
+                    "padding": false
+                },
+                "shadow": {
+                    "defaultPresets": false
                 }
             },
             "core/image": {
