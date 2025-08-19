@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@sitchco/cli':
-        specifier: ^2.0.7
-        version: 2.0.7(@babel/core@7.27.4)(@types/node@24.3.0)(eslint@9.33.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)
+        specifier: ^2.0.8
+        version: 2.0.8(@babel/core@7.27.4)(@types/node@24.3.0)(eslint@9.33.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)
       '@sitchco/eslint-config':
         specifier: ^1.0.1
         version: 1.0.1(@babel/core@7.27.4)(eslint@9.33.0)
@@ -1599,8 +1599,8 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@sitchco/cli@2.0.7':
-    resolution: {integrity: sha512-7W7Qx+0Yg+q5oAx5ec1DXKmSYEwx/PGdx4VbF1IjnWX3EayO0DjuU/byD1HA4f0t27j6nw7YNSdEP5MHSgURzA==}
+  '@sitchco/cli@2.0.8':
+    resolution: {integrity: sha512-dH9O7HF49HbnMk0I4w70rzLnSmwl7jmFjFms5HabV6+witBFqNP848MDGrpk140Pjo/6AdUH4VDvgmKx3ocJLA==}
     hasBin: true
 
   '@sitchco/eslint-config@1.0.1':
@@ -1608,21 +1608,21 @@ packages:
     peerDependencies:
       eslint: '>=9.29.0'
 
-  '@sitchco/formatter@1.0.1':
-    resolution: {integrity: sha512-V31d67O0HMO7CzWjCcg6L09d5/hUnJraiSTF1Je601W8jTale0T0O/KULr3UWBJ/oOfpn4NZ2ZZ/qKbU4PP/lg==}
+  '@sitchco/formatter@1.0.2':
+    resolution: {integrity: sha512-F6BU/RWm8+oi1VYcjvknrTH1A/fK8hmgLXbHnRCFLTLfzvdDODrISjESxHJ1iba7OOSkbuRx9jg7xHQAAKgEzw==}
 
-  '@sitchco/linter@2.1.1':
-    resolution: {integrity: sha512-6X0KMYl0Ga2XUX+jn6xg1o9NhAiwH/OTUjfHNauMj7ZMgkiOX+ew9lF5/GsnqMn2f0SZE0+WNW2Hfm0kJJmkPw==}
+  '@sitchco/linter@2.1.2':
+    resolution: {integrity: sha512-VtammMuGuzSdQgVfkLlXbfUnlSyPkXQ8ybhSntX5WIAkMjHxb9pay+7nzI4BpBEUUioSFZuiLc83j52MMo3O3w==}
 
-  '@sitchco/module-builder@1.0.2':
-    resolution: {integrity: sha512-MStH0b905AsQB8gpqxS5ygRsH+loLLxSwPNNbmFVhxTjR/unz5Gqbzsq0YDMIeoFqiaCKwxZgfNkeCyUca4sBA==}
+  '@sitchco/module-builder@1.0.3':
+    resolution: {integrity: sha512-Jc39hunWq9Yuyjk00nvPsOCKVq616RRCV6WR+vNfoaYNSfO+5egHMuPremO56h8Cu/buPytp446TSmM8U2QKDw==}
     engines: {node: '>=18.0.0'}
 
   '@sitchco/prettier-config@1.0.1':
     resolution: {integrity: sha512-Pnjwukj/7ILdWmG1Z5Il3vU4MuQe4JyJtgkHL9ioNYAD9S+tMQwP/L0gCHwtI5DSRuZ+rTjgnqNpirPvD2KxuA==}
 
-  '@sitchco/project-scanner@1.0.1':
-    resolution: {integrity: sha512-IiNChwKhMeQdqRJ421mCi/MM9DgJiCTnkhFWzTCnOnmbWNPeAVsUuTZAueURYOIe0gyyaCHiqWY32Wr0Lssbjg==}
+  '@sitchco/project-scanner@1.0.2':
+    resolution: {integrity: sha512-hZrrnRi6j694i1w2xGvlWoL/IJ6BxXTV/yLG/dWPHd7wGy4HA6XQf5qtFHrMUL8JjdBCG7MxIh3N/bG1c4STdg==}
     engines: {node: '>=18.0.0'}
 
   '@stylistic/eslint-plugin@4.4.1':
@@ -5138,11 +5138,11 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@sitchco/cli@2.0.7(@babel/core@7.27.4)(@types/node@24.3.0)(eslint@9.33.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)':
+  '@sitchco/cli@2.0.8(@babel/core@7.27.4)(@types/node@24.3.0)(eslint@9.33.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)':
     dependencies:
-      '@sitchco/formatter': 1.0.1(@babel/core@7.27.4)(eslint@9.33.0)
-      '@sitchco/linter': 2.1.1(@babel/core@7.27.4)
-      '@sitchco/module-builder': 1.0.2(@types/node@24.3.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)
+      '@sitchco/formatter': 1.0.2(@babel/core@7.27.4)(eslint@9.33.0)
+      '@sitchco/linter': 2.1.2(@babel/core@7.27.4)
+      '@sitchco/module-builder': 1.0.3(@types/node@24.3.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)
       chalk: 5.6.0
       commander: 14.0.0
     transitivePeerDependencies:
@@ -5181,12 +5181,12 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  '@sitchco/formatter@1.0.1(@babel/core@7.27.4)(eslint@9.33.0)':
+  '@sitchco/formatter@1.0.2(@babel/core@7.27.4)(eslint@9.33.0)':
     dependencies:
       '@prettier/plugin-php': 0.24.0(prettier@3.6.2)
       '@sitchco/eslint-config': 1.0.1(@babel/core@7.27.4)(eslint@9.33.0)
       '@sitchco/prettier-config': 1.0.1
-      '@sitchco/project-scanner': 1.0.1
+      '@sitchco/project-scanner': 1.0.2
       '@stylistic/eslint-plugin': 5.2.3(eslint@9.33.0)
       chalk: 5.6.0
       prettier: 3.6.2
@@ -5199,10 +5199,10 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  '@sitchco/linter@2.1.1(@babel/core@7.27.4)':
+  '@sitchco/linter@2.1.2(@babel/core@7.27.4)':
     dependencies:
       '@sitchco/eslint-config': 1.0.1(@babel/core@7.27.4)(eslint@9.33.0)
-      '@sitchco/project-scanner': 1.0.1
+      '@sitchco/project-scanner': 1.0.2
       chalk: 5.6.0
       eslint: 9.33.0
     transitivePeerDependencies:
@@ -5213,10 +5213,10 @@ snapshots:
       - jiti
       - supports-color
 
-  '@sitchco/module-builder@1.0.2(@types/node@24.3.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)':
+  '@sitchco/module-builder@1.0.3(@types/node@24.3.0)(rollup@4.46.3)(sass@1.90.0)(terser@5.41.0)':
     dependencies:
       '@kucrut/vite-for-wp': 0.12.0(rollup-plugin-external-globals@0.13.0(rollup@4.46.3))(vite-plugin-external@6.2.2)(vite@7.1.3(@types/node@24.3.0)(sass-embedded@1.90.0)(sass@1.90.0)(terser@5.41.0))
-      '@sitchco/project-scanner': 1.0.1
+      '@sitchco/project-scanner': 1.0.2
       chalk: 5.6.0
       glob: 11.0.3
       laravel-vite-plugin: 2.0.0(vite@7.1.3(@types/node@24.3.0)(sass-embedded@1.90.0)(sass@1.90.0)(terser@5.41.0))
@@ -5242,7 +5242,7 @@ snapshots:
     dependencies:
       prettier: 3.6.2
 
-  '@sitchco/project-scanner@1.0.1':
+  '@sitchco/project-scanner@1.0.2':
     dependencies:
       chalk: 5.6.0
       glob: 11.0.3
