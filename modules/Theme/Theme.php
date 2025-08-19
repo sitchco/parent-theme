@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\Theme;
 
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
+use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
 
 class Theme extends Module
@@ -14,47 +15,29 @@ class Theme extends Module
 
     public function init(): void
     {
-        add_action('wp_enqueue_scripts', [$this, 'enqueueAssets'], 100);
-        add_action('enqueue_block_editor_assets', [$this, 'enqueueAdminStyles']);
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
-        add_action('enqueue_block_assets', [$this, 'enqueueBlockAssets']);
         if (wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
-    }
-
-    public function enqueueAssets(): void
-    {
-        $this->enqueueStyle(static::hookName('core'), $this->styleUrl('core.css'));
-        $js_vars = apply_filters(static::hookName('global-js-vars'), [
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'api_url' => trailingslashit(home_url(rest_get_url_prefix())),
-        ]);
-        wp_localize_script(static::hookName('js'), 'sitchcoTheme', $js_vars);
-    }
-
-    public function enqueueAdminStyles(): void
-    {
-        $this->enqueueStyle(static::hookName('admin-block-editor'), $this->styleUrl('admin-editor.css'));
-    }
-
-    public function enqueueBlockAssets(): void
-    {
-        $this->enqueueBlockStyle('core/media-text', [
-            'handle' => static::hookName('core/media-text'),
-            'src' => $this->styleUrl('block-media-text.css'),
-            'path' => $this->path('assets/styles/block-media-text.css'),
-        ]);
-    }
-
-    /**
-     * Enqueues admin assets (CSS and JS).
-     */
-    public function adminAssets(): void
-    {
-        $this->enqueueStyle(static::hookName('admin-css'), $this->styleUrl('styles/admin.css'));
-        $this->enqueueScript(static::hookName('admin-js'), $this->scriptUrl('scripts/admin.js'));
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            $assets->enqueueStyle('core','core.css');
+            $assets->inlineScriptData(
+                'core',
+                'sitchcoTheme',
+                apply_filters(static::hookName('global-js-vars'), [
+                    'ajax_url' => admin_url('admin-ajax.php'),
+                    'api_url' => trailingslashit(home_url(rest_get_url_prefix())),
+                ])
+            );
+        });
+        $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
+            $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
+            $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
+        });
+        $this->enqueueBlockStyles(function (ModuleAssets $assets) {
+            $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
+        });
     }
 
     /**
