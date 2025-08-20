@@ -114,6 +114,12 @@
                 "border": {
                     "radius": false
                 },
+                "color": {
+                    "background": false,
+                    "text": false,
+                    "gradients": [],
+                    "customGradient": false
+                },
                 "spacing": {
                     "margin": false,
                     "padding": false
