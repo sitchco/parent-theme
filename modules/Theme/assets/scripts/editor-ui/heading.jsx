@@ -1,8 +1,9 @@
-window.sitchco.hooks.addAction(window.sitchco.constants.INIT, () => {
+import domReady from '@wordpress/dom-ready';
+
+domReady(() => {
     const { registerFormatType } = window.wp.richText;
     const { RichTextToolbarButton } = window.wp.blockEditor;
 
-    // An array to define all our custom heading formats.
     const headingFormats = [
         {
             name: 'sitchco/heading-style-default',
@@ -26,7 +27,6 @@ window.sitchco.hooks.addAction(window.sitchco.constants.INIT, () => {
         },
     ];
 
-    // Loop through the formats and register each one.
     headingFormats.forEach(({ name, title, className }) => {
         registerFormatType(name, {
             title,
