@@ -24,9 +24,8 @@ class SiteHeaderModule extends Module
     {
         $this->contentService->addTemplateArea('header');
 
-        // This is the correct way to enqueue assets for the front-end.
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $handle = 'site-header'; // The framework will namespace this automatically.
+            $handle = 'site-header';
             $assets->enqueueStyle($handle, 'main.css');
             $assets->enqueueScript($handle, 'main.mjs', ['wp-hooks']);
         });

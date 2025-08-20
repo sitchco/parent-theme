@@ -20,6 +20,5 @@
 }
 
 body.has-sticky-header {
-    /* Uses a CSS variable managed by the UI Framework */
     padding-top: var(--dynamic__header-height);
 }
