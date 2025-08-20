@@ -36,6 +36,9 @@ class Theme extends Module
             $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
             $assets->enqueueScript('theme-main', 'main.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor']);
         });
+        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
+            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
+        });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });

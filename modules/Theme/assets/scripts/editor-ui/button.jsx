@@ -1,9 +1,11 @@
-window.sitchco.hooks.addAction(window.sitchco.constants.INIT, () => {
-    const { addFilter } = window.wp.hooks;
-    const { createHigherOrderComponent } = window.wp.compose;
-    const { InspectorControls } = window.wp.blockEditor;
-    const { PanelBody, SelectControl } = window.wp.components;
+import domReady from '@wordpress/dom-ready';
+import { addFilter } from '@wordpress/hooks';
+import { createHigherOrderComponent } from '@wordpress/compose';
+import { InspectorControls } from '@wordpress/block-editor';
+import { PanelBody, SelectControl } from '@wordpress/components';
 
+domReady(() => {
+    // TODO: move this to CMS maybe?
     const themeOptions = [
         { label: 'Default', value: '' },
         { label: 'Blue', value: 'blue' },
@@ -25,7 +27,7 @@ window.sitchco.hooks.addAction(window.sitchco.constants.INIT, () => {
             return (
                 <>
                     <BlockEdit {...props} />
-                    <InspectorControls>
+                    <InspectorControls group="styles">
                         <PanelBody title="Theme" initialOpen={true}>
                             <SelectControl
                                 label="Theme"
