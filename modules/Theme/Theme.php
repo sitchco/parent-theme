@@ -2,7 +2,6 @@
 
 namespace Sitchco\Parent\Modules\Theme;
 
-use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
@@ -21,7 +20,7 @@ class Theme extends Module
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('core','core.css');
+            $assets->enqueueStyle('core', 'core.css');
             $assets->inlineScriptData(
                 'core',
                 'sitchcoTheme',
@@ -34,6 +33,9 @@ class Theme extends Module
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
             $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
+        });
+        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
+            $assets->enqueueScript('theme-main', 'main.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
         });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
@@ -77,7 +79,6 @@ class Theme extends Module
     }
 
     // FEATURES
-
 
 
     public function contentFilterWarning($content)
