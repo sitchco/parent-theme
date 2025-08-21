@@ -14,8 +14,8 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@sitchco/cli": "^2.0.8",
-        "@sitchco/eslint-config": "^1.0.1"
+        "@sitchco/cli": "^2.0.9",
+        "@sitchco/eslint-config": "^1.0.2"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
