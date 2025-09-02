@@ -27,7 +27,7 @@ class SiteHeaderModule extends Module
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $handle = 'site-header';
             $assets->enqueueStyle($handle, 'main.css');
-            $assets->enqueueScript($handle, 'main.mjs', ['wp-hooks']);
+            $assets->enqueueScript($handle, 'main.mjs', ['sitchco/ui-framework']);
         });
     }
 
