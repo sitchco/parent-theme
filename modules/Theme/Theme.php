@@ -2,7 +2,6 @@
 
 namespace Sitchco\Parent\Modules\Theme;
 
-use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
@@ -21,7 +20,7 @@ class Theme extends Module
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('core','core.css');
+            $assets->enqueueStyle('core', 'core.css');
             $assets->inlineScriptData(
                 'core',
                 'sitchcoTheme',
@@ -34,10 +33,41 @@ class Theme extends Module
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
             $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
+            $assets->enqueueScript('theme-main', 'main.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor']);
+        });
+        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
+            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
+        });
+        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
+            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
         });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
+
+        // TODO: put this somewhere else, it definitely feels part of the Theme module,
+        //       but is there a Controller class that can be built to handle this?
+        add_filter('register_block_type_args', [$this, 'add_button_attributes'], 10, 2);
+    }
+
+    /**
+     * Adds custom attributes to the core/button block.
+     * TODO: consider moving this to a Controller class.
+     *
+     * @param array  $args      Array of arguments for registering a block type.
+     * @param string $block_name Name of the block type.
+     * @return array The modified arguments.
+     */
+    public function add_button_attributes(array $args, string $block_name): array
+    {
+        if ('core/button' === $block_name) {
+            // Renamed 'sitchcoTheme' to 'theme'
+            $args['attributes']['theme'] = [
+                'type'    => 'string',
+                'default' => '',
+            ];
+        }
+        return $args;
     }
 
     /**
@@ -77,7 +107,6 @@ class Theme extends Module
     }
 
     // FEATURES
-
 
 
     public function contentFilterWarning($content)
