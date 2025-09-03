@@ -1,6 +1,4 @@
-import { registerStickyHeader } from './has-sticky-header.js';
+import { registerStickyHeader } from './sticky.js';
 
-document.addEventListener('sitchco/core/init', () => {
-    const { register } = window.sitchco;
-    register(registerStickyHeader);
-});
+const { register } = window.sitchco;
+register(registerStickyHeader);
