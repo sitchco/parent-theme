@@ -11,7 +11,11 @@ class SiteHeaderModule extends Module
 {
     const DEPENDENCIES = [ContentPartialModule::class];
 
-    public const FEATURES = ['registerBlockPatterns'];
+    public const FEATURES = [
+        'registerBlockPatterns',
+        'overlayHeader',
+        'stickyHeader',
+    ];
 
     protected ContentPartialService $contentService;
 
@@ -23,16 +27,27 @@ class SiteHeaderModule extends Module
     public function init(): void
     {
         $this->contentService->addTemplateArea('header');
-
-        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $handle = 'site-header';
-            $assets->enqueueStyle($handle, 'main.css');
-            $assets->enqueueScript($handle, 'main.mjs', ['sitchco/ui-framework']);
-        });
     }
 
     public function registerBlockPatterns(): void
     {
         $this->contentService->addBlockPatterns('header', $this->path());
+    }
+
+    public function overlayHeader(): void
+    {
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            $assets->enqueueStyle('site-header-overlay', 'overlay.css');
+        });
+    }
+
+    public function stickyHeader(): void
+    {
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            $handle = 'site-header-sticky';
+            $assets->registerStyle('site-header-overlay', 'overlay.css');
+            $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header-overlay']);
+            $assets->enqueueScript($handle, 'sticky.js', ['sitchco/ui-framework']);
+        });
     }
 }

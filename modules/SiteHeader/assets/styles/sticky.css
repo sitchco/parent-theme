@@ -1,0 +1,11 @@
+/*body.has-sticky-header {*/
+/*    padding-top: var(--dynamic__header-height);*/
+/*}*/
+
+.site-header--sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+}
