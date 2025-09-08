@@ -1,4 +1,4 @@
-export function registerStickyHeader() {
+function registerStickyHeader() {
     const { util, hooks } = window.sitchco;
     const header = document.querySelector('.site-header--sticky');
 
