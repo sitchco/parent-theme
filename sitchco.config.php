@@ -1,6 +1,5 @@
 <?php
 
-use Sitchco\Modules\PageOrder;
 use Sitchco\Modules\Wordpress\Cleanup;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;

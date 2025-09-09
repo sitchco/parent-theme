@@ -1,0 +1,11 @@
+{% set header_classes = [
+    'site-header',
+    site_header.is_overlaid ? 'site-header--overlay',
+    site_header.is_sticky ? 'site-header--sticky',
+] %}
+
+<header class="{{ header_classes|join(' ')|trim }}">
+    <div class="site-header__container">
+        {{ site_header.content }}
+    </div>
+</header>
