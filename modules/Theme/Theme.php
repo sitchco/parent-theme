@@ -38,27 +38,25 @@ class Theme extends Module
         $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
             $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
         });
-        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
-        });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
 
         // TODO: put this somewhere else, it definitely feels part of the Theme module,
         //       but is there a Controller class that can be built to handle this?
-        add_filter('register_block_type_args', [$this, 'add_button_attributes'], 10, 2);
+        add_filter('register_block_type_args', [$this, 'addButtonAttributes'], 10, 2);
+        add_filter('register_block_type_args', [$this, 'addColumnAttributes'], 10, 2);
+        add_filter('render_block_data', [$this, 'addColumnOpacityStyleToAttributes']);
     }
 
     /**
      * Adds custom attributes to the core/button block.
-     * TODO: consider moving this to a Controller class.
      *
      * @param array  $args      Array of arguments for registering a block type.
      * @param string $block_name Name of the block type.
      * @return array The modified arguments.
      */
-    public function add_button_attributes(array $args, string $block_name): array
+    public function addButtonAttributes(array $args, string $block_name): array
     {
         if ('core/button' === $block_name) {
             // Renamed 'sitchcoTheme' to 'theme'
@@ -68,6 +66,60 @@ class Theme extends Module
             ];
         }
         return $args;
+    }
+
+    /**
+     * Adds custom attributes to the core/column block.
+     *
+     * @param array  $args      Array of arguments for registering a block type.
+     * @param string $block_name Name of the block type.
+     * @return array The modified arguments.
+     */
+    public function addColumnAttributes(array $args, string $block_name): array
+    {
+        if ('core/column' === $block_name) {
+            $args['attributes']['backgroundOpacity'] = [
+                'type'    => 'number',
+                'default' => '',
+            ];
+        }
+        return $args;
+    }
+
+    /**
+     * Adds the background opacity style to the core/column block attributes.
+     *
+     * @param array $block The block details.
+     * @return array The modified block details.
+     */
+    public function addColumnOpacityStyleToAttributes(array $block): array
+    {
+        if (
+            'core/column' === $block['blockName'] &&
+            isset($block['attrs']['style']['color']['background']) &&
+            isset($block['attrs']['backgroundOpacity'])
+        ) {
+            $background_color = $block['attrs']['style']['color']['background'];
+            $opacity = $block['attrs']['backgroundOpacity'];
+
+            if (strpos($background_color, '#') === 0) {
+                $hex = str_replace('#', '', $background_color);
+                if (strlen($hex) == 3) {
+                    $r = hexdec(substr($hex, 0, 1) . substr($hex, 0, 1));
+                    $g = hexdec(substr($hex, 1, 1) . substr($hex, 1, 1));
+                    $b = hexdec(substr($hex, 2, 1) . substr($hex, 2, 1));
+                } else {
+                    $r = hexdec(substr($hex, 0, 2));
+                    $g = hexdec(substr($hex, 2, 2));
+                    $b = hexdec(substr($hex, 4, 2));
+                }
+                $rgb = "$r, $g, $b";
+
+                $block['attrs']['style']['color']['background'] = "rgba({$rgb}, {$opacity})";
+            }
+        }
+
+        return $block;
     }
 
     /**
