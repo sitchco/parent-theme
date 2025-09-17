@@ -1,9 +1,40 @@
 .wp-block-media-text {
     gap: var(--wp--custom--grid-gutter-default);
+
     > .wp-block-media-text__content {
         padding: 0;
     }
+
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
 }
+
 :where(.wp-block-media-text__content > :first-child) {
     margin-block-start: 0;
+}
+
+.wp-block-media-text__media,
+.wp-block-media-text__content {
+    flex-basis: auto;
+    flex-grow: 1;
+}
+
+.wp-block-media-text.has-media-on-the-right {
+    flex-direction: column-reverse;
+}
+
+@media (min-width: 782px) {
+    .wp-block-media-text {
+        flex-direction: row;
+    }
+
+    .wp-block-media-text__media,
+    .wp-block-media-text__content {
+        flex-basis: calc(50% - calc(var(--wp--custom--grid-gutter-default) / 2));
+    }
+
+    .wp-block-media-text.has-media-on-the-right {
+        flex-direction: row;
+    }
 }
