@@ -3,9 +3,14 @@
 /*}*/
 
 .site-header--sticky {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
+    /**
+     * TODO: build out a solution without position fixed, that should be the default state of this modifier
+     *  and it should work when overlay is on/off.
+     **/
+
+    /*position: fixed;*/
+    /*top: 0;*/
+    /*left: 0;*/
+    /*width: 100%;*/
+    /*z-index: 1000;*/
 }
