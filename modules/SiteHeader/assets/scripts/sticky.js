@@ -1,6 +1,6 @@
 function registerStickyHeader() {
     const { util, hooks } = window.sitchco;
-    const header = document.querySelector('.site-header--sticky');
+    const header = document.querySelector('.has-site-header-sticky');
 
     if (!header) {
         return;
@@ -11,7 +11,7 @@ function registerStickyHeader() {
         const isSticky = window.scrollY > headerHeight;
 
         document.body.classList.toggle('has-sticky-header', isSticky);
-        header.classList.toggle('site-header--is-sticky', isSticky);
+        header.classList.toggle('sticking', isSticky);
     };
 
     const throttledScrollHandler = util.throttle(handleScroll, 100);
