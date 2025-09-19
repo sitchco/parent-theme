@@ -1,15 +1,17 @@
 import domReady from '@wordpress/dom-ready';
-import { select, dispatch } from '@wordpress/data';
+import { select, dispatch, subscribe } from '@wordpress/data';
 
 domReady(function() {
-    const unsubscribe = select('core/editor').subscribe(() => {
-        // Check if the editor is ready
-        if (!select('core/editor').isEditorReady()) {
+    const unsubscribe = subscribe(() => {
+        // Check if the 'core/editor' store is available and if a post ID can be retrieved.
+        // This is a more robust way to check if the editor is ready for interaction.
+        const editorStore = select('core/editor');
+        if (!editorStore || !editorStore.getCurrentPostId()) {
             return;
         }
 
         // Get the current post's additional CSS classes
-        let currentClasses = select('core/editor').getEditedPostAttribute('className') || '';
+        let currentClasses = editorStore.getEditedPostAttribute('className') || '';
         const classToAdd = 'site-header';
 
         // Check if 'site-header' is already present
