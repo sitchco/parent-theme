@@ -26,7 +26,7 @@ class SiteHeaderModule extends Module
             $assets->enqueueScript('site-header/frontend', 'index.js', ['sitchco/ui-framework']);
         });
         $this->enqueueAdminAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('site-header/admin', 'admin-index.js', ['wp-dom-ready']);
+            $assets->enqueueScript('site-header/admin', 'admin-index.js', ['wp-dom-ready', 'wp-data']);
         });
     }
 
