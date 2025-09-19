@@ -1,0 +1,4 @@
+/* Dark background for Gutenberg editor content area */
+.editor-styles-wrapper {
+    background-color: #777 !important;
+}

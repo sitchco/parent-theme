@@ -15,6 +15,7 @@ class SiteHeaderModule extends Module
         'registerBlockPatterns',
         'overlayHeader',
         'stickyHeader',
+        'disableEditorDarkMode'
     ];
 
     protected ContentPartialService $contentService;
@@ -55,5 +56,12 @@ class SiteHeaderModule extends Module
             $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header/overlay']);
             $assets->enqueueScript($handle, 'sticky.js', ['sitchco/ui-framework']);
         });
+    }
+
+    // TODO: This is not working currently.
+    public function disableEditorDarkMode(): void
+    {
+        // TODO: build this into our system?
+        wp_dequeue_style('site-header/editor-dark-mode');
     }
 }
