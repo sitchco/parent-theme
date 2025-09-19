@@ -27,6 +27,8 @@ class ContentPartialModule extends Module
             add_action('current_screen', [$this->contentService, 'registerBlockPatterns']);
         }
         add_action('wp', [$this->contentService, 'setContext']);
+
+        // TODO: do any TimberUtil methods work here?
         add_filter('sitchco/template-context/partials/site-header', [$this, 'addPageContextToSiteHeader'], 99, 1);
     }
 

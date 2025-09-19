@@ -22,6 +22,12 @@ class SiteHeaderModule extends Module
     public function __construct(ContentPartialService $contentService)
     {
         $this->contentService = $contentService;
+        $this->enqueueFrontendAssets(function(ModuleAssets $assets) {
+            $assets->enqueueScript('site-header/frontend', 'index.js', ['sitchco/ui-framework']);
+        });
+        $this->enqueueAdminAssets(function(ModuleAssets $assets) {
+            $assets->enqueueScript('site-header/admin', 'admin-index.js', ['wp-dom-ready']);
+        });
     }
 
     public function init(): void
@@ -37,16 +43,16 @@ class SiteHeaderModule extends Module
     public function overlayHeader(): void
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('site-header-overlay', 'overlay.css');
+            $assets->enqueueStyle('site-header/overlay', 'overlay.css');
         });
     }
 
     public function stickyHeader(): void
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $handle = 'site-header-sticky';
-            $assets->registerStyle('site-header-overlay', 'overlay.css');
-            $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header-overlay']);
+            $handle = 'site-header/sticky';
+            $assets->registerStyle('site-header/overlay', 'overlay.css');
+            $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header/overlay']);
             $assets->enqueueScript($handle, 'sticky.js', ['sitchco/ui-framework']);
         });
     }
