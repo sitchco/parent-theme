@@ -58,10 +58,9 @@ class SiteHeaderModule extends Module
         });
     }
 
-    // TODO: This is not working currently.
     public function editorDarkMode(): void
     {
-        // TODO: build dequeue into our system?
+        // TODO: unrelated but do we want to build $assets->dequeueStyle/Script into our system?
         $this->enqueueAdminAssets(function(ModuleAssets $assets) {
             $assets->enqueueStyle('site-header/admin/editor-dark-mode', 'editor-dark-mode.css');
         });
