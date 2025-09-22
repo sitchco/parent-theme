@@ -15,9 +15,7 @@ return [
         ],
         ContentPartialModule::class,
         ContentPartialBlockModule::class,
-        SiteHeaderModule::class => [
-            'disableEditorDarkMode' => true,
-        ],
+        SiteHeaderModule::class,
         SiteFooterModule::class,
         Theme::class,
     ],
