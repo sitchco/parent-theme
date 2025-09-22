@@ -45,9 +45,9 @@ class Theme extends Module
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
 
-        // TODO: put this somewhere else, it definitely feels part of the Theme module,
-        //       but is there a Controller class that can be built to handle this?
-        add_filter('register_block_type_args', [$this, 'add_button_attributes'], 10, 2);
+        // TODO: move this somewhere else?
+        // TODO: opportunity to add another Module level constant for EXTENSIONS/CONTROLLERS?
+        add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
     }
 
     /**
@@ -58,10 +58,9 @@ class Theme extends Module
      * @param string $block_name Name of the block type.
      * @return array The modified arguments.
      */
-    public function add_button_attributes(array $args, string $block_name): array
+    public function addButtonThemeAttribute(array $args, string $block_name): array
     {
         if ('core/button' === $block_name) {
-            // Renamed 'sitchcoTheme' to 'theme'
             $args['attributes']['theme'] = [
                 'type'    => 'string',
                 'default' => '',
