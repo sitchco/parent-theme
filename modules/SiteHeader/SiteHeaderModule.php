@@ -15,7 +15,6 @@ class SiteHeaderModule extends Module
         'registerBlockPatterns',
         'overlayHeader',
         'stickyHeader',
-        'editorDarkMode'
     ];
 
     protected ContentPartialService $contentService;
@@ -23,12 +22,6 @@ class SiteHeaderModule extends Module
     public function __construct(ContentPartialService $contentService)
     {
         $this->contentService = $contentService;
-        $this->enqueueFrontendAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('site-header/frontend', 'index.js', ['sitchco/ui-framework']);
-        });
-        $this->enqueueAdminAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('site-header/admin', 'admin-index.js', ['wp-dom-ready', 'wp-data']);
-        });
     }
 
     public function init(): void
@@ -55,14 +48,6 @@ class SiteHeaderModule extends Module
             $assets->registerStyle('site-header/overlay', 'overlay.css');
             $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header/overlay']);
             $assets->enqueueScript($handle, 'sticky.js', ['sitchco/ui-framework']);
-        });
-    }
-
-    public function editorDarkMode(): void
-    {
-        // TODO: unrelated but do we want to build $assets->dequeueStyle/Script into our system?
-        $this->enqueueAdminAssets(function(ModuleAssets $assets) {
-            $assets->enqueueStyle('site-header/admin/editor-dark-mode', 'editor-dark-mode.css');
         });
     }
 }

@@ -1,1 +1,0 @@
-import './inc/apply-site-header-class';

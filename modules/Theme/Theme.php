@@ -47,7 +47,7 @@ class Theme extends Module
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
 
-        // TODO: opportunity to add another Module level constant for EXTENSIONS/CONTROLLERS?
+        // TODO: create file at same level as Theme.php
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
     }
 
