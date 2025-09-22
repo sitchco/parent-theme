@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\ContentPartial;
 
 use Sitchco\Framework\Module;
 use Sitchco\Modules\TimberModule;
+use Sitchco\Utils\TimberUtil;
 
 class ContentPartialModule extends Module
 {
@@ -27,10 +28,7 @@ class ContentPartialModule extends Module
             add_action('current_screen', [$this->contentService, 'registerBlockPatterns']);
         }
         add_action('wp', [$this->contentService, 'setContext']);
-
-        // TODO: TimberUtil::addContext() not working here (even with priority added to method)
-        // TimberUtil::addContext('partials/site-header', [$this, 'addPageContextToSiteHeader'], 99);
-        add_filter('sitchco/template-context/partials/site-header', [$this, 'addPageContextToSiteHeader'], 99, 1);
+        TimberUtil::addContext('partials/site-header', [$this, 'addPageContextToSiteHeader'], 99, 1);
     }
 
 
