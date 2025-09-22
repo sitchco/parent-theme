@@ -28,7 +28,8 @@ class ContentPartialModule extends Module
         }
         add_action('wp', [$this->contentService, 'setContext']);
 
-        // TODO: do any TimberUtil methods work here?
+        // TODO: TimberUtil::addContext() not working here (even with priority added to method)
+        // TimberUtil::addContext('partials/site-header', [$this, 'addPageContextToSiteHeader'], 99);
         add_filter('sitchco/template-context/partials/site-header', [$this, 'addPageContextToSiteHeader'], 99, 1);
     }
 
