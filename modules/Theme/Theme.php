@@ -12,6 +12,10 @@ class Theme extends Module
 
     const DEPENDENCIES = [TimberModule::class];
 
+    const FEATURES = [
+        'disableAdminBar'
+    ];
+
     public function init(): void
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
@@ -49,6 +53,11 @@ class Theme extends Module
         // TODO: move this somewhere else?
         // TODO: opportunity to add another Module level constant for EXTENSIONS/CONTROLLERS?
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
+    }
+
+    public function disableAdminBar(): void
+    {
+        add_filter('show_admin_bar', '__return_false');
     }
 
     public function allowSVGUploads($mimes)
