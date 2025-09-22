@@ -16,6 +16,7 @@ class Theme extends Module
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
+        add_filter('upload_mimes', [$this, 'allowSVGUploads']);
         if (wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
@@ -48,6 +49,12 @@ class Theme extends Module
         // TODO: move this somewhere else?
         // TODO: opportunity to add another Module level constant for EXTENSIONS/CONTROLLERS?
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
+    }
+
+    public function allowSVGUploads($mimes)
+    {
+        $mimes['svg'] = 'image/svg+xml';
+        return $mimes;
     }
 
     /**
