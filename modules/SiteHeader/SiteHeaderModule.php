@@ -27,6 +27,7 @@ class SiteHeaderModule extends Module
             $assets->enqueueScript('site-header/frontend', 'index.js', ['sitchco/ui-framework']);
         });
         $this->enqueueAdminAssets(function(ModuleAssets $assets) {
+            $assets->enqueueStyle('site-header/admin/editor-dark-mode', 'editor-dark-mode.css');
             $assets->enqueueScript('site-header/admin', 'admin-index.js', ['wp-dom-ready', 'wp-data']);
         });
     }
@@ -61,7 +62,9 @@ class SiteHeaderModule extends Module
     // TODO: This is not working currently.
     public function disableEditorDarkMode(): void
     {
-        // TODO: build this into our system?
-        wp_dequeue_style('site-header/editor-dark-mode');
+        // TODO: build dequeue into our system?
+        add_action('admin_enqueue_scripts', function() {
+            wp_dequeue_style('site-header/admin/editor-dark-mode');
+        }, 1);
     }
 }
