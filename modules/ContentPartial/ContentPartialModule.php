@@ -28,7 +28,7 @@ class ContentPartialModule extends Module
             add_action('current_screen', [$this->contentService, 'registerBlockPatterns']);
         }
         add_action('wp', [$this->contentService, 'setContext']);
-        TimberUtil::addContext('partials/site-header', [$this, 'addPageContextToSiteHeader'], 99, 1);
+        TimberUtil::addContext('partials/site-header', [$this, 'addPageContextToSiteHeader'], 99);
     }
 
 
