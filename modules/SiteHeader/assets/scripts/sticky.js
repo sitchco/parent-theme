@@ -6,11 +6,12 @@ function registerStickyHeader() {
         return;
     }
 
+    document.body.classList.add('has-sticky-header');
+
     const handleScroll = () => {
         const headerHeight = hooks.applyFilters('header-height', 50);
         const isSticky = window.scrollY > headerHeight;
 
-        document.body.classList.toggle('has-sticky-header', isSticky);
         header.classList.toggle('sticking', isSticky);
     };
 
