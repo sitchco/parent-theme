@@ -5,7 +5,7 @@ import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 
 domReady(() => {
-    // TODO: move this to CMS maybe?
+    // TODO: move this to CMS
     const themeOptions = [
         { label: 'Default', value: '' },
         { label: 'Blue', value: 'blue' },

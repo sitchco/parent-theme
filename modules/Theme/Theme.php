@@ -43,14 +43,10 @@ class Theme extends Module
         $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
             $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
         });
-        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
-        });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
 
-        // TODO: move this somewhere else?
         // TODO: opportunity to add another Module level constant for EXTENSIONS/CONTROLLERS?
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
     }
@@ -68,7 +64,6 @@ class Theme extends Module
 
     /**
      * Adds custom attributes to the core/button block.
-     * TODO: consider moving this to a Controller class.
      *
      * @param array  $args      Array of arguments for registering a block type.
      * @param string $block_name Name of the block type.
