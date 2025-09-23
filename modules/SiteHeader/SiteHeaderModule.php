@@ -6,6 +6,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Utils\Hooks;
 
 class SiteHeaderModule extends Module
 {
@@ -27,6 +28,7 @@ class SiteHeaderModule extends Module
     public function init(): void
     {
         $this->contentService->addTemplateArea('header');
+        add_filter(Hooks::name('template-context/partials/site-header'), [$this, 'addPageContextToSiteHeader'], 99, 1);
     }
 
     public function registerBlockPatterns(): void
@@ -49,5 +51,16 @@ class SiteHeaderModule extends Module
             $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header/overlay']);
             $assets->enqueueScript($handle, 'sticky.js', ['sitchco/ui-framework']);
         });
+    }
+
+    public function addPageContextToSiteHeader(array $context): array
+    {
+        $header_overlay = get_field('header_overlay');
+        if ($header_overlay === 'overlay') {
+            $context['site_header']->is_overlaid = true;
+        } elseif ($header_overlay === 'separate') {
+            $context['site_header']->is_overlaid = false;
+        }
+        return $context;
     }
 }
