@@ -16,9 +16,15 @@
                 "class": "",
                 "id": ""
             },
-            "post_type": ["content-partial"],
-            "post_status": ["publish"],
-            "taxonomy": ["template-area:header"],
+            "post_type": [
+                "content-partial"
+            ],
+            "post_status": [
+                "publish"
+            ],
+            "taxonomy": [
+                "template-area:header"
+            ],
             "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
@@ -26,6 +32,35 @@
             "bidirectional": 0,
             "ui": 1,
             "bidirectional_target": []
+        },
+        {
+            "key": "field_68cd81e342430",
+            "label": "Override Header Overlay",
+            "name": "header_overlay",
+            "aria-label": "",
+            "type": "select",
+            "instructions": "Determine if the header will overlay the content of the page.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "overlay": "Overlay",
+                "separate": "Separate"
+            },
+            "default_value": false,
+            "return_format": "value",
+            "multiple": 0,
+            "allow_null": 1,
+            "allow_in_bindings": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": "",
+            "create_options": 0,
+            "save_options": 0
         },
         {
             "key": "field_67a6437827191",
@@ -41,9 +76,15 @@
                 "class": "",
                 "id": ""
             },
-            "post_type": ["content-partial"],
-            "post_status": ["publish"],
-            "taxonomy": ["template-area:footer"],
+            "post_type": [
+                "content-partial"
+            ],
+            "post_status": [
+                "publish"
+            ],
+            "taxonomy": [
+                "template-area:footer"
+            ],
             "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
@@ -71,5 +112,5 @@
     "active": true,
     "description": "CPT: Page",
     "show_in_rest": 0,
-    "modified": 1739562064
+    "modified": 1758305591
 }

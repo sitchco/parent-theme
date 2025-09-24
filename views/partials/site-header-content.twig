@@ -1,11 +1,10 @@
 {% set header_classes = [
-    'site-header',
-    site_header.is_overlaid ? 'site-header--overlay',
-    site_header.is_sticky ? 'site-header--sticky',
+    site_header.is_overlaid ? 'has-site-header-overlay',
+    site_header.is_sticky ? 'has-site-header-sticky',
 ] %}
 
 <header class="{{ header_classes|join(' ')|trim }}">
-    <div class="site-header__container">
-        {{ site_header.content }}
-    </div>
+    {# The site-header class is applied in the CMS on the outer-most group #}
+    {# TODO: consider adding js logic to apply site-header class to first element after <header> #}
+    {{ site_header.content }}
 </header>

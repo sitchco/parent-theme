@@ -12,10 +12,15 @@ class Theme extends Module
 
     const DEPENDENCIES = [TimberModule::class];
 
+    const FEATURES = [
+        'disableAdminBar'
+    ];
+
     public function init(): void
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
         add_action('wp_body_open', [$this, 'addSvgSprite']);
+        add_filter('upload_mimes', [$this, 'allowSVGUploads']);
         if (wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
@@ -38,30 +43,35 @@ class Theme extends Module
         $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
             $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
         });
-        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
-        });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
 
-        // TODO: put this somewhere else, it definitely feels part of the Theme module,
-        //       but is there a Controller class that can be built to handle this?
-        add_filter('register_block_type_args', [$this, 'add_button_attributes'], 10, 2);
+        // TODO: create file at same level as Theme.php
+        add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
+    }
+
+    public function disableAdminBar(): void
+    {
+        add_filter('show_admin_bar', '__return_false');
+    }
+
+    public function allowSVGUploads($mimes)
+    {
+        $mimes['svg'] = 'image/svg+xml';
+        return $mimes;
     }
 
     /**
      * Adds custom attributes to the core/button block.
-     * TODO: consider moving this to a Controller class.
      *
      * @param array  $args      Array of arguments for registering a block type.
      * @param string $block_name Name of the block type.
      * @return array The modified arguments.
      */
-    public function add_button_attributes(array $args, string $block_name): array
+    public function addButtonThemeAttribute(array $args, string $block_name): array
     {
         if ('core/button' === $block_name) {
-            // Renamed 'sitchcoTheme' to 'theme'
             $args['attributes']['theme'] = [
                 'type'    => 'string',
                 'default' => '',
