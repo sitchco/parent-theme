@@ -38,7 +38,6 @@ class Theme extends Module
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
             $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
-            $assets->enqueueScript('theme-main', 'main.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor']);
         });
         $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
             $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
