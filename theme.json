@@ -143,34 +143,34 @@
             }
         },
         "custom": {
-            "contentSpaceDefault": "var:preset|spacing|30",
-            "gridGutterDefault": "var:preset|spacing|50"
+            "contentSpacing": "var:preset|spacing|30",
+            "gridGutterSpacing": "var:preset|spacing|50"
         }
     },
     "styles": {
         "spacing": {
-            "blockGap": "var:custom|content-space-default",
+            "blockGap": "var:custom|content-spacing",
             "padding": {
                 "top": "0px",
-                "right": "var:custom|grid-gutter-default",
+                "right": "var:custom|grid-gutter-spacing",
                 "bottom": "0px",
-                "left": "var:custom|grid-gutter-default"
+                "left": "var:custom|grid-gutter-spacing"
             }
         },
         "blocks": {
             "core/columns": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter-default"
+                    "blockGap": "var:custom|grid-gutter-spacing"
                 }
             },
             "core/row": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter-default"
+                    "blockGap": "var:custom|grid-gutter-spacing"
                 }
             },
             "core/stack": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter-default"
+                    "blockGap": "var:custom|grid-gutter-spacing"
                 }
             },
             "core/cover": {

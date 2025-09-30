@@ -1,5 +1,5 @@
 .wp-block-media-text {
-    gap: var(--wp--custom--grid-gutter-default);
+    gap: var(--wp--custom--grid-gutter-spacing);
 
     > .wp-block-media-text__content {
         padding: 0;
@@ -31,7 +31,7 @@
 
     .wp-block-media-text__media,
     .wp-block-media-text__content {
-        flex-basis: calc(50% - calc(var(--wp--custom--grid-gutter-default) / 2));
+        flex-basis: calc(50% - calc(var(--wp--custom--grid-gutter-spacing) / 2));
     }
 
     .wp-block-media-text.has-media-on-the-right {
