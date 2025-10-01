@@ -1,11 +1,15 @@
-let viteClientScripts = []
+let viteClientScripts = [];
 
 function cloneViteClientsIntoIframe(iframe) {
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) return;
+    if (!doc) {
+        return;
+    }
 
     const existing = doc.querySelector('[data-injected-vite-client]');
-    if (existing) return; // Already injected
+    if (existing) {
+        return;
+    } // Already injected
 
     viteClientScripts.forEach((script, index) => {
         const clone = doc.createElement('script');
@@ -20,19 +24,23 @@ function cloneViteClientsIntoIframe(iframe) {
 function observeBlockPreviewIframes() {
     const container = document.querySelector('.editor-visual-editor');
     // Find all vite clients in the main editor page
-    viteClientScripts = Array.from(
-        document.querySelectorAll('script[type="module"][src*="@vite/client"]')
-    );
+    viteClientScripts = Array.from(document.querySelectorAll('script[type="module"][src*="@vite/client"]'));
+
     if (!(container && viteClientScripts.length)) {
         return;
     }
 
-    const observer = new MutationObserver(sitchco.util.debounce(() => {
-        const iframe = document.querySelector('iframe[name=editor-canvas]');
-        if (!iframe || iframe.dataset.viteInjected) return;
-        iframe.dataset.viteInjected = 'true';
-        iframe.addEventListener('load', () => cloneViteClientsIntoIframe(iframe));
-    }, 250));
+    const observer = new MutationObserver(
+        sitchco.util.debounce(() => {
+            const iframe = document.querySelector('iframe[name=editor-canvas]');
+            if (!iframe || iframe.dataset.viteInjected) {
+                return;
+            }
+
+            iframe.dataset.viteInjected = 'true';
+            iframe.addEventListener('load', () => cloneViteClientsIntoIframe(iframe));
+        }, 250)
+    );
 
     observer.observe(container, {
         childList: true,

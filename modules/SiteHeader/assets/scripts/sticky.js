@@ -1,7 +1,6 @@
 function registerStickyHeader() {
     const { util, hooks } = window.sitchco;
     const header = document.querySelector('.has-site-header-sticky');
-
     if (!header) {
         return;
     }
@@ -20,4 +19,4 @@ function registerStickyHeader() {
 }
 
 const { register } = window.sitchco;
-register(registerStickyHeader)
+register(registerStickyHeader);

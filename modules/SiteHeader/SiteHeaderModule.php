@@ -12,11 +12,7 @@ class SiteHeaderModule extends Module
 {
     const DEPENDENCIES = [ContentPartialModule::class];
 
-    public const FEATURES = [
-        'registerBlockPatterns',
-        'overlayHeader',
-        'stickyHeader',
-    ];
+    public const FEATURES = ['registerBlockPatterns', 'overlayHeader', 'stickyHeader'];
 
     protected ContentPartialService $contentService;
 

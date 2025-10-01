@@ -12,9 +12,7 @@ class Theme extends Module
 
     const DEPENDENCIES = [TimberModule::class];
 
-    const FEATURES = [
-        'disableAdminBar'
-    ];
+    const FEATURES = ['disableAdminBar'];
 
     public function init(): void
     {
@@ -39,8 +37,16 @@ class Theme extends Module
             $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
             $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
         });
-        $this->enqueueEditorUIAssets(function(ModuleAssets $assets) {
-            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks', 'wp-components', 'wp-compose', 'wp-block-editor', 'wp-rich-text']);
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
+            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', [
+                'wp-blocks',
+                'wp-element',
+                'wp-hooks',
+                'wp-components',
+                'wp-compose',
+                'wp-block-editor',
+                'wp-rich-text',
+            ]);
         });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
@@ -72,7 +78,7 @@ class Theme extends Module
     {
         if ('core/button' === $block_name) {
             $args['attributes']['theme'] = [
-                'type'    => 'string',
+                'type' => 'string',
                 'default' => '',
             ];
         }
@@ -116,7 +122,6 @@ class Theme extends Module
     }
 
     // FEATURES
-
 
     public function contentFilterWarning($content)
     {

@@ -16,15 +16,9 @@
                 "class": "",
                 "id": ""
             },
-            "post_type": [
-                "content-partial"
-            ],
-            "post_status": [
-                "publish"
-            ],
-            "taxonomy": [
-                "template-area:header"
-            ],
+            "post_type": ["content-partial"],
+            "post_status": ["publish"],
+            "taxonomy": ["template-area:header"],
             "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
@@ -76,15 +70,9 @@
                 "class": "",
                 "id": ""
             },
-            "post_type": [
-                "content-partial"
-            ],
-            "post_status": [
-                "publish"
-            ],
-            "taxonomy": [
-                "template-area:footer"
-            ],
+            "post_type": ["content-partial"],
+            "post_status": ["publish"],
+            "taxonomy": ["template-area:footer"],
             "return_format": "id",
             "multiple": 0,
             "allow_null": 1,
