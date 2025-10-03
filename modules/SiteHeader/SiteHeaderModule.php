@@ -35,7 +35,7 @@ class SiteHeaderModule extends Module
     public function overlayHeader(): void
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('site-header/overlay/js', 'overlay.css');
+            $assets->enqueueScript('site-header/overlay/js', 'overlay.js');
         });
     }
 
