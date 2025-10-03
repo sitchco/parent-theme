@@ -35,17 +35,15 @@ class SiteHeaderModule extends Module
     public function overlayHeader(): void
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('site-header/overlay', 'overlay.css');
+            $assets->enqueueStyle('site-header/overlay/js', 'overlay.css');
         });
     }
 
     public function stickyHeader(): void
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $handle = 'site-header/sticky';
-            $assets->registerStyle('site-header/overlay', 'overlay.css');
-            $assets->enqueueStyle($handle, 'sticky.css', ['sitchco/site-header/overlay']);
-            $assets->enqueueScript($handle, 'sticky.js', ['sitchco/ui-framework']);
+            $assets->registerScript('site-header/overlay/js', 'overlay.js');
+            $assets->enqueueScript('site-header/sticky/js', 'sticky.js', ['sitchco/ui-framework', 'sitchco/site-header/overlay/js']);
         });
     }
 
