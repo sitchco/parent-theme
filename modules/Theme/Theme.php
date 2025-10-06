@@ -17,7 +17,6 @@ class Theme extends Module
     public function init(): void
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
-        add_action('wp_body_open', [$this, 'addSvgSprite']);
         add_filter('upload_mimes', [$this, 'allowSVGUploads']);
         if (wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
@@ -54,6 +53,18 @@ class Theme extends Module
 
         // TODO: create file at same level as Theme.php
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
+
+        add_filter('block_type_metadata_settings', function ($settings, $metadata) {
+            if ($metadata['name'] === 'core/image') {
+                $settings['attributes']['inlineSvg'] = [
+                    'type' => 'boolean',
+                    'default' => false,
+                ];
+            }
+            return $settings;
+        }, 10, 2);
+
+        add_filter('render_block_core/image', [$this, 'imageBlockInlineSVG'], 20, 2);
     }
 
     public function disableAdminBar(): void
@@ -110,17 +121,6 @@ class Theme extends Module
         add_theme_support('editor-style');
     }
 
-    /**
-     * Outputs SVG sprite after the opening body tag
-     */
-    public function addSvgSprite(): void
-    {
-        $sprite = $this->path('dist/images/sprite.svg');
-        if ($sprite->exists()) {
-            echo file_get_contents($sprite);
-        }
-    }
-
     // FEATURES
 
     public function contentFilterWarning($content)
@@ -134,5 +134,38 @@ class Theme extends Module
         }
 
         return $content;
+    }
+
+    public function imageBlockInlineSVG(string $block_content, array $block): string {
+        $p = new \WP_HTML_Tag_Processor($block_content);
+        if (!$p->next_tag('img')) {
+            return $block_content;
+        }
+        $img_uploaded_src = $p->get_attribute('src');
+        if (!str_ends_with($img_uploaded_src, '.svg') || empty($block['attrs']['inlineSvg'])) {
+            return $block_content;
+        }
+
+        $file_path = null;
+        if (isset($block['attrs']['id'])) {
+            $file_path = get_attached_file($block['attrs']['id']);
+        }
+
+        if (!$file_path || !file_exists($file_path)) {
+            return $block_content;
+        }
+
+        $svg_content = file_get_contents($file_path);
+        $p_svg = new \WP_HTML_Tag_Processor($svg_content);
+
+        $p_svg->set_attribute('width', $p->get_attribute('width'));
+        $p_svg->set_attribute('height', $p->get_attribute('height'));
+        $p_svg->set_attribute('role', 'img');
+        $p_svg->set_attribute('aria-label', $p->get_attribute('alt'));
+        return preg_replace(
+            '#<img\b[^>]*>#i',
+            $p_svg->get_updated_html(),
+            $block_content
+        );
     }
 }
