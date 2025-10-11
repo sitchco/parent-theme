@@ -8,14 +8,15 @@
         "dev": "sitchco dev",
         "lint": "sitchco lint",
         "format": "sitchco format",
-        "clean": "sitchco clean"
+        "clean": "sitchco clean",
+        "prepare": "sitchco prepare"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@sitchco/cli": "^2.0.17",
-        "@sitchco/eslint-config": "^1.0.3"
+        "@sitchco/cli": "^2.1.1",
+        "@sitchco/eslint-config": "^2.1.0"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
