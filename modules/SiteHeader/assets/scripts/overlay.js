@@ -1,6 +1,5 @@
 function registerOverlayHeader() {
     const header = document.querySelector('.has-site-header-overlay');
-
     if (!header) {
         return;
     }
@@ -9,4 +8,4 @@ function registerOverlayHeader() {
 }
 
 const { register } = window.sitchco;
-register(registerOverlayHeader)
+register(registerOverlayHeader);

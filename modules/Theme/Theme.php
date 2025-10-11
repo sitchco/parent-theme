@@ -29,7 +29,7 @@ class Theme extends Module
                 apply_filters(static::hookName('global-js-vars'), [
                     'ajax_url' => admin_url('admin-ajax.php'),
                     'api_url' => trailingslashit(home_url(rest_get_url_prefix())),
-                ])
+                ]),
             );
         });
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
@@ -54,15 +54,20 @@ class Theme extends Module
         // TODO: create file at same level as Theme.php
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
 
-        add_filter('block_type_metadata_settings', function ($settings, $metadata) {
-            if ($metadata['name'] === 'core/image') {
-                $settings['attributes']['inlineSvg'] = [
-                    'type' => 'boolean',
-                    'default' => false,
-                ];
-            }
-            return $settings;
-        }, 10, 2);
+        add_filter(
+            'block_type_metadata_settings',
+            function ($settings, $metadata) {
+                if ($metadata['name'] === 'core/image') {
+                    $settings['attributes']['inlineSvg'] = [
+                        'type' => 'boolean',
+                        'default' => false,
+                    ];
+                }
+                return $settings;
+            },
+            10,
+            2,
+        );
 
         add_filter('render_block_core/image', [$this, 'imageBlockInlineSVG'], 20, 2);
     }
@@ -136,7 +141,8 @@ class Theme extends Module
         return $content;
     }
 
-    public function imageBlockInlineSVG(string $block_content, array $block): string {
+    public function imageBlockInlineSVG(string $block_content, array $block): string
+    {
         $p = new \WP_HTML_Tag_Processor($block_content);
         if (!$p->next_tag('img')) {
             return $block_content;
@@ -162,10 +168,6 @@ class Theme extends Module
         $p_svg->set_attribute('height', $p->get_attribute('height'));
         $p_svg->set_attribute('role', 'img');
         $p_svg->set_attribute('aria-label', $p->get_attribute('alt'));
-        return preg_replace(
-            '#<img\b[^>]*>#i',
-            $p_svg->get_updated_html(),
-            $block_content
-        );
+        return preg_replace('#<img\b[^>]*>#i', $p_svg->get_updated_html(), $block_content);
     }
 }

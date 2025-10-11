@@ -43,7 +43,10 @@ class SiteHeaderModule extends Module
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $assets->registerScript('site-header/overlay/js', 'overlay.js');
-            $assets->enqueueScript('site-header/sticky/js', 'sticky.js', ['sitchco/ui-framework', 'sitchco/site-header/overlay/js']);
+            $assets->enqueueScript('site-header/sticky/js', 'sticky.js', [
+                'sitchco/ui-framework',
+                'sitchco/site-header/overlay/js',
+            ]);
         });
     }
 
