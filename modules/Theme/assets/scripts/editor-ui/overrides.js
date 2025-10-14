@@ -1,7 +1,6 @@
 import { addFilter } from '@wordpress/hooks';
 
 const makeSpacingVar = (slug) => `var(--wp--preset--spacing--${slug})`;
-const parseSpacingVar = (value) => value.replace(/^var\(--wp--preset--spacing--(.*?)\)$/, '$1');
 
 function spacingOverride(originalOptions) {
     const themeSizes = window.sitchco?.themeSettings?.spacing?.spacingSizes?.theme || [];
@@ -40,8 +39,6 @@ addFilter('kadence.blocks.rowlayout.rowGutterOptions', 'sitchco/kadence-override
 
 addFilter('kadence.blocks.rowlayout.columnGutterOptions', 'sitchco/kadence-override/gutterOptions', spacingOverride);
 
-addFilter('kadence.blocks.rowlayout.columnGutterOptions', 'sitchco/kadence-override/gutterOptions', spacingOverride);
-
 addFilter('kadence.blocks.column.verticalGapOptions', 'sitchco/kadence-override/gapOptions', spacingOverride);
 
 addFilter('kadence.blocks.column.horizontalGapOptions', 'sitchco/kadence-override/gapOptions', spacingOverride);
@@ -62,12 +59,3 @@ addFilter(
     'sitchco/kadence-override/previewGutterSize',
     gutterSizeOverride
 );
-
-addFilter('blocks.registerBlockType', 'sitchco/kadence-override/default-attributes', (settings, name) => {
-    const { contentSpacing } = window.sitchco?.themeSettings?.custom ?? {};
-    if (name === 'kadence/column' && settings.attributes.rowGap && contentSpacing) {
-        const slug = parseSpacingVar(contentSpacing);
-        settings.attributes.rowGap.default = Array(3).fill(slug);
-    }
-    return settings;
-});

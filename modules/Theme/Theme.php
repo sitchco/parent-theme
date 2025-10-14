@@ -45,7 +45,6 @@ class Theme extends Module
                 'wp-compose',
                 'wp-block-editor',
                 'wp-rich-text',
-                'wp-data',
             ]);
             $assets->inlineScriptData('parent-editor-ui', 'themeSettings', wp_get_global_settings());
         }, 1);
