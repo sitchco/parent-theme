@@ -45,8 +45,10 @@ class Theme extends Module
                 'wp-compose',
                 'wp-block-editor',
                 'wp-rich-text',
+                'wp-data',
             ]);
-        });
+            $assets->inlineScriptData('parent-editor-ui', 'themeSettings', wp_get_global_settings());
+        }, 1);
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
@@ -70,6 +72,9 @@ class Theme extends Module
         );
 
         add_filter('render_block_core/image', [$this, 'imageBlockInlineSVG'], 20, 2);
+
+        add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
+        add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
     }
 
     public function disableAdminBar(): void
@@ -169,5 +174,16 @@ class Theme extends Module
         $p_svg->set_attribute('role', 'img');
         $p_svg->set_attribute('aria-label', $p->get_attribute('alt'));
         return preg_replace('#<img\b[^>]*>#i', $p_svg->get_updated_html(), $block_content);
+    }
+
+    public function overrideKadenceBlockSpacingSizes(array $sizes): array
+    {
+        $theme_settings = wp_get_global_settings();
+        $filtered = array_filter($sizes, fn($slug) => in_array($slug, ['ss-auto', '0', 'none']), ARRAY_FILTER_USE_KEY);
+        $theme_sizes = $theme_settings['spacing']['spacingSizes']['theme'] ?? [];
+        $theme_sizes = collect($theme_sizes)
+            ->mapWithKeys(fn($size) => [$size['slug'] => "var(--wp--preset--spacing--{$size['slug']})"])
+            ->all();
+        return $theme_sizes + $filtered;
     }
 }
