@@ -1,11 +1,10 @@
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
-import { InspectorControls } from '@wordpress/block-editor';
-import { InspectorAdvancedControls } from '@wordpress/block-editor';
+import { InspectorControls, InspectorAdvancedControls } from '@wordpress/block-editor';
 import { ToggleControl } from '@wordpress/components';
 import { Fragment } from '@wordpress/element';
 
-addFilter('blocks.registerBlockType', 'my-plugin/extend-core-image', (settings, name) => {
+addFilter('blocks.registerBlockType', 'sitchco/extend-core-image', (settings, name) => {
     if (name !== 'core/image') {
         return settings;
     }
@@ -47,4 +46,4 @@ const addInlineSvgToggle = createHigherOrderComponent((BlockEdit) => {
     };
 }, 'addInlineSvgToggle');
 
-addFilter('editor.BlockEdit', 'my-plugin/add-inline-svg-toggle', addInlineSvgToggle);
+addFilter('editor.BlockEdit', 'sitchco/add-inline-svg-toggle', addInlineSvgToggle);
