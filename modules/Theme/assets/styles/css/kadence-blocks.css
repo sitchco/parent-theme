@@ -1,8 +1,5 @@
-.block-editor-block-list__block[data-type='kadence/rowlayout'] {
-    margin-top: initial;
-    margin-bottom: initial;
-    margin-block-start: var(--wp--custom--content-spacing);
-    margin-block-end: 0;
+.kt-row-column-wrap {
+    --global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
 }
 
 .kt-inside-inner-col > *,
