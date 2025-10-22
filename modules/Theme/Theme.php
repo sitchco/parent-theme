@@ -167,11 +167,12 @@ class Theme extends Module
 
         $svg_content = file_get_contents($file_path);
         $p_svg = new \WP_HTML_Tag_Processor($svg_content);
-
+        $p_svg->next_tag();
         $p_svg->set_attribute('width', $p->get_attribute('width'));
         $p_svg->set_attribute('height', $p->get_attribute('height'));
         $p_svg->set_attribute('role', 'img');
         $p_svg->set_attribute('aria-label', $p->get_attribute('alt'));
+        $p_svg->set_attribute('id', 'inline-svg-' . $block['attrs']['id'] ?? 0);
         return preg_replace('#<img\b[^>]*>#i', $p_svg->get_updated_html(), $block_content);
     }
 
