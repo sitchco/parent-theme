@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'content-partial-block' => 'content-partial-block',
+    'sitchco/content-partial-block' => 'content-partial-block',
 ];
