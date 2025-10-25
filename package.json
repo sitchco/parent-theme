@@ -22,6 +22,10 @@
         "onlyBuiltDependencies": [
             "@parcel/watcher",
             "esbuild"
-        ]
+        ],
+        "overrides": {
+            "@sitchco/cli": "link:../../sitchco-packages/packages/tools/cli",
+            "@sitchco/eslint-config": "link:../../sitchco-packages/packages/configs/eslint-config"
+        }
     }
 }

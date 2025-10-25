@@ -74,6 +74,7 @@ class Theme extends Module
 
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
         add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
+        add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideKadenceBlockConfigDefaults']);
     }
 
     public function disableAdminBar(): void
@@ -185,5 +186,12 @@ class Theme extends Module
             ->mapWithKeys(fn($size) => [$size['slug'] => "var(--wp--preset--spacing--{$size['slug']})"])
             ->all();
         return $theme_sizes + $filtered;
+    }
+
+    public function overrideKadenceBlockConfigDefaults(mixed $config): mixed
+    {
+        return $config === '{}'
+            ? json_encode(['kadence/tabs' => (object) [], 'kadence/accordion' => (object) []])
+            : $config;
     }
 }
