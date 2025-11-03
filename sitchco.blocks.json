@@ -1,0 +1,7 @@
+{
+    "version": "1.0",
+    "hash": "8e54b15d982ee378abe054d836f7510e",
+    "blocks": {
+        "sitchco/content-partial-block": "modules/ContentPartial/blocks/content-partial-block"
+    }
+}
