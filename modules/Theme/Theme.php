@@ -183,7 +183,7 @@ class Theme extends Module
         $filtered = array_filter($sizes, fn($slug) => in_array($slug, ['ss-auto', '0', 'none']), ARRAY_FILTER_USE_KEY);
         $theme_sizes = $theme_settings['spacing']['spacingSizes']['theme'] ?? [];
         $theme_sizes = collect($theme_sizes)
-            ->mapWithKeys(fn($size) => [$size['slug'] => "var(--wp--preset--spacing--{$size['slug']})"])
+            ->mapWithKeys(fn($size) => ["spacing-{$size['slug']}" => "var(--wp--preset--spacing--{$size['slug']})"])
             ->all();
         return $theme_sizes + $filtered;
     }

@@ -4,13 +4,14 @@ const makeSpacingVar = (slug) => `var(--wp--preset--spacing--${slug})`;
 
 function spacingOverride(originalOptions) {
     const themeSizes = window.sitchco?.themeSettings?.spacing?.spacingSizes?.theme || [];
-    return [
+    const spacing = [
         ...originalOptions.filter((option) => ['ss-auto', '0', 'none'].includes(option.value)),
         ...themeSizes.map((size) => {
+            const label = size.name.replace('px / ', '/');
             const option = {
-                label: size.name.replace('px / ', '/'),
-                value: size.slug,
-                size: parseInt(size.slug),
+                label,
+                value: `spacing-${size.slug}`,
+                size: parseInt(label.split('/').at(-1)),
             };
             if (originalOptions[0].name) {
                 option.name = size.name;
@@ -19,6 +20,8 @@ function spacingOverride(originalOptions) {
             return option;
         }),
     ];
+    window.sitchco.spacing = spacing;
+    return spacing;
 }
 
 addFilter(
