@@ -48,7 +48,7 @@ addFilter('kadence.blocks.column.horizontalGapOptions', 'sitchco/kadence-overrid
 
 function gutterSizeOverride(size, _, gutter) {
     const themeSizes = window.sitchco?.themeSettings?.spacing?.spacingSizes?.theme || [];
-    const match = themeSizes.find((s) => s.slug === gutter);
+    const match = themeSizes.find((s) => `spacing-${s.slug}` === gutter);
     if (match) {
         return makeSpacingVar(match.slug);
     }
