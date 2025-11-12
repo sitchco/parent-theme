@@ -14,6 +14,13 @@ class Theme extends Module
 
     const FEATURES = ['disableAdminBar'];
 
+    protected InlineSVGService $inlineSVGService;
+
+    public function __construct(InlineSVGService $inlineSVGService)
+    {
+        $this->inlineSVGService = $inlineSVGService;
+    }
+
     public function init(): void
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
@@ -148,33 +155,7 @@ class Theme extends Module
 
     public function imageBlockInlineSVG(string $block_content, array $block): string
     {
-        $p = new \WP_HTML_Tag_Processor($block_content);
-        if (!$p->next_tag('img')) {
-            return $block_content;
-        }
-        $img_uploaded_src = $p->get_attribute('src');
-        if (!str_ends_with($img_uploaded_src, '.svg') || empty($block['attrs']['inlineSvg'])) {
-            return $block_content;
-        }
-
-        $file_path = null;
-        if (isset($block['attrs']['id'])) {
-            $file_path = get_attached_file($block['attrs']['id']);
-        }
-
-        if (!$file_path || !file_exists($file_path)) {
-            return $block_content;
-        }
-
-        $svg_content = file_get_contents($file_path);
-        $p_svg = new \WP_HTML_Tag_Processor($svg_content);
-        $p_svg->next_tag();
-        $p_svg->set_attribute('width', $p->get_attribute('width'));
-        $p_svg->set_attribute('height', $p->get_attribute('height'));
-        $p_svg->set_attribute('role', 'img');
-        $p_svg->set_attribute('aria-label', $p->get_attribute('alt'));
-        $p_svg->set_attribute('id', 'inline-svg-' . $block['attrs']['id'] ?? 0);
-        return preg_replace('#<img\b[^>]*>#i', $p_svg->get_updated_html(), $block_content);
+        return $this->inlineSVGService->replaceImageBlock($block_content, $block);
     }
 
     public function overrideKadenceBlockSpacingSizes(array $sizes): array
