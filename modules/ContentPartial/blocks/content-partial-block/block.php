@@ -13,5 +13,5 @@ $blockPostId = $context['fields']['block'];
 $Repository = $container->get(ContentPartialRepository::class);
 $post = $Repository->findById($blockPostId);
 if ($post instanceof ContentPartialPost) {
-    $context['partial_post'] = $post;
+    return $post->content();
 }

@@ -1,5 +1,6 @@
 {
     "name": "sitchco/content-partial-block",
+    "apiVersion": 3,
     "title": "Content Partial Block",
     "description": "A Gutenberg block for displaying content partials using ACF.",
     "category": "sitchco",
