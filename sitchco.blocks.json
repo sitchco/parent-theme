@@ -1,7 +1,8 @@
 {
     "version": "1.0",
-    "hash": "8e54b15d982ee378abe054d836f7510e",
+    "hash": "5c04c4c054f3d8bf2a3a0e1cb38c4b6d",
     "blocks": {
-        "sitchco/content-partial-block": "modules/ContentPartial/blocks/content-partial-block"
+        "sitchco/content-partial-block": "modules/ContentPartial/blocks/content-partial-block",
+        "sitchco/content-slider": "modules/ContentSlider/blocks/content-slider"
     }
 }

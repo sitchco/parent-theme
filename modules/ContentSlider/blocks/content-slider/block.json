@@ -1,0 +1,31 @@
+{
+    "apiVersion": 3,
+    "name": "sitchco/content-slider",
+    "title": "Content Slider",
+    "description": "A customizable content slider powered by Splide",
+    "category": "sitchco",
+    "icon": "slides",
+    "keywords": ["slider", "carousel", "slideshow", "splide"],
+    "viewScript": ["file:./script.js", "kad-splide", "sitchco/ui-framework"],
+    "editorStyle": "file:./editor-style.css",
+    "style": ["file:./style.css", "kadence-blocks-splide"],
+    "acf": {
+        "mode": "preview",
+        "renderCallback": "Sitchco\\Modules\\TimberModule::blockRenderCallback"
+    },
+    "supports": {
+        "anchor": true,
+        "align": ["wide", "full"],
+        "className": true,
+        "jsx": true
+    },
+    "allowedBlocks": ["kadence/column"],
+    "innerBlocksConfig": {
+        "template": [
+            ["kadence/column", []],
+            ["kadence/column", []],
+            ["kadence/column", []]
+        ],
+        "renderAppender": true
+    }
+}

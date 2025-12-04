@@ -1,0 +1,185 @@
+{
+    "key": "group_68f7cf60b9668",
+    "title": "Content Slider Settings",
+    "fields": [
+        {
+            "key": "field_68f7cf60ba248",
+            "label": "Autoplay",
+            "name": "autoplay",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Enable automatic slide progression",
+            "required": 0,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Enabled",
+            "ui_off_text": "Disabled",
+            "message": ""
+        },
+        {
+            "key": "field_68f7cf60ba5eb",
+            "label": "Autoplay Speed (ms)",
+            "name": "autoplay_speed",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Time between slides in milliseconds",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_68f7cf60ba248",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 5000,
+            "min": 1000,
+            "max": 30000,
+            "step": 500,
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_68f7cf60badba",
+            "label": "Show Arrows",
+            "name": "arrows",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Display navigation arrows",
+            "required": 0,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 1,
+            "ui": 1,
+            "ui_on_text": "Show",
+            "ui_off_text": "Hide",
+            "message": ""
+        },
+        {
+            "key": "field_68f7cf60bb1b4",
+            "label": "Show Dots",
+            "name": "dots",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Display pagination dots",
+            "required": 0,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Show",
+            "ui_off_text": "Hide",
+            "message": ""
+        },
+        {
+            "key": "field_68f7cf60bc165",
+            "label": "Slides per View (Desktop)",
+            "name": "per_view_desktop",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Number of slides visible on desktop screens (1024px+)",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 3,
+            "min": 1,
+            "max": 6,
+            "allow_in_bindings": 1,
+            "placeholder": "",
+            "step": 1,
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_68f7cf60bc526",
+            "label": "Slides per View (Tablet)",
+            "name": "per_view_tablet",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Number of slides visible on tablet screens (768px - 1023px)",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 2,
+            "min": 1,
+            "max": 4,
+            "allow_in_bindings": 1,
+            "placeholder": "",
+            "step": 1,
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_68f7cf60bc917",
+            "label": "Slides per View (Mobile)",
+            "name": "per_view_mobile",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Number of slides visible on mobile screens (<768px)",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 1,
+            "min": 1,
+            "max": 3,
+            "allow_in_bindings": 1,
+            "placeholder": "",
+            "step": 1,
+            "prepend": "",
+            "append": ""
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "block",
+                "operator": "==",
+                "value": "sitchco\/content-slider"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "",
+    "show_in_rest": 0,
+    "display_title": "",
+    "modified": 1764870822
+}

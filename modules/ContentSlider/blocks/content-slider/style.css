@@ -1,0 +1,22 @@
+/**
+ * Content Slider - Frontend Styles
+ *
+ * Base styles for the content slider. Splide's core styles are loaded
+ * via the kadence-blocks-splide dependency.
+ */
+
+.sc-content-slider {
+    position: relative;
+    width: 100%;
+}
+
+.sc-content-slider .splide__slide {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure inner block content fills the slide */
+.sc-content-slider .splide__slide > * {
+    flex: 1;
+    height: 100%;
+}

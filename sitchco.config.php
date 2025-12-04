@@ -7,6 +7,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
+use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
 use Sitchco\Parent\Modules\Theme\Theme;
 
 return [
@@ -19,6 +20,7 @@ return [
         ContentPartialBlockModule::class,
         SiteHeaderModule::class,
         SiteFooterModule::class,
+        ContentSlider::class,
         Theme::class,
     ],
     'disallowedBlocks' => [

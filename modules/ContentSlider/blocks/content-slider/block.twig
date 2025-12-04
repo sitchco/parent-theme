@@ -1,0 +1,28 @@
+{% set slider = slider ?? {} %}
+{% set slider_id = slider.id ?? function('uniqid', 'slider-') %}
+{% set slider_class = slider.class ?? 'sc-content-slider splide' %}
+{% set slider_config = function('wp_json_encode', slider.config ?? []) %}
+
+{% if is_preview %}
+    <div {{ block_wrapper_attributes(wrapper_attributes) }}>
+        {{ inner_blocks(innerBlocksConfig) }}
+    </div>
+{% else %}
+    <div
+        id="{{ slider_id }}"
+        class="{{ slider_class }}"
+        data-sc-slider="{{ slider_config|default('[]')|e('html_attr') }}"
+        aria-label="{{ slider.config.ariaLabel ?? 'Content slider' }}"
+        role="region"
+    >
+        <div class="splide__track">
+            <ul class="splide__list">
+                {% for slide in inner_blocks %}
+                    <li class="splide__slide">
+                        {{ render_block(slide) }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endif %}
