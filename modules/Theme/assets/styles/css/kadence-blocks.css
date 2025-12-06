@@ -31,3 +31,7 @@
         margin-block-start: 0;
     }
 }
+
+.kadence-font-size-control .kadence-radio-container-control.components-button-group .components-button {
+    min-width: unset;
+}

@@ -81,6 +81,7 @@ class Theme extends Module
 
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
         add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
+        add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideKadenceBlockFontSizes']);
         add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideKadenceBlockConfigDefaults']);
     }
 
@@ -160,11 +161,27 @@ class Theme extends Module
 
     public function overrideKadenceBlockSpacingSizes(array $sizes): array
     {
-        $theme_settings = wp_get_global_settings();
+        return $this->overrideKadenceBlockSizes(
+            $sizes,
+            'spacing',
+            fn($settings) => $settings['spacing']['spacingSizes']['theme'] ?? [],
+        );
+    }
+
+    public function overrideKadenceBlockFontSizes(array $sizes): array
+    {
+        return $this->overrideKadenceBlockSizes(
+            $sizes,
+            'font-size',
+            fn($settings) => $settings['typography']['fontSizes']['theme'] ?? [],
+        );
+    }
+
+    protected function overrideKadenceBlockSizes(array $sizes, string $type, callable $getThemeSizes): array
+    {
         $filtered = array_filter($sizes, fn($slug) => in_array($slug, ['ss-auto', '0', 'none']), ARRAY_FILTER_USE_KEY);
-        $theme_sizes = $theme_settings['spacing']['spacingSizes']['theme'] ?? [];
-        $theme_sizes = collect($theme_sizes)
-            ->mapWithKeys(fn($size) => ["spacing-{$size['slug']}" => "var(--wp--preset--spacing--{$size['slug']})"])
+        $theme_sizes = collect($getThemeSizes(wp_get_global_settings()))
+            ->mapWithKeys(fn($size) => ["{$type}-{$size['slug']}" => "var(--wp--preset--{$type}--{$size['slug']})"])
             ->all();
         return $theme_sizes + $filtered;
     }
