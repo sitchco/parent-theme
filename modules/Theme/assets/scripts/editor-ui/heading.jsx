@@ -7,7 +7,7 @@ domReady(() => {
         {
             name: 'sitchco/heading-style',
             title: 'Heading',
-            className: 'wp-block-heading',
+            className: 'is-style-heading',
         },
     ];
 
