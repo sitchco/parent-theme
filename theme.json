@@ -11,7 +11,7 @@
             "width": false
         },
         "color": {
-            "background": false,
+            "background": true,
             "button": true,
             "caption": true,
             "custom": true,
@@ -90,26 +90,6 @@
             "wideSize": "1200px"
         },
         "blocks": {
-            "core/group": {
-                "color": {
-                    "background": true
-                }
-            },
-            "core/cover": {
-                "color": {
-                    "background": true
-                }
-            },
-            "core/columns": {
-                "color": {
-                    "background": true
-                }
-            },
-            "core/column": {
-                "color": {
-                    "background": true
-                }
-            },
             "core/button": {
                 "border": {
                     "radius": false
