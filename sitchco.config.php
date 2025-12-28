@@ -9,6 +9,7 @@ use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
 use Sitchco\Parent\Modules\Theme\Theme;
+use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 
 return [
     'modules' => [
@@ -22,6 +23,7 @@ return [
         SiteFooterModule::class,
         ContentSlider::class,
         Theme::class,
+        KadenceBlocks::class,
     ],
     'disallowedBlocks' => [
         /** TEXT */

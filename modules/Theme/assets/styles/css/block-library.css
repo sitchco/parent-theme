@@ -2,13 +2,13 @@
     padding: var(--wp--custom--grid-gutter-spacing);
 }
 
-:where(.wp-block-column.has-background) {
+/*:where(.wp-block-column.has-background) {
     padding: var(--wp--custom--grid-gutter-spacing);
 }
 
 :where(.wp-block-group.has-background) {
     padding: var(--wp--custom--grid-gutter-spacing);
-}
+}*/
 
 :where(article.has-global-padding) {
     > :first-child:not(.alignfull) {

@@ -124,7 +124,8 @@
         },
         "custom": {
             "contentSpacing": "var:preset|spacing|30",
-            "gridGutterSpacing": "var:preset|spacing|50"
+            "gridGutterSpacing": "var:preset|spacing|50",
+            "contentEdgePadding": "var:custom|grid-gutter-spacing"
         }
     },
     "styles": {

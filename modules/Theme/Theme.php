@@ -78,11 +78,6 @@ class Theme extends Module
         );
 
         add_filter('render_block_core/image', [$this, 'imageBlockInlineSVG'], 20, 2);
-
-        add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
-        add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
-        add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideKadenceBlockFontSizes']);
-        add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideKadenceBlockConfigDefaults']);
     }
 
     public function disableAdminBar(): void
@@ -157,39 +152,5 @@ class Theme extends Module
     public function imageBlockInlineSVG(string $block_content, array $block): string
     {
         return $this->inlineSVGService->replaceImageBlock($block_content, $block);
-    }
-
-    public function overrideKadenceBlockSpacingSizes(array $sizes): array
-    {
-        return $this->overrideKadenceBlockSizes(
-            $sizes,
-            'spacing',
-            fn($settings) => $settings['spacing']['spacingSizes']['theme'] ?? [],
-        );
-    }
-
-    public function overrideKadenceBlockFontSizes(array $sizes): array
-    {
-        return $this->overrideKadenceBlockSizes(
-            $sizes,
-            'font-size',
-            fn($settings) => $settings['typography']['fontSizes']['theme'] ?? [],
-        );
-    }
-
-    protected function overrideKadenceBlockSizes(array $sizes, string $type, callable $getThemeSizes): array
-    {
-        $filtered = array_filter($sizes, fn($slug) => in_array($slug, ['ss-auto', '0', 'none']), ARRAY_FILTER_USE_KEY);
-        $theme_sizes = collect($getThemeSizes(wp_get_global_settings()))
-            ->mapWithKeys(fn($size) => ["{$type}-{$size['slug']}" => "var(--wp--preset--{$type}--{$size['slug']})"])
-            ->all();
-        return $theme_sizes + $filtered;
-    }
-
-    public function overrideKadenceBlockConfigDefaults(mixed $config): mixed
-    {
-        return $config === '{}'
-            ? json_encode(['kadence/tabs' => (object) [], 'kadence/accordion' => (object) []])
-            : $config;
     }
 }
