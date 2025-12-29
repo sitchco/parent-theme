@@ -1,13 +1,3 @@
-/**
- * Editor-side visual feedback for columns with backgrounds.
- *
- * Adds 'kt-column-has-bg' class in the editor to match server-side
- * addColumnBackgroundClass filter behavior.
- *
- * NOTE: This file is present but not enqueued. To enable:
- * 1. Uncomment the filter registration in KadenceBlocks.php
- * 2. Add editor asset enqueueing to the module
- */
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 

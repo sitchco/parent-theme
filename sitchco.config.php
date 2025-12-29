@@ -5,11 +5,11 @@ use Sitchco\Parent\ButtonConfig;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
+use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
+use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
-use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
 use Sitchco\Parent\Modules\Theme\Theme;
-use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 
 return [
     'modules' => [
