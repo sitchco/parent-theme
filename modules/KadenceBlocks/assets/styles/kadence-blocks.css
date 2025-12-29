@@ -12,14 +12,14 @@
 }
 
 /* Front End, inside column */
-/*
 :where(.kt-inside-inner-col > *),
-    !* Preview, inside column, handles different preview structure  *!
+/* Preview, inside column, handles different preview structure */
 :where(.kadence-inner-column-inner > *:not(.kadence-column)),
 :where(.kadence-inner-column-inner > .kadence-column > .kadence-inner-column-inner),
-    !* Global, inside tab, handles different preview structure *!
+/* Global, inside tab, handles different preview structure */
 :where(.kt-tab-inner-content-inner > *:not(.kadence-column)),
 :where(.kt-tab-inner-content-inner > .kadence-column > .kadence-inner-column-inner) {
+    /* REVIEW: why is this value so large? */
     margin-block-start: var(--wp--custom--content-spacing);
     margin-block-end: 0;
 
@@ -30,6 +30,7 @@
 
 .wp-block-kadence-column.kb-has-row-gap-lg > .kt-inside-inner-col > *,
 .kadence-inner-column-inner.kb-has-row-gap-lg > * {
+    /* Review: WHY? */
     margin-block-start: 0;
 }
 
@@ -50,65 +51,52 @@
 .kadence-font-size-control .kadence-radio-container-control.components-button-group .components-button {
     min-width: unset;
 }
-*/
 
-/* === DISABLED: Incremental testing ===
- * Row/column structural patterns
- * Migrated from child theme for generic Kadence+theme.json integration
- */
-
-/*
 :where(.wp-block-kadence-rowlayout) {
     container-name: kadence-rowlayout;
     container-type: inline-size;
-
-    --global-content-edge-padding: var(--wp--custom--content-spacing);
-
-    &.alignfull {
-        --global-content-edge-padding: var(--wp--custom--grid-gutter-spacing);
-    }
-
-    .kt-inside-inner-col > * {
-        margin-block-start: var(--wp--custom--grid-gutter-spacing);
-    }
-
-    &.kt-row-has-bg {
-        --global-content-edge-padding: var(--wp--custom--grid-gutter-spacing);
-        --global-kb-row-default-top: var(--wp--custom--content-spacing);
-        --global-kb-row-default-bottom: var(--wp--custom--content-spacing);
-
-        @container kadence-rowlayout (min-width: 720px) {
-            --global-content-edge-padding: var(--wp--custom--content-spacing);
-        }
-
-        :where(.kt-row-column-wrap) {
-            padding-top: var(--global-kb-row-default-top);
-            padding-bottom: var(--global-kb-row-default-bottom);
-        }
-
-        .kt-inside-inner-col > *:first-child {
-            margin-block-start: 0;
-        }
-    }
 }
 
 :where(.wp-block-kadence-column) {
-    --global-content-edge-padding: var(--wp--custom--content-spacing);
-
-    &.kt-column-has-bg {
-        > :where(.kadence-inner-column-inner, .kt-inside-inner-col) {
-            padding: var(--wp--custom--content-spacing) calc(var(--wp--custom--content-spacing) / 2);
-        }
-
-        .kt-inside-inner-col > *:first-child {
-            margin-block-start: 0;
-        }
-    }
-
     &.kb-section-is-sticky > .kt-inside-inner-col {
         top: calc(var(--dynamic__header-height) + var(--wp--custom--content-spacing));
     }
 }
-*/
 
-/* === END DISABLED === */
+/* === DISABLED: Testing pattern-based approach per ADR ===
+ * Edge padding and background-aware spacing - may be replaced by Option F or patterns
+ *
+ * :where(.wp-block-kadence-rowlayout) {
+ *     --global-content-edge-padding: var(--wp--custom--content-spacing);
+ *
+ *     &.alignfull {
+ *         --global-content-edge-padding: var(--wp--custom--grid-gutter-spacing);
+ *     }
+ *
+ *     &.kt-row-has-bg {
+ *         --global-content-edge-padding: var(--wp--custom--grid-gutter-spacing);
+ *         --global-kb-row-default-top: var(--wp--custom--content-spacing);
+ *         --global-kb-row-default-bottom: var(--wp--custom--content-spacing);
+ *
+ *         @container kadence-rowlayout (min-width: 720px) {
+ *             --global-content-edge-padding: var(--wp--custom--content-spacing);
+ *         }
+ *
+ *         :where(.kt-row-column-wrap) {
+ *             padding-top: var(--global-kb-row-default-top);
+ *             padding-bottom: var(--global-kb-row-default-bottom);
+ *         }
+ *     }
+ * }
+ *
+ * :where(.wp-block-kadence-column) {
+ *     --global-content-edge-padding: var(--wp--custom--content-spacing);
+ *
+ *     &.kt-column-has-bg {
+ *         > :where(.kadence-inner-column-inner, .kt-inside-inner-col) {
+ *             padding: var(--wp--custom--content-spacing) calc(var(--wp--custom--content-spacing) / 2);
+ *         }
+ *     }
+ * }
+ *
+ * === END DISABLED === */
