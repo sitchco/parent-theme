@@ -21,7 +21,8 @@ class KadenceBlocks extends Module
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript('kadence-blocks-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks']);
-        });
+            $assets->inlineScriptData('kadence-blocks-editor-ui', 'themeSettings', wp_get_global_settings());
+        }, 1);
 
         add_filter('render_block_kadence/column', [$this, 'addColumnBackgroundClass'], 10, 2);
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideSpacingSizes']);
