@@ -55,6 +55,21 @@
 :where(.wp-block-kadence-rowlayout) {
     container-name: kadence-rowlayout;
     container-type: inline-size;
+
+    /* Row Layout alignment - constrained by default, full-width opt-in.
+     * Kadence outputs alignment classes but doesn't apply width constraints.
+     * This makes the background wrapper respect WordPress alignment system. */
+    max-width: var(--wp--style--global--content-size);
+    margin-inline: auto;
+
+    &.alignwide {
+        max-width: var(--wp--style--global--wide-size);
+    }
+
+    &.alignfull {
+        max-width: none;
+        margin-inline: 0;
+    }
 }
 
 :where(.wp-block-kadence-column) {
