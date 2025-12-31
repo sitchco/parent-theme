@@ -9,6 +9,9 @@
     --global-content-width: var(--wp--style--global--content-size);
     --global-content-edge-padding: var(--wp--custom--content-edge-padding);
     --global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
+    --global-row-gutter-sm: var(--wp--custom--grid-gutter-spacing);
+    --global-kb-row-default-top: var(--wp--custom--grid-gutter-spacing);
+    --global-kb-row-default-bottom: var(--wp--custom--grid-gutter-spacing);
 }
 
 /* Front End, inside column */
@@ -19,7 +22,6 @@
 /* Global, inside tab, handles different preview structure */
 :where(.kt-tab-inner-content-inner > *:not(.kadence-column)),
 :where(.kt-tab-inner-content-inner > .kadence-column > .kadence-inner-column-inner) {
-    /* REVIEW: why is this value so large? */
     margin-block-start: var(--wp--custom--content-spacing);
     margin-block-end: 0;
 
