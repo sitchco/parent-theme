@@ -7,11 +7,11 @@
  */
 :root {
     --global-content-width: var(--wp--style--global--content-size);
-    --global-content-edge-padding: var(--wp--custom--content-edge-padding);
+    --global-content-edge-padding: var(--wp--custom--page-gutter);
     --global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
     --global-row-gutter-sm: var(--wp--custom--grid-gutter-spacing);
-    --global-kb-row-default-top: var(--wp--custom--grid-gutter-spacing);
-    --global-kb-row-default-bottom: var(--wp--custom--grid-gutter-spacing);
+    --global-kb-row-default-top: var(--wp--custom--section-spacing);
+    --global-kb-row-default-bottom: var(--wp--custom--section-spacing);
 }
 
 /* Front End, inside column */
@@ -32,7 +32,7 @@
 
 .wp-block-kadence-column.kb-has-row-gap-lg > .kt-inside-inner-col > *,
 .kadence-inner-column-inner.kb-has-row-gap-lg > * {
-    /* Review: WHY? */
+    /* When Kadence's row-gap is active, disable margin-based spacing to prevent double gaps */
     margin-block-start: 0;
 }
 
@@ -79,41 +79,3 @@
         top: calc(var(--dynamic__header-height) + var(--wp--custom--content-spacing));
     }
 }
-
-/* === DISABLED: Testing pattern-based approach per ADR ===
- * Edge padding and background-aware spacing - may be replaced by Option F or patterns
- *
- * :where(.wp-block-kadence-rowlayout) {
- *     --global-content-edge-padding: var(--wp--custom--content-spacing);
- *
- *     &.alignfull {
- *         --global-content-edge-padding: var(--wp--custom--grid-gutter-spacing);
- *     }
- *
- *     &.kt-row-has-bg {
- *         --global-content-edge-padding: var(--wp--custom--grid-gutter-spacing);
- *         --global-kb-row-default-top: var(--wp--custom--content-spacing);
- *         --global-kb-row-default-bottom: var(--wp--custom--content-spacing);
- *
- *         @container kadence-rowlayout (min-width: 720px) {
- *             --global-content-edge-padding: var(--wp--custom--content-spacing);
- *         }
- *
- *         :where(.kt-row-column-wrap) {
- *             padding-top: var(--global-kb-row-default-top);
- *             padding-bottom: var(--global-kb-row-default-bottom);
- *         }
- *     }
- * }
- *
- * :where(.wp-block-kadence-column) {
- *     --global-content-edge-padding: var(--wp--custom--content-spacing);
- *
- *     &.kt-column-has-bg {
- *         > :where(.kadence-inner-column-inner, .kt-inside-inner-col) {
- *             padding: var(--wp--custom--content-spacing) calc(var(--wp--custom--content-spacing) / 2);
- *         }
- *     }
- * }
- *
- * === END DISABLED === */
