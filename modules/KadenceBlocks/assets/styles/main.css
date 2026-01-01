@@ -72,10 +72,20 @@
         max-width: none;
         margin-inline: 0;
     }
+    /* If row doesn't have a background, reset top and bottom padding */
+    &:not(.kt-row-has-bg) > .kt-row-column-wrap {
+        --global-kb-row-default-top: 0;
+        --global-kb-row-default-bottom: 0;
+    }
 }
 
 :where(.wp-block-kadence-column) {
     &.kb-section-is-sticky > .kt-inside-inner-col {
         top: calc(var(--dynamic__header-height) + var(--wp--custom--content-spacing));
     }
+}
+
+/* Disable draggable padding resize */
+.kt-padding-resize-box {
+    pointer-events: none;
 }

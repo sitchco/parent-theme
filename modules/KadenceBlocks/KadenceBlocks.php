@@ -16,7 +16,7 @@ class KadenceBlocks extends Module
     public function init(): void
     {
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('kadence-blocks', 'kadence-blocks.css');
+            $assets->enqueueStyle('kadence-blocks', 'main.css');
         });
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
