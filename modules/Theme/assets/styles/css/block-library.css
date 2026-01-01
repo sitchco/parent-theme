@@ -1,5 +1,5 @@
 :where(.wp-block-columns.has-background) {
-    padding: var(--wp--custom--grid-gutter-spacing);
+    padding: var(--wp--custom--section-spacing) var(--wp--custom--grid-gutter-spacing);
 }
 
 /*:where(.wp-block-column.has-background) {
