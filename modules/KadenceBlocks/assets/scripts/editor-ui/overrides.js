@@ -64,6 +64,10 @@ addFilter('kadence.blocks.column.verticalGapOptions', 'sitchco/kadence-override/
 addFilter('kadence.blocks.column.horizontalGapOptions', 'sitchco/kadence-override/gapOptions', spacingOverride);
 
 function gutterSizeOverride(size, _, gutter) {
+    if (gutter === 'content-flow') {
+        return 'var(--wp--custom--content-spacing)';
+    }
+
     const themeSizes = themeSpacing() || [];
     const match = themeSizes.find((s) => `spacing-${s.slug}` === gutter);
     if (match) {

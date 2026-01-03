@@ -1,0 +1,56 @@
+/**
+ * Kadence Row Layout alignment and width constraints.
+ *
+ * Makes Row Layout respect WordPress alignment system and handles
+ * edge padding for alignfull rows with backgrounds.
+ */
+:where(.wp-block-kadence-rowlayout) {
+    container-name: kadence-rowlayout;
+    container-type: inline-size;
+
+    /* Row Layout alignment - constrained by default, full-width opt-in.
+     * Kadence outputs alignment classes but doesn't apply width constraints.
+     * This makes the background wrapper respect WordPress alignment system. */
+    max-width: var(--wp--style--global--content-size);
+    margin-inline: auto;
+
+    &.alignwide {
+        max-width: var(--wp--style--global--wide-size);
+    }
+
+    &.alignfull {
+        max-width: none;
+        margin-inline: 0;
+        padding-right: var(--wp--style--root--padding-right);
+        padding-left: var(--wp--style--root--padding-left);
+
+        /* Edge padding on outer for alignfull with background.
+         * Kadence puts this on inner, which breaks alignment when inner has
+         * kb-theme-content-width. Moving to outer fixes this—background still
+         * bleeds to edge (background-clip: border-box), content is inset. */
+        &.kt-row-has-bg {
+            /*padding-inline: var(--global-content-edge-padding);*/
+        }
+    }
+
+    /* If row doesn't have a background, reset top and bottom padding */
+    &:not(.kt-row-has-bg) > .kt-row-column-wrap {
+        --global-kb-row-default-top: 0;
+        --global-kb-row-default-bottom: 0;
+    }
+
+    /* Override Kadence's inner edge padding—we handle it on outer instead */
+    &.kt-row-has-bg > .kt-row-column-wrap {
+        /*--global-content-edge-padding: 0;*/
+    }
+}
+
+/* Fix for Row inside Section: flex children with margin-inline: auto collapse
+ * to 0 width unless they have explicit width. Only target non-alignfull rows
+ * inside a Section's inner column (flex container). */
+:where(.kt-inside-inner-col) > :where(.wp-block-kadence-rowlayout:not(.alignfull)) {
+    width: 100%;
+    /* On mobile, add edge padding since the row spans full width but isn't alignfull.
+     * This ensures page gutter is maintained even when row max-width > viewport. */
+    padding-inline: var(--wp--style--root--padding-right, 15px);
+}

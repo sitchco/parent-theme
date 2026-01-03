@@ -1,0 +1,31 @@
+/**
+ * Content flow spacing inside Kadence columns.
+ *
+ * Strategy: Map Kadence's gap variables to our design system, then force
+ * flex + gap as default. Kadence's inline styles with explicit values
+ * should still be able to override.
+ */
+
+/* Map Kadence gap tokens to our content-spacing variable */
+:root {
+    /* Frontend variables */
+    --global-kb-gap-sm: var(--wp--custom--content-spacing);
+    --global-kb-gap-md: var(--wp--custom--content-spacing);
+    --global-kb-gap-lg: calc(var(--wp--custom--content-spacing) * 1.5);
+
+    /* Editor preview variables */
+    --global-row-gutter-sm: var(--wp--custom--content-spacing);
+    --global-row-gutter-md: var(--wp--custom--content-spacing);
+    --global-row-gutter-lg: calc(var(--wp--custom--content-spacing) * 1.5);
+}
+
+/* Force flex layout with our default gap.
+ * Target only content columns (inside row's column-wrap), not layout columns
+ * (sections that may contain rows). Using :not(:has()) to exclude columns
+ * containing layout blocks which would collapse under flex. */
+.kt-inside-inner-col,
+.kt-tab-inner-content-inner {
+    > * {
+        margin-block-start: 0;
+    }
+}

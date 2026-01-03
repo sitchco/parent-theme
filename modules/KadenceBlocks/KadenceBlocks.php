@@ -19,20 +19,25 @@ class KadenceBlocks extends Module
             $assets->enqueueStyle('kadence-blocks', 'main.css');
         });
 
+        $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
+            $assets->enqueueStyle('kadence-blocks-editor', 'admin-editor.css');
+        });
+
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript('kadence-blocks-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks']);
             $assets->inlineScriptData('kadence-blocks-editor-ui', 'themeSettings', wp_get_global_settings());
         }, 1);
 
         add_filter('render_block_kadence/column', [$this, 'addColumnBackgroundClass'], 10, 2);
+        add_filter('kadence_blocks_column_render_block_attributes', [$this, 'injectDefaultColumnGap']);
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideSpacingSizes']);
-        add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideSpacingSizes']);
+        add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideGapSizes']);
         add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideFontSizes']);
         add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideConfigDefaults']);
     }
 
     /**
-     * Override Kadence spacing/gap presets to use theme.json spacing presets.
+     * Override Kadence spacing presets to use theme.json spacing presets.
      */
     public function overrideSpacingSizes(array $sizes): array
     {
@@ -41,6 +46,17 @@ class KadenceBlocks extends Module
             'spacing',
             fn($settings) => $settings['spacing']['spacingSizes']['theme'] ?? [],
         );
+    }
+
+    /**
+     * Override Kadence gap presets with theme.json presets plus semantic tokens.
+     */
+    public function overrideGapSizes(array $sizes): array
+    {
+        $sizes = $this->overrideSpacingSizes($sizes);
+        $sizes['content-flow'] = 'var(--wp--custom--content-spacing)';
+
+        return $sizes;
     }
 
     /**
@@ -75,6 +91,25 @@ class KadenceBlocks extends Module
         return $config === '{}'
             ? json_encode(['kadence/tabs' => (object) [], 'kadence/accordion' => (object) []])
             : $config;
+    }
+
+    /**
+     * Inject default row gap for Kadence columns when none is specified.
+     *
+     * When rowGapVariable is empty, Kadence outputs no row-gap. This filter
+     * injects 'content-flow' as the default, which maps to the semantic
+     * --wp--custom--content-spacing variable via overrideGapSizes.
+     */
+    public function injectDefaultColumnGap(array $attributes): array
+    {
+        if (empty($attributes['rowGapVariable'][0])) {
+            if (!isset($attributes['rowGapVariable']) || !is_array($attributes['rowGapVariable'])) {
+                $attributes['rowGapVariable'] = ['', '', ''];
+            }
+            $attributes['rowGapVariable'][0] = 'content-flow';
+        }
+
+        return $attributes;
     }
 
     /**

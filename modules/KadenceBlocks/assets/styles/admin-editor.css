@@ -1,0 +1,45 @@
+/**
+ * Kadence Blocks editor-only styles.
+ *
+ * Fixes for Kadence UI controls and editor preview elements.
+ * These selectors don't exist on the front-end.
+ */
+
+/* Fix font size control radio buttons being too wide */
+.kadence-font-size-control .kadence-radio-container-control.components-button-group .components-button {
+    min-width: unset;
+}
+
+/* Disable draggable padding resize handles */
+.kt-padding-resize-box {
+    pointer-events: none;
+}
+.block-editor-block-list__layout.is-root-container {
+    /* Kadence top-level section blocks don't include the align classes that wp expects...
+     maybe the assumption was that only row-layout blocks would be top-level? */
+    > [data-align='wide'] {
+        max-width: var(--wp--style--global--wide-size);
+    }
+    > [data-align='full'] {
+        max-width: none;
+        width: auto;
+        margin-right: calc(var(--wp--style--root--padding-right) * -1) !important;
+        margin-left: calc(var(--wp--style--root--padding-left) * -1) !important;
+    }
+}
+
+/* Corresponding admin rule to @content-flow.css */
+.kadence-inner-column-inner {
+    display: flex;
+    flex-direction: column;
+    > * {
+        margin-block-start: 0;
+    }
+
+    /* Fix for Row inside Section: flex children with margin-inline: auto collapse
+    * to 0 width unless they have explicit width. Mirrors front-end fix in row-layout.css. */
+    > .wp-block-kadence-rowlayout:not(.alignfull) {
+        width: 100%;
+        padding-inline: var(--wp--style--root--padding-right, 15px);
+    }
+}

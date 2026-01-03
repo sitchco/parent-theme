@@ -1,0 +1,9 @@
+/**
+ * Kadence Column block styling.
+ * TODO: re-evaluate based on recent changes to kb integration layer
+ */
+:where(.wp-block-kadence-column) {
+    &.kb-section-is-sticky > .kt-inside-inner-col {
+        top: calc(var(--dynamic__header-height) + var(--wp--custom--content-spacing));
+    }
+}
