@@ -77,8 +77,7 @@ class Theme extends Module
             2,
         );
 
-        add_filter('render_block_core/image', [$this, 'imageBlockInlineSVG'], 20, 2);
-
+        add_filter('render_block_kadence/image', [$this, 'imageBlockInlineSVG'], 20, 2);
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
         add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
         add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideKadenceBlockFontSizes']);
@@ -156,7 +155,48 @@ class Theme extends Module
 
     public function imageBlockInlineSVG(string $block_content, array $block): string
     {
-        return $this->inlineSVGService->replaceImageBlock($block_content, $block);
+        // First, use the service to inline the SVG
+        $block_content = $this->inlineSVGService->replaceImageBlock($block_content, $block);
+
+        // Check if SVG was inlined
+        if (!str_contains($block_content, '<svg')) {
+            return $block_content;
+        }
+
+        // Get dimensions from block attributes (Kadence Advanced Image)
+        $attrs = $block['attrs'] ?? [];
+        $width = $attrs['width'] ?? null;
+        $imgMaxWidth = $attrs['imgMaxWidth'] ?? null;
+
+        // Process the SVG to add proper sizing styles for img-like behavior
+        $p = new \WP_HTML_Tag_Processor($block_content);
+
+        if ($p->next_tag('svg')) {
+            $styles = ['max-width: 100%', 'height: auto'];
+
+            // Add explicit width if set in CMS
+            if ($width) {
+                $styles[] = "width: {$width}px";
+            }
+
+            // Override max-width if explicitly set in CMS
+            if ($imgMaxWidth) {
+                $styles[0] = "max-width: {$imgMaxWidth}px";
+            }
+
+            $existing_style = $p->get_attribute('style') ?? '';
+            $new_style = implode('; ', $styles);
+
+            if ($existing_style) {
+                $new_style = rtrim($existing_style, ';') . '; ' . $new_style;
+            }
+
+            $p->set_attribute('style', $new_style);
+
+            return $p->get_updated_html();
+        }
+
+        return $block_content;
     }
 
     public function overrideKadenceBlockSpacingSizes(array $sizes): array
