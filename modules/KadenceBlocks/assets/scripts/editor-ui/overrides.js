@@ -12,13 +12,15 @@ function createSizeOverride({ settings, type, labelTransform }) {
             ...originalOptions.filter((option) => ['ss-auto', '0', 'none'].includes(option.value)),
             ...themeSizes.map((size) => {
                 const label = labelTransform(size.name);
+                const numbers = label.match(/\d+/g);
+                const parsedSize = numbers ? parseInt(numbers.at(-1)) : null;
                 const option = {
                     label,
                     value: `${type}-${size.slug}`,
-                    size: parseInt(label.split('/').at(-1)),
+                    ...(parsedSize && { size: parsedSize }),
                 };
                 if (originalOptions[0].name) {
-                    option.name = size.name;
+                    option.name = label;
                     option.output = makePresetVar(type, size.slug);
                 }
                 return option;
@@ -62,6 +64,10 @@ addFilter('kadence.blocks.column.verticalGapOptions', 'sitchco/kadence-override/
 addFilter('kadence.blocks.column.horizontalGapOptions', 'sitchco/kadence-override/gapOptions', spacingOverride);
 
 function gutterSizeOverride(size, _, gutter) {
+    if (gutter === 'content-flow') {
+        return 'var(--wp--custom--content-spacing)';
+    }
+
     const themeSizes = themeSpacing() || [];
     const match = themeSizes.find((s) => `spacing-${s.slug}` === gutter);
     if (match) {

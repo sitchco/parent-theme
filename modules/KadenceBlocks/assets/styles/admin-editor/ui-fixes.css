@@ -1,0 +1,31 @@
+/**
+ * General Kadence editor UI fixes.
+ *
+ * Fixes for Kadence UI controls and editor layout issues.
+ */
+
+/* Fix font size control radio buttons being too wide */
+.kadence-font-size-control .kadence-radio-container-control.components-button-group .components-button {
+    min-width: unset;
+}
+
+/* Disable draggable padding resize handles, and remove default height to avoid confusion in the editor */
+.kt-padding-resize-box {
+    pointer-events: none;
+    max-height: none !important;
+    height: 0;
+}
+
+.block-editor-block-list__layout.is-root-container {
+    /* Kadence top-level section blocks don't include the align classes that wp expects...
+     maybe the assumption was that only row-layout blocks would be top-level? */
+    > [data-align='wide'] {
+        max-width: var(--wp--style--global--wide-size);
+    }
+    > [data-align='full'] {
+        max-width: none;
+        width: auto;
+        margin-right: calc(var(--wp--style--root--padding-right) * -1) !important;
+        margin-left: calc(var(--wp--style--root--padding-left) * -1) !important;
+    }
+}

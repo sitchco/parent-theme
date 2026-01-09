@@ -1,0 +1,86 @@
+/**
+ * Kadence Column block styling.
+ *
+ * ============================================================================
+ * FRONTEND HTML STRUCTURE (public page view)
+ * ============================================================================
+ *
+ * <div class="wp-block-kadence-column kadence-column{ID} kt-column-has-bg">
+ *   <div class="kt-inside-inner-col">
+ *     <!-- Column content -->
+ *   </div>
+ * </div>
+ *
+ * Key classes:
+ * - .wp-block-kadence-column : Block identifier / outer wrapper
+ * - .kadence-column{ID}      : Unique column identifier (no hyphen before ID)
+ * - .kt-column-has-bg        : Present when column has background
+ * - .kt-inside-inner-col     : Inner content wrapper (flex container)
+ *
+ * ============================================================================
+ * EDITOR HTML STRUCTURE
+ * ============================================================================
+ * See admin-editor/column.css for editor markup (inner wrapper class differs).
+ *
+ */
+:where(.wp-block-kadence-column) {
+    &.kb-section-is-sticky > .kt-inside-inner-col {
+        top: calc(var(--dynamic__header-height) + var(--wp--custom--content-spacing));
+    }
+}
+
+.kt-inside-inner-col,
+.kadence-inner-column-inner,
+.kt-tab-inner-content-inner {
+    /* Zero margin to allow default gap instead (see content-flow in KadenceBlocks.php and column-gap-defaults.js */
+    > * {
+        margin-block-start: 0;
+        margin-block-end: 0;
+    }
+
+    /**
+     * Optical spacing correction for elements with strong visual boundaries.
+     *
+     * Elements with hard edges (images, videos, code blocks, etc.) create perceived
+     * separation through their visual boundary alone. When followed by text, the gap
+     * appears larger than the same spacing between two text elements—even though the
+     * actual value is identical.
+     *
+     * This offset adds a small amount of margin to compensate, making the visual
+     * rhythm feel consistent across different element combinations.
+     *
+     * Other elements that may benefit from this treatment:
+     * - .wp-block-video, .wp-block-embed (hard rectangular edges)
+     * - .wp-block-cover (full-width background creates visual break)
+     * - .wp-block-code, .wp-block-preformatted (background creates a "box")
+     * - .wp-block-table (borders/cells create strong edges)
+     * - .wp-block-separator (already a visual divider, gap looks doubled)
+     * - .wp-block-gallery (collection of hard-edged images)
+     * - .wp-block-buttons (solid background creates edge when block-level)
+     * - .wp-block-quote, .wp-block-pullquote (when styled with border/background)
+     */
+    > .wp-block-kadence-image:not(:last-child) {
+        margin-bottom: var(--wp--custom--visual-edge-offset);
+    }
+    > .wp-block-kadence-image:not(:first-child) {
+        margin-top: var(--wp--custom--visual-edge-offset);
+    }
+}
+
+/**
+ * Content inset via margin for columns with backgrounds.
+ *
+ * Text flow content gets automatic inset from container edges.
+ * Layout blocks (rows, groups, images) manage their own spacing.
+ */
+.kt-column-has-bg > .kt-inside-inner-col {
+    --kb-padding-top: var(--wp--custom--container-inset);
+    --kb-padding-left: var(--wp--custom--container-inset);
+    --kb-padding-right: var(--wp--custom--container-inset);
+    --kb-padding-bottom: var(--wp--custom--container-inset);
+    padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
+    > .alignfull {
+        margin-left: calc(-1 * var(--kb-padding-left));
+        margin-right: calc(-1 * var(--kb-padding-right));
+    }
+}

@@ -1,20 +1,20 @@
 :where(.wp-block-columns.has-background) {
-    padding: var(--wp--custom--grid-gutter-spacing);
+    padding: 0; /* var(--wp--custom--section-spacing) var(--wp--custom--grid-gutter-spacing);*/
 }
 
 :where(.wp-block-column.has-background) {
-    padding: var(--wp--custom--grid-gutter-spacing);
+    padding: 0; /* var(--wp--custom--grid-gutter-spacing);*/
 }
 
 :where(.wp-block-group.has-background) {
-    padding: var(--wp--custom--grid-gutter-spacing);
+    padding: 0; /*var(--wp--custom--grid-gutter-spacing);*/
 }
 
 :where(article.has-global-padding) {
     > :first-child:not(.alignfull) {
-        margin-block-start: var(--wp--custom--grid-gutter-spacing);
+        margin-block-start: var(--wp--custom--section-spacing);
     }
     > :last-child:not(.alignfull) {
-        margin-block-end: var(--wp--custom--grid-gutter-spacing);
+        margin-block-end: var(--wp--custom--section-spacing);
     }
 }

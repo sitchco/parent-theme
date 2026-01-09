@@ -1,0 +1,44 @@
+/**
+ * Kadence Row Layout block editor preview styles.
+ *
+ * Mirrors frontend row-layout.css rules for WYSIWYG preview in the editor.
+ *
+ * ============================================================================
+ * EDITOR HTML STRUCTURE (block editor preview)
+ * ============================================================================
+ *
+ * <div class="wp-block-kadence-rowlayout kt-row-column-wrap alignnone kb-row-id-{ID} kt-has-{N}-columns kt-row-layout-equal kt-row-valign-top kt-row-has-bg">
+ *   <div class="kt-row-layout-background"></div>
+ *   <style>...</style>
+ *   <div class="kt-row-layout-overlay kt-row-overlay-normal"></div>
+ *   <div class="components-resizable-box__container kt-top-padding-resize kt-padding-resize-box">...</div>
+ *   <div class="innerblocks-wrap kb-theme-content-width kt-layout-inner-wrap-id{ID} kb-grid-columns-{N} block-editor-block-list__layout">
+ *     <div class="wp-block-kadence-column kadence-column inner-column-1 kadence-column-{ID} kt-column-has-bg">
+ *       <style>...</style>
+ *       <div class="kadence-inner-column-inner block-editor-block-list__layout">
+ *         <!-- Column content -->
+ *       </div>
+ *     </div>
+ *     <!-- Additional columns... -->
+ *   </div>
+ *   <div class="components-resizable-box__container kt-bottom-padding-resize kt-padding-resize-box">...</div>
+ * </div>
+ *
+ * Key differences from frontend:
+ * - .wp-block-kadence-rowlayout and .kt-row-column-wrap are on the SAME element (merged)
+ * - .innerblocks-wrap is the flex container for columns (not .kt-row-column-wrap)
+ * - Column inner is .kadence-inner-column-inner (not .kt-inside-inner-col)
+ * - Extra UI elements: .kt-row-layout-background, .kt-row-layout-overlay, resize handles
+ * - Uses kb-row-id-{ID} instead of kb-row-layout-id{ID}
+ *
+ * Key classes:
+ * - .wp-block-kadence-rowlayout   : Block identifier (same element has .kt-row-column-wrap)
+ * - .kt-row-column-wrap           : On same element as above (NOT a child like frontend)
+ * - .innerblocks-wrap             : Actual flex container for columns
+ * - .kb-theme-content-width       : Content width constraint class
+ * - .kb-grid-columns-{N}          : CSS grid column count
+ * - .wp-block-kadence-column      : Column wrapper
+ * - .kadence-inner-column-inner   : Column inner content wrapper
+ * - .kt-row-has-bg                : Present when row has background
+ *
+ */

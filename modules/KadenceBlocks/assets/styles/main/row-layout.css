@@ -1,0 +1,42 @@
+/**
+ * Kadence Row Layout alignment and width constraints.
+ *
+ * Makes Row Layout respect WordPress alignment system and handles
+ * edge padding for alignfull rows with backgrounds.
+ *
+ * ============================================================================
+ * FRONTEND HTML STRUCTURE (public page view)
+ * ============================================================================
+ *
+ * <div class="kb-row-layout-wrap kb-row-layout-id{ID} alignnone|alignwide|alignfull kt-row-has-bg wp-block-kadence-rowlayout">
+ *   <div class="kt-row-column-wrap kt-has-{N}-columns kt-row-layout-equal kt-tab-layout-inherit kt-mobile-layout-row kt-row-valign-top kb-theme-content-width">
+ *     <div class="wp-block-kadence-column kadence-column{ID} kt-column-has-bg">
+ *       <div class="kt-inside-inner-col">
+ *         <!-- Column content -->
+ *       </div>
+ *     </div>
+ *     <!-- Additional columns... -->
+ *   </div>
+ * </div>
+ *
+ * Key classes:
+ * - .kb-row-layout-wrap        : Outer wrapper (background container)
+ * - .wp-block-kadence-rowlayout: Block identifier (same element as above)
+ * - .kt-row-column-wrap        : Inner flex container for columns
+ * - .kt-has-{N}-columns        : Column count (e.g., kt-has-3-columns)
+ * - .kt-row-has-bg             : Present when row has background
+ * - .kb-theme-content-width    : Content width constraint class
+ * - .wp-block-kadence-column   : Column wrapper
+ * - .kt-inside-inner-col       : Column inner content wrapper
+ *
+ * ============================================================================
+ * EDITOR HTML STRUCTURE
+ * ============================================================================
+ * See admin-editor/row-layout.css for editor markup (significantly different).
+ *
+ */
+:where(.wp-block-kadence-rowlayout) {
+    container-name: kadence-rowlayout;
+    container-type: inline-size;
+}
+

@@ -1,0 +1,21 @@
+/**
+ * CSS variable aliases for Kadence Blocks compatibility.
+ *
+ * Kadence Blocks expects these --global-* variables from Kadence Theme.
+ * We alias them to theme.json custom properties so Kadence Blocks works
+ * correctly without Kadence Theme.
+ */
+:root {
+    --global-content-width: var(--wp--style--global--content-size);
+    --global-content-edge-padding: var(--wp--custom--page-gutter);
+    --global-row-gutter-xs: var(--wp--custom--grid-gutter-spacing);
+    --global-row-gutter-sm: var(--wp--custom--grid-gutter-spacing);
+    --global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
+    --global-row-gutter-lg: var(--wp--custom--grid-gutter-spacing);
+    --global-kb-row-default-top: 0; /* var(--wp--custom--section-spacing); */
+    --global-kb-row-default-bottom: 0; /* var(--wp--custom--section-spacing); */
+    --global-kb-gap-xs: var(--wp--custom--content-spacing);
+    --global-kb-gap-sm: var(--wp--custom--content-spacing);
+    --global-kb-gap-md: var(--wp--custom--content-spacing);
+    --global-kb-gap-lg: var(--wp--custom--content-spacing);
+}

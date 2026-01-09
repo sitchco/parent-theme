@@ -124,7 +124,11 @@
         },
         "custom": {
             "contentSpacing": "var:preset|spacing|30",
-            "gridGutterSpacing": "var:preset|spacing|50"
+            "gridGutterSpacing": "var:preset|spacing|50",
+            "pageGutter": "var:custom|grid-gutter-spacing",
+            "sectionSpacing": "var:custom|grid-gutter-spacing",
+            "containerInset": "var:custom|page-gutter",
+            "visualEdgeOffset": "0.5rem"
         }
     },
     "styles": {
@@ -132,9 +136,9 @@
             "blockGap": "var:custom|content-spacing",
             "padding": {
                 "top": "0px",
-                "right": "var:custom|grid-gutter-spacing",
+                "right": "var:custom|page-gutter",
                 "bottom": "0px",
-                "left": "var:custom|grid-gutter-spacing"
+                "left": "var:custom|page-gutter"
             }
         },
         "blocks": {
