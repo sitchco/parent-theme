@@ -1,0 +1,12 @@
+/**
+ * Editor layout variable fallbacks for breakout column calculations.
+ *
+ * Kadence normally sets these via JS based on editor state (sidebar open/closed, etc.).
+ * These fallbacks ensure breakout previews work if Kadence's JS fails to set them.
+ */
+:root {
+    --global-kb-editor-full-width: 100vw;
+    --global-kb-editor-admin-sidebar: 0px;
+    --global-kb-editor-sidebar: 0px;
+    --global-kb-editor-sidebar-secondary: 0px;
+}
