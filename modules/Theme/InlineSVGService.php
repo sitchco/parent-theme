@@ -17,6 +17,8 @@ class InlineSVGService
         $defaults = [
             'file_path_resolver' => null, // Callable that returns file path given (src, block)
             'svg_id_prefix' => 'inline-svg-', // Prefix for SVG id attribute
+            'width' => null, // Explicit width in pixels for img-like behavior
+            'max_width' => null, // Max width constraint in pixels
         ];
 
         $options = array_merge($defaults, $options);
@@ -87,6 +89,26 @@ class InlineSVGService
         if ($options['svg_id_prefix'] && isset($block['attrs']['id'])) {
             $p_svg->set_attribute('id', $options['svg_id_prefix'] . $block['attrs']['id']);
         }
+
+        // Apply sizing styles for img-like behavior
+        $styles = ['max-width: 100%', 'height: auto'];
+
+        if ($options['width']) {
+            $styles[] = "width: {$options['width']}px";
+        }
+
+        if ($options['max_width']) {
+            $styles[0] = "max-width: {$options['max_width']}px";
+        }
+
+        $existing_style = $p_svg->get_attribute('style') ?? '';
+        $new_style = implode('; ', $styles);
+
+        if ($existing_style) {
+            $new_style = rtrim($existing_style, ';') . '; ' . $new_style;
+        }
+
+        $p_svg->set_attribute('style', $new_style);
 
         // Replace the img tag with the inline SVG
         return preg_replace('#<img\b[^>]*>#i', $p_svg->get_updated_html(), $block_content);

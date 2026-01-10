@@ -77,8 +77,7 @@ class Theme extends Module
             2,
         );
 
-        add_filter('render_block_core/image', [$this, 'imageBlockInlineSVG'], 20, 2);
-
+        add_filter('render_block_kadence/image', [$this, 'imageBlockInlineSVG'], 20, 2);
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
         add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideKadenceBlockSpacingSizes']);
         add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideKadenceBlockFontSizes']);
@@ -156,7 +155,12 @@ class Theme extends Module
 
     public function imageBlockInlineSVG(string $block_content, array $block): string
     {
-        return $this->inlineSVGService->replaceImageBlock($block_content, $block);
+        $attrs = $block['attrs'] ?? [];
+
+        return $this->inlineSVGService->replaceImageBlock($block_content, $block, [
+            'width' => $attrs['width'] ?? null,
+            'max_width' => $attrs['imgMaxWidth'] ?? null,
+        ]);
     }
 
     public function overrideKadenceBlockSpacingSizes(array $sizes): array
