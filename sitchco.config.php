@@ -40,6 +40,12 @@ return [
         /** Design */
         'core/more',
         'core/nextpage',
+        /** Layout */
+        'core/group',
+        'core/cover',
+        'core/columns',
+        'core/column',
+        'core/image',
         /** Widgets */
         'core/archives',
         'core/calendar',
