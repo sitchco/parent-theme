@@ -1,111 +1,197 @@
 # KadenceBlocks Integration Module
 
-This module is an integration layer between Kadence Blocks plugin and our theme's design system. It exists because Kadence Blocks is tightly coupled to Kadence Theme and makes assumptions that conflict with WordPress theme.json conventions.
+Integration layer between Kadence Blocks plugin and theme.json-based themes. Kadence Blocks provides responsive controls (different values per breakpoint) that the core block editor lacks, but it completely ignores WordPress design systems. This module makes Kadence Blocks respect theme.json by providing CSS variable aliases, replacing presets with theme.json values, and ensuring editor/frontend parity.
 
-## Philosophy
+**Before making changes to this module**, read [ADR.md](./ADR.md) to understand the architectural decisions and constraints.
 
-**theme.json is the source of truth.** Kadence Blocks has its own spacing presets, font sizes, and layout assumptions. This module redirects those to use theme.json values instead, giving us a single place to define our design tokens.
+## Requirements
 
-**Explicit over automatic.** Early iterations tried to inject smart defaults and automatic spacing. This led to specificity conflicts and unpredictable behavior. The current approach: strip Kadence's assumptions to zero, let content editors set values explicitly in the CMS, and provide good defaults only where Kadence would otherwise output broken CSS.
+- **Forked Kadence Blocks plugin**: This module depends on a fork of Kadence Blocks (`sitchco/kadence-blocks`) that adds editor-side filter hooks not present in upstream.
+- **theme.json design tokens**: Spacing/font size presets and the `--wp--custom--*` variables referenced by this module must be defined (directly or via inheritance) in `theme.json`.
+- **Module enabled**: Ensure the module is registered in `sitchco.config.php`.
 
-## Problems Solved
+## What This Module Does
 
-### 1. Kadence ignores theme.json presets
-
-**Problem:** Kadence has hardcoded spacing presets (sm/md/lg) and font sizes that don't match theme.json values.
-
-**Solution:** PHP filters (`overrideSpacingSizes`, `overrideGapSizes`, `overrideFontSizes`) replace Kadence's presets with theme.json presets. Editor JS (`overrides.js`) does the same for the block editor UI.
-
-### 2. Columns have no default content spacing
-
-**Problem:** Kadence Theme uses bottom margin for vertical content spacing. Our design system uses top margin. Kadence Blocks without Kadence Theme has neither assumption—it just outputs whatever gap value is set (or nothing). Trying to reconcile this with CSS overrides across responsive breakpoints was brittle and created specificity conflicts.
-
-**Solution:** Set default gap at the source rather than fight with CSS:
-- `KadenceBlocks.php` — registers `content-flow` token, injects as default during render via `kadence_blocks_column_render_block_attributes` filter
-- `assets/scripts/editor-ui/column-gap-defaults.js` — mirrors default in editor preview via `kadence.block.column.defaultRowGapVariable` filter (requires fork)
-
-The CSS variable mappings live in `variables.css`, and zero-margin rules (to let gap control spacing) are in `column.css`.
-
-**Dependency:** This requires a fork of Kadence Blocks. The fork adds a `kadence.block.column.defaultRowGapVariable` filter to `src/blocks/column/edit.js`. Without this, the editor preview doesn't match the frontend.
-
-### 3. Kadence expects Kadence Theme variables
-
-**Problem:** Kadence Blocks references `--global-*` CSS variables that only exist in Kadence Theme.
-
-**Solution:** `variables.css` aliases these to our theme.json custom properties:
-```css
---global-content-width: var(--wp--style--global--content-size);
---global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
-```
-
-### 4. Row Layout ignores WordPress alignment
-
-**Problem:** Kadence Row Layout outputs alignment classes but doesn't constrain width, causing layout inconsistencies with native WordPress blocks.
-
-**Solution:** `row-layout.css` applies WordPress alignment constraints:
-- Default: `max-width: var(--wp--style--global--content-size)`
-- `.alignwide`: `max-width: var(--wp--style--global--wide-size)`
-- `.alignfull`: full width with root padding
-
-### 5. Column padding can't be overridden without knowing preset values
-
-**Problem:** Kadence outputs padding directly as `padding-top: var(--wp--preset--spacing--70)`. To override this in CSS, you need to know which preset was chosen—there's no intermediate variable to target.
-
-**Solution:** Enable CSS variable output for padding via `kadence_blocks_measure_output_css_variables` filter. This changes output to:
-```css
---kb-padding-top: var(--wp--preset--spacing--70);
-padding-top: var(--kb-padding-top);
-```
-
-Now CSS can override `--kb-padding-top` without knowing the original preset. The editor-side equivalent is in `measure-css-variables.js`.
+- Replaces Kadence's spacing/font presets with theme.json values
+- Aliases Kadence's `--global-*` CSS variables to WordPress `--wp--*` properties
+- Injects a theme-controlled default gap for columns (via hidden `content-flow` token)
+- Enables CSS variable output for padding (allows CSS overrides)
+- Adds background detection class (`kt-column-has-bg`) for styling hooks
+- Provides parallel JavaScript implementations for editor preview parity
 
 ## File Structure
 
+The module is organized into three layers:
+
+**PHP (KadenceBlocks.php)** - Filters that replace Kadence presets with theme.json values, inject defaults, and add styling hooks. This is where the Kadence-to-theme.json mapping happens.
+
+**JavaScript (assets/scripts/editor-ui/)** - Editor-side implementations that mirror the PHP behavior. Each PHP filter has a corresponding JavaScript hook to maintain editor/frontend parity.
+
+**CSS (assets/styles/)** - Split between frontend (`main/`) and editor (`admin-editor/`) because the HTML structures differ significantly. Variable aliases live in `_variables.css` files; block-specific rules in their own files.
+
+The editor CSS files include inline documentation of the HTML structure they target, since this differs from frontend output and isn't obvious from inspection.
+
+## Integration Points
+
+### PHP Filters (KadenceBlocks.php)
+
+| Filter | Purpose |
+|--------|---------|
+| `kadence_blocks_css_spacing_sizes` | Replace spacing presets with theme.json scale values |
+| `kadence_blocks_css_gap_sizes` | Replace gap presets with theme.json scale values + add hidden `content-flow` token (maps to `--wp--custom--content-spacing`) |
+| `kadence_blocks_css_font_sizes` | Replace font presets with theme.json values |
+| `kadence_blocks_column_render_block_attributes` | Inject `content-flow` as default gap when none selected (works with `gap_sizes` filter above) |
+| `kadence_blocks_measure_output_css_variables` | Enable CSS variable output for padding |
+| `render_block_kadence/column` | Add `kt-column-has-bg` class |
+
+### JavaScript Hooks (editor-ui/*.js)
+
+| Hook | Purpose |
+|------|---------|
+| `kadence.block.column.defaultRowGapVariable` | Set default gap in editor (requires fork) |
+| `kadence.blocks.measureOutputCssVariables` | Enable CSS variable output in editor |
+| `kadence.rowlayout.defaultPadding` | Provide default padding for resize handles |
+
+### CSS Variables
+
+```css
+/* Column/row padding (when CSS variable output enabled) */
+--kb-padding-top
+--kb-padding-right
+--kb-padding-bottom
+--kb-padding-left
+
+/* Semantic spacing (defined in theme.json, used by this module) */
+--wp--custom--content-spacing      /* Vertical rhythm between content */
+--wp--custom--page-gutter          /* Screen edge padding */
+--wp--custom--container-inset      /* Content inset for backgrounds */
 ```
-KadenceBlocks/
-├── KadenceBlocks.php          # Main module: PHP filters for presets, gap injection
-├── README.md                  # This file
-└── assets/
-    ├── scripts/
-    │   ├── editor-ui.js       # Entry point for editor JS
-    │   └── editor-ui/
-    │       ├── column-gap-defaults.js     # Default gap for editor preview
-    │       ├── kadence-column-background.jsx  # Background detection component
-    │       ├── measure-css-variables.js   # Enable CSS variable output for padding
-    │       └── overrides.js               # Replace Kadence presets with theme.json
-    └── styles/
-        ├── main.css           # Frontend entry point
-        ├── main/
-        │   ├── variables.css  # Kadence Theme variable aliases + gap token mappings
-        │   ├── row-layout.css # Row alignment and width constraints
-        │   └── column.css     # Column-specific fixes + zero-margin rules for gap
-        ├── admin-editor.css   # Editor preview entry point
-        └── admin-editor/
-            ├── ui-fixes.css   # Fixes for Kadence editor UI controls
-            ├── column.css     # Editor-specific column styles
-            └── row-layout.css # Editor-specific row layout styles
+
+The `--kb-padding-*` variables enable child elements to reference parent padding. Any child element with `.alignfull` class automatically applies negative margins based on `--kb-padding-left` and `--kb-padding-right`, achieving a full-bleed effect. This works with images, groups, or any block that supports alignment - giving editors versatile layout control without nesting additional containers.
+
+## Child Theme Integration
+
+The parent theme handles the Kadence Blocks integration. Child themes customize appearance through theme.json. No PHP filters or JavaScript hooks are required in child themes.
+
+### How It Works
+
+1. The parent theme's spacing scale is mapped to Kadence's preset controls
+2. Semantic variables reference values from the spacing scale
+3. The integration module ensures Kadence blocks use these values
+
+### What Child Themes Define
+
+**Spacing scale** (optional - inherit or override):
+
+```json
+{
+  "settings": {
+    "spacing": {
+      "spacingSizes": [
+        { "slug": "40", "size": "1rem", "name": "Small" },
+        { "slug": "50", "size": "1.5rem", "name": "Medium" },
+        { "slug": "60", "size": "2rem", "name": "Large" }
+      ]
+    }
+  }
+}
 ```
 
-## Dependencies
+**Semantic variables** (assign scale values to purposes):
 
-### Kadence Blocks Fork
+```json
+{
+  "settings": {
+    "custom": {
+      "contentSpacing": "var(--wp--preset--spacing--50)",
+      "containerInset": "var(--wp--preset--spacing--60)",
+      "pageGutter": "var(--wp--preset--spacing--50)"
+    }
+  }
+}
+```
 
-This module requires modifications to the Kadence Blocks plugin. The fork adds filter hooks that don't exist in upstream Kadence.
+### What You Get
 
-**Modified file:** `wp-content/plugins/kadence-blocks/src/blocks/column/edit.js`
+- Kadence spacing/font controls show your theme.json presets
+- New columns have vertical content spacing by default
+- Columns with backgrounds receive appropriate inset
+- Row layouts respect WordPress alignment constraints
 
-**Change:** Added `kadence.block.column.defaultRowGapVariable` filter at line ~992.
+All defaults are overridable via editor controls. No magic spacing that editors cannot adjust.
 
-When updating Kadence Blocks, this change must be reapplied or the editor preview will show `row-gap: 0` for new columns.
+## Fork Dependency
 
-## Known Issues / Open Questions
+This module requires a forked version of Kadence Blocks (`sitchco/kadence-blocks`). The fork adds JavaScript filter hooks that don't exist in upstream. The most critical for editor/frontend parity is:
 
-1. **Column overflow: hidden** — Applied globally to fix border-radius clipping. May cause issues with sticky elements or dropdowns that need to overflow. See `column.css`.
+**Hook**: `kadence.block.column.defaultRowGapVariable`
+**Purpose**: Allows setting default row gap in the editor preview
+**Impact without fork**: Editor preview shows `row-gap: 0` for new columns while frontend shows the correct default
 
-2. **Row background padding** — Rows with backgrounds (`kt-row-has-bg`) may need different padding treatment. Currently zeroing `--global-kb-row-default-top/bottom` for rows without backgrounds.
+Other fork hooks used by this module include `kadence.blocks.measureOutputCssVariables` and `kadence.rowlayout.defaultPadding`.
 
-3. **Responsive gap inheritance** — Gap injection sets desktop value only `['content-flow', '', '']`. Tablet/mobile inherit from desktop, which is usually correct but may need refinement.
+Note: The PHP filter `kadence_blocks_column_render_block_attributes` exists in upstream Kadence (via the abstract block class's dynamic filter pattern). Only the JavaScript hooks require the fork.
 
-## History
+### Fork Maintenance
 
-This module was created to encapsulate scattered Kadence modifications from both parent and child themes into a single, maintainable location. Early approaches tried to be too clever with automatic spacing injection, leading to specificity conflicts. The current approach favors explicit editor control with sensible defaults only where Kadence would otherwise produce broken output.
+See [Fork Maintenance](./ADR.md#fork-maintenance) in ADR.md for scope, commit references, and update process.
+
+## Common Issues
+
+- [Kadence controls show wrong preset names](#kadence-controls-show-wrong-preset-names)
+- [Editor preview doesn't match frontend](#editor-preview-doesnt-match-frontend)
+- [Columns have no vertical spacing](#columns-have-no-vertical-spacing)
+- [Background padding not working](#background-padding-not-working)
+
+### Kadence controls show wrong preset names
+
+**Symptom**: Spacing dropdown shows "xs/sm/md/lg" instead of theme.json preset names.
+
+#### Cause 1: Vite HMR race condition (local development)
+
+During local development with `pnpm dev`, `Sitchco\Framework\ModuleAssets::inlineScriptData()` defers script data to the `admin_head` hook, but the editor UI JavaScript loads and executes during the earlier `enqueue_block_editor_assets` hook. The filters in `overrides.js` try to read `window.sitchco.themeSettings` before it exists, fall back to empty arrays, and Kadence uses its default presets.
+
+In production builds, Vite bundles the inline data directly into the JavaScript file, so it's available when filters register.
+
+**Impact**: If content is saved in this state, blocks are saved with Kadence's values (like `sm`) instead of theme.json references. This is difficult to detect because the visual editor looks normal—corrupted values only appear in code view.
+
+**Workaround**: When editing content in the CMS, avoid editing while `pnpm dev` is running. Use a compiled build (`pnpm build`) so the filters are applied correctly.
+
+**Detecting corrupted blocks**: Switch to Code editor mode (Options menu → Code editor, or `Shift+Option+Command+M` on macOS) and search for "padding", "margin", or "gap". If you see values like `"sm"` or `"md"`, the block was saved without filters applied.
+
+**Fixing corrupted blocks**: Delete the incorrect values from the raw HTML, then reapply spacing using the editor controls. The correct theme.json references will be saved.
+
+*This is a known bug with a fix scheduled for a future sprint. Until resolved, avoid editing content while `pnpm dev` is running.*
+
+#### Cause 2: Module not running
+
+If you're not running `pnpm dev` and still see Kadence defaults, the `kadence_blocks_css_spacing_sizes` filter likely isn't running. Verify the module is registered in `sitchco.config.php`.
+
+### Editor preview doesn't match frontend
+
+**Symptom**: Spacing looks different in the editor than on the published page.
+
+**Likely causes**:
+- Fork not applied after Kadence update (check for `kadence.block.column.defaultRowGapVariable` filter)
+- JavaScript hook not firing (check browser console for errors)
+- CSS specificity conflict in editor styles
+
+### Columns have no vertical spacing
+
+**Symptom**: Content in columns stacks with no gap between elements.
+
+**Likely cause**: The default gap isn't being injected. Check that both filters are working:
+1. `kadence_blocks_css_gap_sizes` must add `content-flow` to the gap sizes map
+2. `kadence_blocks_column_render_block_attributes` must inject `content-flow` when `rowGapVariable` is empty
+
+### Background padding not working
+
+**Symptom**: Columns with backgrounds have no content inset.
+
+**Likely cause**: The `kt-column-has-bg` class isn't being added. Check the `render_block_kadence/column` filter, or verify background detection logic matches how the background was applied.
+
+## Related Documentation
+
+- [ADR.md](./ADR.md) - Architectural decisions and rationale behind this module
+- Parent theme `theme.json` - Spacing scale and semantic variable definitions
+- Kadence Blocks documentation - Understanding block attributes and controls
