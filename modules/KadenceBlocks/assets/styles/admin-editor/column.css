@@ -41,13 +41,15 @@
  * Content inset for columns with backgrounds (editor preview).
  * Mirrors main/column.css rules for frontend.
  */
-.kt-column-has-bg .kadence-inner-column-inner {
-    --kb-padding-top: var(--wp--custom--container-inset);
+.kt-column-has-bg > .kadence-inner-column-inner {
+    --kb-padding-top: var(--wp--custom--column-inset-y);
     --kb-padding-left: var(--wp--custom--container-inset);
     --kb-padding-right: var(--wp--custom--container-inset);
-    --kb-padding-bottom: var(--wp--custom--container-inset);
+    --kb-padding-bottom: var(--wp--custom--column-inset-y);
     padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
+}
 
+.wp-block-kadence-column .kadence-inner-column-inner {
     > .alignfull {
         margin-left: calc(-1 * var(--kb-padding-left));
         margin-right: calc(-1 * var(--kb-padding-right));

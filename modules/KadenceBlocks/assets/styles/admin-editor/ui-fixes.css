@@ -12,8 +12,6 @@
 /* Disable draggable padding resize handles, and remove default height to avoid confusion in the editor */
 .kt-padding-resize-box {
     pointer-events: none;
-    max-height: none !important;
-    height: 0;
 }
 
 .block-editor-block-list__layout.is-root-container {

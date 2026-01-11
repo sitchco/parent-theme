@@ -3,6 +3,11 @@
  *
  * Fixes for Kadence UI controls and editor preview elements.
  * These selectors don't exist on the front-end.
+ *
+ * NOTE: main.css is also loaded in the admin editor preview, so when
+ * selectors and rules are identical between frontend and editor, they
+ * only need to be in main.css. Only add rules here when the editor
+ * markup differs from frontend (see HTML structure docs in each file).
  */
 
 @import 'admin-editor/_variables.css';

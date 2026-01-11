@@ -14,7 +14,7 @@
     /* Layout */
     --global-content-width: var(--wp--style--global--content-size);
     --kb-global-content-width: var(--wp--style--global--content-size);
-    --global-content-edge-padding: var(--wp--custom--page-gutter);
+    --global-content-edge-padding: 0;
 
     /* Row gutters */
     --global-row-gutter-xs: var(--wp--custom--grid-gutter-spacing);
@@ -22,7 +22,7 @@
     --global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
     --global-row-gutter-lg: var(--wp--custom--grid-gutter-spacing);
 
-    /* Column gaps */
+    /* Content gaps */
     --global-kb-gap-xs: var(--wp--custom--content-spacing);
     --global-kb-gap-sm: var(--wp--custom--content-spacing);
     --global-kb-gap-md: var(--wp--custom--content-spacing);
@@ -31,7 +31,7 @@
     /* Kadence spacing scale → semantic tokens */
     --global-kb-spacing-xxs: var(--wp--custom--visual-edge-offset);
     --global-kb-spacing-xs: var(--wp--custom--content-spacing);
-    --global-kb-spacing-sm: var(--wp--custom--section-spacing);
+    --global-kb-spacing-sm: var(--wp--custom--grid-gutter-spacing);
     --global-kb-spacing-md: var(--wp--custom--section-spacing);
     --global-kb-spacing-lg: var(--wp--custom--section-spacing);
     --global-kb-spacing-xl: var(--wp--custom--section-spacing);

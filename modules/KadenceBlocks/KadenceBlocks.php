@@ -149,7 +149,7 @@ class KadenceBlocks extends Module
     }
 
     /**
-     * Enable CSS custom property output for padding on Kadence column blocks.
+     * Enable CSS custom property output for padding on Kadence blocks.
      *
      * Instead of outputting:
      *   padding-top: var(--wp--preset--spacing--70);
@@ -168,8 +168,10 @@ class KadenceBlocks extends Module
         string $selector,
         array $attributes,
     ): bool {
-        if ($property === 'padding' && str_contains($selector, '.kadence-column')) {
-            return true;
+        if ($property === 'padding') {
+            if (str_contains($selector, '.kadence-column') || str_contains($selector, '.kb-row-layout')) {
+                return true;
+            }
         }
 
         return $use_variables;

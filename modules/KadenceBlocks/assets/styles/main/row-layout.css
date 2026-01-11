@@ -38,5 +38,43 @@
 :where(.wp-block-kadence-rowlayout) {
     container-name: kadence-rowlayout;
     container-type: inline-size;
+    &.alignnone,
+    &.alignwide {
+        width: 100%;
+        max-width: var(--wp--style--global--content-size);
+        margin-left: auto;
+        margin-right: auto;
+    }
+    &.alignwide {
+        max-width: var(--wp--style--global--wide-size);
+    }
 }
 
+.kt-row-has-bg {
+    > .kt-row-column-wrap {
+        --kb-padding-top: var(--wp--custom--row-inset-y);
+        --kb-padding-left: var(--wp--custom--container-inset);
+        --kb-padding-right: var(--wp--custom--container-inset);
+        --kb-padding-bottom: var(--wp--custom--row-inset-y);
+        padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
+    }
+    /*
+     * Alignfull/alignwide rows with content-width constraint:
+     * The .kb-theme-content-width class already constrains content to theme width,
+     * so we don't need container-inset padding on the inner container.
+     * Instead, apply page-gutter to the outer (for screen edge spacing)
+     * and zero the inner padding to prevent double-constraining the content.
+     */
+    @media (min-width: 768px) {
+        &:where(.alignfull, .alignwide) {
+            &:where(:has(> .kb-theme-content-width)) {
+                padding-left: var(--wp--custom--page-gutter);
+                padding-right: var(--wp--custom--page-gutter);
+                > .kt-row-column-wrap {
+                    --kb-padding-left: 0;
+                    --kb-padding-right: 0;
+                }
+            }
+        }
+    }
+}

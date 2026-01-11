@@ -123,12 +123,14 @@
             }
         },
         "custom": {
-            "contentSpacing": "var:preset|spacing|30",
-            "gridGutterSpacing": "var:preset|spacing|50",
-            "pageGutter": "var:custom|grid-gutter-spacing",
+            "pageGutter": "var:preset|spacing|20",
+            "contentSpacing": "var:preset|spacing|20",
+            "gridGutterSpacing": "var:preset|spacing|30",
             "sectionSpacing": "var:custom|grid-gutter-spacing",
             "containerInset": "var:custom|page-gutter",
-            "visualEdgeOffset": "0.5rem"
+            "rowInsetY": "var:custom|container-inset",
+            "columnInsetY": "var:custom|container-inset",
+            "visualEdgeOffset": "calc(var(--wp--custom--content-spacing) * .45)"
         }
     },
     "styles": {
