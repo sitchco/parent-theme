@@ -118,34 +118,61 @@ class KadenceBlocks extends Module
      *
      * Checks for background color, gradient, or image in block attributes
      * and adds 'kt-column-has-bg' class when found.
+     *
+     * Note: This logic is intentionally aligned with the editor-side detection
+     * in kadence-column-background.jsx to ensure consistent behavior between
+     * frontend rendering and the block editor.
      */
     public function addColumnBackgroundClass(string $block_content, array $block): string
     {
         $attrs = $block['attrs'] ?? [];
-        $has_background = false;
 
-        foreach ($attrs as $key => $value) {
-            if (str_contains($key, 'background') || str_contains($key, 'bgColor')) {
-                if (!empty($value)) {
-                    $has_background = true;
-                    break;
+        if (!$this->hasColumnBackground($attrs)) {
+            return $block_content;
+        }
+
+        $p = new \WP_HTML_Tag_Processor($block_content);
+        if ($p->next_tag(['tag_name' => 'DIV', 'class_name' => 'wp-block-kadence-column'])) {
+            $p->add_class('kt-column-has-bg');
+            return $p->get_updated_html();
+        }
+
+        return $block_content;
+    }
+
+    /**
+     * Check if column attributes indicate a background is set.
+     *
+     * Explicitly checks specific attributes rather than pattern matching,
+     * aligned with the JS implementation in kadence-column-background.jsx.
+     */
+    protected function hasColumnBackground(array $attrs): bool
+    {
+        // 1. Inline style background (WordPress core)
+        if (!empty($attrs['style']['color']['background'])) {
+            return true;
+        }
+
+        // 2. Solid background color
+        if (!empty($attrs['background'])) {
+            return true;
+        }
+
+        // 3. Gradient background (excluding explicit 'none')
+        if (!empty($attrs['gradient']) && $attrs['gradient'] !== 'none') {
+            return true;
+        }
+
+        // 4. Background image (check nested bgImg/url in array)
+        if (!empty($attrs['backgroundImg']) && is_array($attrs['backgroundImg'])) {
+            foreach ($attrs['backgroundImg'] as $img) {
+                if (is_array($img) && (!empty($img['bgImg']) || !empty($img['url']))) {
+                    return true;
                 }
             }
         }
 
-        if (!$has_background && !empty($attrs['style']['color']['background'])) {
-            $has_background = true;
-        }
-
-        if ($has_background) {
-            $p = new \WP_HTML_Tag_Processor($block_content);
-            if ($p->next_tag(['tag_name' => 'DIV', 'class_name' => 'wp-block-kadence-column'])) {
-                $p->add_class('kt-column-has-bg');
-                return $p->get_updated_html();
-            }
-        }
-
-        return $block_content;
+        return false;
     }
 
     /**

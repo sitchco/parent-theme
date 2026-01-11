@@ -1,48 +1,45 @@
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 
+/**
+ * Check if column attributes indicate a background is set.
+ *
+ * Note: This logic is intentionally aligned with the server-side detection
+ * in KadenceBlocks.php::hasColumnBackground() to ensure consistent behavior
+ * between the block editor and frontend rendering.
+ *
+ * @param {Object} attributes - Block attributes
+ * @returns {boolean} - Whether a background is set
+ */
+function hasColumnBackground(attributes) {
+    // 1. Inline style background (WordPress core)
+    if (attributes?.style?.color?.background) {
+        return true;
+    }
+    // 2. Solid background color (Kadence)
+    if (attributes.background && typeof attributes.background === 'string' && attributes.background.length > 0) {
+        return true;
+    }
+    // 3. Gradient background (excluding explicit 'none')
+    if (attributes.gradient && attributes.gradient !== 'none') {
+        return true;
+    }
+    // 4. Background image (check nested bgImg/url in array)
+    if (Array.isArray(attributes.backgroundImg) && attributes.backgroundImg.length > 0) {
+        if (attributes.backgroundImg.some((item) => item && (item.bgImg || item.url))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 const withColumnBackgroundClass = createHigherOrderComponent((BlockListBlock) => {
     return (props) => {
         const { name, attributes } = props;
         if (name !== 'kadence/column') {
             return <BlockListBlock {...props} />;
         }
-
-        let hasBackground = false;
-        // 1. Check for background color in style attribute
-        if (attributes?.style?.color?.background) {
-            hasBackground = true;
-        }
-        // 2. Check for backgroundColor attribute
-        if (!hasBackground && attributes.backgroundColor) {
-            hasBackground = true;
-        }
-        // 3. Check for gradient attribute
-        if (!hasBackground && attributes.gradient && attributes.gradient !== 'none') {
-            hasBackground = true;
-        }
-        // 4. Check for background image in `background`, `backgroundImg`, or `backgroundImage` attributes
-        if (!hasBackground) {
-            const bgAttributes = [attributes.background, attributes.backgroundImg, attributes.backgroundImage];
-
-            for (const attr of bgAttributes) {
-                if (!attr) {
-                    continue;
-                }
-                if (typeof attr === 'string' && attr.length > 0) {
-                    hasBackground = true;
-                    break;
-                }
-                if (Array.isArray(attr) && attr.length > 0) {
-                    // Check for bgImg or url inside the array's objects
-                    if (attr.some((item) => item && (item.bgImg || item.url))) {
-                        hasBackground = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (hasBackground) {
+        if (hasColumnBackground(attributes)) {
             const newProps = {
                 ...props,
                 className: [props.className, 'kt-column-has-bg'].filter(Boolean).join(' '),
