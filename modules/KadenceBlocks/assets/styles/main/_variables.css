@@ -39,4 +39,6 @@
     --global-kb-spacing-3xl: var(--wp--custom--section-spacing);
     --global-kb-spacing-4xl: var(--wp--custom--section-spacing);
     --global-kb-spacing-5xl: var(--wp--custom--section-spacing);
+
+    --kb-section-setting-offset: calc(var(--dynamic__header-height) + var(--wp--custom--section-spacing));
 }

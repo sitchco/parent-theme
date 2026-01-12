@@ -23,11 +23,6 @@
  * See admin-editor/column.css for editor markup (inner wrapper class differs).
  *
  */
-:where(.wp-block-kadence-column) {
-    &.kb-section-is-sticky > .kt-inside-inner-col {
-        top: calc(var(--dynamic__header-height) + var(--wp--custom--content-spacing));
-    }
-}
 
 .kt-inside-inner-col,
 .kadence-inner-column-inner,
