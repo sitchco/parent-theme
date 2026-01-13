@@ -50,6 +50,20 @@
     }
 }
 
+/*
+ * Base horizontal padding for alignfull rows.
+ * Prevents content from touching viewport edge regardless of background.
+ * Vertical padding is only applied when background is present (.kt-row-has-bg).
+ */
+.wp-block-kadence-rowlayout.alignfull {
+    > .kt-row-column-wrap {
+        --kb-padding-left: var(--wp--custom--container-inset);
+        --kb-padding-right: var(--wp--custom--container-inset);
+        padding-left: var(--kb-padding-left);
+        padding-right: var(--kb-padding-right);
+    }
+}
+
 .kt-row-has-bg {
     > .kt-row-column-wrap {
         --kb-padding-top: var(--wp--custom--row-inset-y);

@@ -62,6 +62,19 @@
     }
 }
 
+/*
+ * Reset padding variables in multi-column layouts to prevent inheritance from row.
+ * Single-column rows retain inheritance so alignfull children can break out to row edge.
+ * Mobile stacked columns also retain inheritance for full-viewport breakout.
+ * Columns with backgrounds override these with their own values.
+ */
+@media (min-width: 768px) {
+    :where(.kt-row-column-wrap:not(.kt-has-1-columns) > .wp-block-kadence-column > .kt-inside-inner-col) {
+        --kb-padding-left: 0;
+        --kb-padding-right: 0;
+    }
+}
+
 /**
  * Content inset via margin for columns with backgrounds.
  *
