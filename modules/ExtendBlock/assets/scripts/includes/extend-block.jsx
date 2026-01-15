@@ -129,7 +129,7 @@ function createInspectorFilter(targetBlocks, panels, options = {}) {
                     {panels.map((panel, panelIndex) => (
                         <InspectorControls key={panelIndex} group={panel.group || 'settings'}>
                             <PanelBody title={panel.title} initialOpen={panel.initialOpen ?? true}>
-                                {panel.fields.map((field) => {
+                                {panel.fields?.map((field) => {
                                     const value = attributes[field.name];
                                     const onChange = (newValue) => setAttributes({ [field.name]: newValue });
                                     return (
@@ -252,6 +252,9 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
  */
 export function extendBlock(config) {
     const { blocks: blocksConfig, namespace, shouldRender, useSetup, classGenerator, kadenceTabAware } = config;
+    if (!namespace) {
+        throw new Error('extendBlock requires a namespace');
+    }
 
     // Normalize blocks to array
     const blocks = Array.isArray(blocksConfig) ? blocksConfig : [blocksConfig];
@@ -316,6 +319,9 @@ export function extendBlock(config) {
  */
 export function extendBlockClasses(config) {
     const { blocks: blocksConfig, namespace, classGenerator } = config;
+    if (!namespace) {
+        throw new Error('extendBlockClasses requires a namespace');
+    }
     if (!classGenerator) {
         throw new Error('extendBlockClasses requires a classGenerator function');
     }

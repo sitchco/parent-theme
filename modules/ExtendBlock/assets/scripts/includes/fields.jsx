@@ -143,6 +143,10 @@ export function fieldsToAttributes(fields) {
     const attributes = {};
 
     for (const field of fields) {
+        if (!field.name) {
+            throw new Error('Field is missing required "name" property');
+        }
+
         attributes[field.name] = {
             type: field.attributeType,
             default: field.default,
