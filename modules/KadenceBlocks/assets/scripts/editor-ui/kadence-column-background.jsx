@@ -1,12 +1,7 @@
-import { addFilter } from '@wordpress/hooks';
-import { createHigherOrderComponent } from '@wordpress/compose';
+const { extendBlockClasses } = sitchco.extendBlock;
 
 /**
  * Check if column attributes indicate a background is set.
- *
- * Note: This logic is intentionally aligned with the server-side detection
- * in KadenceBlocks.php::hasColumnBackground() to ensure consistent behavior
- * between the block editor and frontend rendering.
  *
  * @param {Object} attributes - Block attributes
  * @returns {boolean} - Whether a background is set
@@ -33,21 +28,8 @@ function hasColumnBackground(attributes) {
     return false;
 }
 
-const withColumnBackgroundClass = createHigherOrderComponent((BlockListBlock) => {
-    return (props) => {
-        const { name, attributes } = props;
-        if (name !== 'kadence/column') {
-            return <BlockListBlock {...props} />;
-        }
-        if (hasColumnBackground(attributes)) {
-            const newProps = {
-                ...props,
-                className: [props.className, 'kt-column-has-bg'].filter(Boolean).join(' '),
-            };
-            return <BlockListBlock {...newProps} />;
-        }
-        return <BlockListBlock {...props} />;
-    };
-}, 'withColumnBackgroundClass');
-
-addFilter('editor.BlockListBlock', 'sitchco/with-column-background-class', withColumnBackgroundClass);
+extendBlockClasses({
+    blocks: 'kadence/column',
+    namespace: 'sitchco/kadence-column-background',
+    classGenerator: (attributes) => (hasColumnBackground(attributes) ? ['kt-column-has-bg'] : []),
+});

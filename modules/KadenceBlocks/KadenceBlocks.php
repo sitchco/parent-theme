@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\KadenceBlocks;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 
 /**
  * Integration layer for Kadence Blocks plugin.
@@ -13,6 +14,8 @@ use Sitchco\Framework\ModuleAssets;
  */
 class KadenceBlocks extends Module
 {
+    public const DEPENDENCIES = [ExtendBlockModule::class];
+
     public function init(): void
     {
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
@@ -24,11 +27,15 @@ class KadenceBlocks extends Module
         });
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript('kadence-blocks-editor-ui', 'editor-ui.js', ['wp-blocks', 'wp-element', 'wp-hooks']);
+            $assets->enqueueScript('kadence-blocks-editor-ui', 'editor-ui.js', [
+                'wp-blocks',
+                'wp-element',
+                'wp-hooks',
+                'sitchco/extend-block',
+            ]);
             $assets->inlineScriptData('kadence-blocks-editor-ui', 'themeSettings', wp_get_global_settings());
         }, 1);
 
-        add_filter('render_block_kadence/column', [$this, 'addColumnBackgroundClass'], 10, 2);
         add_filter('kadence_blocks_column_render_block_attributes', [$this, 'injectDefaultColumnGap']);
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideSpacingSizes']);
         add_filter('kadence_blocks_css_gap_sizes', [$this, 'overrideGapSizes']);
@@ -111,68 +118,6 @@ class KadenceBlocks extends Module
         }
 
         return $attributes;
-    }
-
-    /**
-     * Detect columns with backgrounds and add a CSS class for styling hooks.
-     *
-     * Checks for background color, gradient, or image in block attributes
-     * and adds 'kt-column-has-bg' class when found.
-     *
-     * Note: This logic is intentionally aligned with the editor-side detection
-     * in kadence-column-background.jsx to ensure consistent behavior between
-     * frontend rendering and the block editor.
-     */
-    public function addColumnBackgroundClass(string $block_content, array $block): string
-    {
-        $attrs = $block['attrs'] ?? [];
-
-        if (!$this->hasColumnBackground($attrs)) {
-            return $block_content;
-        }
-
-        $p = new \WP_HTML_Tag_Processor($block_content);
-        if ($p->next_tag(['tag_name' => 'DIV', 'class_name' => 'wp-block-kadence-column'])) {
-            $p->add_class('kt-column-has-bg');
-            return $p->get_updated_html();
-        }
-
-        return $block_content;
-    }
-
-    /**
-     * Check if column attributes indicate a background is set.
-     *
-     * Explicitly checks specific attributes rather than pattern matching,
-     * aligned with the JS implementation in kadence-column-background.jsx.
-     */
-    protected function hasColumnBackground(array $attrs): bool
-    {
-        // 1. Inline style background (WordPress core)
-        if (!empty($attrs['style']['color']['background'])) {
-            return true;
-        }
-
-        // 2. Solid background color
-        if (!empty($attrs['background'])) {
-            return true;
-        }
-
-        // 3. Gradient background (excluding explicit 'none')
-        if (!empty($attrs['gradient']) && $attrs['gradient'] !== 'none') {
-            return true;
-        }
-
-        // 4. Background image (check nested bgImg/url in array)
-        if (!empty($attrs['backgroundImg']) && is_array($attrs['backgroundImg'])) {
-            foreach ($attrs['backgroundImg'] as $img) {
-                if (is_array($img) && (!empty($img['bgImg']) || !empty($img['url']))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     /**
