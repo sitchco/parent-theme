@@ -6,6 +6,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
 use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
@@ -23,6 +24,7 @@ return [
         SiteFooterModule::class,
         ContentSlider::class,
         Theme::class,
+        ExtendBlockModule::class,
         KadenceBlocks::class,
     ],
     'disallowedBlocks' => [
