@@ -1,5 +1,3 @@
-const { extendBlockClasses } = sitchco.extendBlock;
-
 /**
  * Check if column attributes indicate a background is set.
  *
@@ -28,8 +26,12 @@ function hasColumnBackground(attributes) {
     return false;
 }
 
-extendBlockClasses({
-    blocks: 'kadence/column',
-    namespace: 'sitchco/kadence-column-background',
-    classGenerator: (attributes) => (hasColumnBackground(attributes) ? ['kt-column-has-bg'] : []),
+sitchco.ready(() => {
+    const { extendBlockClasses } = sitchco.extendBlock;
+
+    extendBlockClasses({
+        blocks: 'kadence/column',
+        namespace: 'sitchco/kadence-column-background',
+        classGenerator: (attributes) => (hasColumnBackground(attributes) ? ['kt-column-has-bg'] : []),
+    });
 });
