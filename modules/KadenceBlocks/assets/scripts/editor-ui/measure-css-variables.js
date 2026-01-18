@@ -23,32 +23,35 @@ addFilter(
 /**
  * Provide default padding values for row layout resize handles.
  *
- * When no explicit padding is set, this filter returns the theme's default
- * padding based on whether the row has a background.
+ * Reads --kb-row-default-padding from the row element, which varies by context
+ * (e.g., background rows get generous padding, others get minimal).
+ * Caches values to handle device preview transitions gracefully.
  */
+const rowPaddingCache = new Map();
+
 addFilter('kadence.rowlayout.defaultPadding', 'sitchco/kadence-row-default-padding', (_defaultVal, { attributes }) => {
-    const hasBackground =
-        attributes.bgColor ||
-        attributes.bgImg ||
-        attributes.gradient ||
-        attributes.overlay ||
-        attributes.overlayGradient ||
-        attributes.overlayBgImg;
-    if (!hasBackground) {
-        return 0;
-    }
-
+    const { uniqueID } = attributes;
     const editorDocument = document.querySelector('iframe[name="editor-canvas"]')?.contentWindow?.document || document;
-    // Body may be null during device preview transitions (iframe recreation)
+    // During transitions (no body or no row element), return cached or default
     if (!editorDocument.body) {
-        return _defaultVal;
+        return rowPaddingCache.get(uniqueID) ?? _defaultVal;
     }
 
-    // Resolve fluid/clamp values by measuring an element with the utility class
-    const measure = editorDocument.createElement('div');
-    measure.className = 'kb-row-default-padding-measure';
-    editorDocument.body.appendChild(measure);
-    const resolved = measure.offsetHeight;
-    measure.remove();
-    return resolved;
+    // Find the row element by its unique ID class
+    const rowElement = uniqueID ? editorDocument.querySelector(`.kb-row-id-${uniqueID}`) : null;
+    if (rowElement) {
+        // Measure by creating a temporary element inside the row
+        // This resolves fluid/clamp values and inherits the row's context
+        const measure = editorDocument.createElement('div');
+        measure.style.cssText = 'position:absolute;visibility:hidden;height:var(--kb-row-default-padding)';
+        rowElement.appendChild(measure);
+        const resolved = measure.offsetHeight;
+        measure.remove();
+
+        // Cache for use during transitions
+        rowPaddingCache.set(uniqueID, resolved);
+        return resolved;
+    }
+    // Row not found (likely mid-transition), use cached value or default
+    return rowPaddingCache.get(uniqueID) ?? _defaultVal;
 });
