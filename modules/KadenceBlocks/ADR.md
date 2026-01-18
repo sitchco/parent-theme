@@ -197,7 +197,7 @@ The JS side has more hooks than PHP (13 vs 7) because editor UI also needs to po
 - **Parent theme with theme.json values**: This module assumes usage with the sitchco-parent-theme (or a child of it) which defines the spacing and font size scales. If theme.json doesn't define these values, the preset dropdowns will be empty - there is no fallback to Kadence defaults.
 - **Forked Kadence Blocks**: The editor preview parity depends on custom JavaScript filter hooks. Plugin updates require verifying the fork still applies.
 - **Parallel implementations**: PHP and JavaScript must stay in sync. Changes to one often require changes to the other.
-- **CSS variable definitions**: The theme must define the `--wp--custom--*` variables that the module references (content-spacing, page-gutter, etc.)
+- **CSS variable definitions**: The theme must define the `--wp--custom--*` variables that the module references (content-spacing, container-inset-x-sm, container-inset-x-lg, etc.)
 
 ### What to watch for
 

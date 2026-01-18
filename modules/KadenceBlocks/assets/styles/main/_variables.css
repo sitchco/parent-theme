@@ -42,3 +42,15 @@
 
     --kb-section-setting-offset: calc(var(--dynamic__header-height) + var(--wp--custom--section-spacing));
 }
+
+/*
+ * Responsive root padding: scale up on larger viewports.
+ * Overrides WordPress's root padding variables directly rather than --wp--custom--container-inset-x-sm,
+ * so container queries that use container-inset-x-sm for narrow contexts continue working.
+ */
+@media (min-width: 600px) {
+    body {
+        --wp--style--root--padding-left: var(--wp--custom--container-inset-x-lg);
+        --wp--style--root--padding-right: var(--wp--custom--container-inset-x-lg);
+    }
+}

@@ -62,9 +62,9 @@ The editor CSS files include inline documentation of the HTML structure they tar
 --kb-padding-left
 
 /* Semantic spacing (defined in theme.json, used by this module) */
---wp--custom--content-spacing      /* Vertical rhythm between content */
---wp--custom--page-gutter          /* Screen edge padding */
---wp--custom--container-inset      /* Content inset for backgrounds */
+--wp--custom--content-spacing         /* Vertical rhythm between content */
+--wp--custom--container-inset-x-sm    /* Screen edge padding (narrow contexts) */
+--wp--custom--container-inset-x-lg    /* Content inset for backgrounds (wide contexts) */
 ```
 
 The `--kb-padding-*` variables enable child elements to reference parent padding. Any child element with `.alignfull` class automatically applies negative margins based on `--kb-padding-left` and `--kb-padding-right`, achieving a full-bleed effect. This works with images, groups, or any block that supports alignment - giving editors versatile layout control without nesting additional containers.
@@ -104,8 +104,8 @@ The parent theme handles the Kadence Blocks integration. Child themes customize 
   "settings": {
     "custom": {
       "contentSpacing": "var(--wp--preset--spacing--50)",
-      "containerInset": "var(--wp--preset--spacing--60)",
-      "pageGutter": "var(--wp--preset--spacing--50)"
+      "containerInsetXSm": "var(--wp--preset--spacing--50)",
+      "containerInsetXLg": "var(--wp--preset--spacing--60)"
     }
   }
 }

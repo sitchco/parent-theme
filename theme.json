@@ -123,13 +123,13 @@
             }
         },
         "custom": {
-            "pageGutter": "var:preset|spacing|20",
+            "containerInsetXSm": "var:preset|spacing|20",
             "contentSpacing": "var:preset|spacing|20",
             "gridGutterSpacing": "var:preset|spacing|30",
             "sectionSpacing": "var:custom|grid-gutter-spacing",
-            "containerInset": "var:custom|page-gutter",
-            "rowInsetY": "var:custom|container-inset",
-            "columnInsetY": "var:custom|container-inset",
+            "containerInsetXLg": "var:custom|grid-gutter-spacing",
+            "containerInsetYSm": "var:custom|content-spacing",
+            "containerInsetYLg": "var:custom|section-spacing",
             "visualEdgeOffset": "calc(var(--wp--custom--content-spacing) * .45)"
         }
     },
@@ -138,9 +138,9 @@
             "blockGap": "var:custom|content-spacing",
             "padding": {
                 "top": "0px",
-                "right": "var:custom|page-gutter",
+                "right": "var:custom|container-inset-x-sm",
                 "bottom": "0px",
-                "left": "var:custom|page-gutter"
+                "left": "var:custom|container-inset-x-sm"
             }
         },
         "blocks": {
