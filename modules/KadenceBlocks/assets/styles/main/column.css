@@ -62,6 +62,12 @@
     }
 }
 
+/* Container establishment for width-responsive padding (only on columns with backgrounds) */
+:where(.kt-row-column-wrap) > .wp-block-kadence-column.kt-column-has-bg {
+    container-name: kadence-column;
+    container-type: inline-size;
+}
+
 /*
  * Reset padding variables in multi-column layouts to prevent inheritance from row.
  * Single-column rows retain inheritance so alignfull children can break out to row edge.
@@ -76,22 +82,39 @@
 }
 
 /**
- * Content inset via margin for columns with backgrounds.
+ * Columns with backgrounds — structure-based vertical padding.
  *
- * Text flow content gets automatic inset from container edges.
- * Layout blocks (rows, groups, images) manage their own spacing.
+ * Specificity: 0,1,0 - allows Kadence editor styles (0,2,0) to override
+ *
+ * Base: columns are cards (tight vertical, container-inset-x-sm horizontal).
+ * Section contexts (top-level, single-column row) get generous vertical.
+ * Wide containers upgrade horizontal padding to container-inset-x-lg.
  */
-.kt-column-has-bg > .kt-inside-inner-col {
-    --kb-padding-top: var(--wp--custom--column-inset-y);
-    --kb-padding-left: var(--wp--custom--container-inset);
-    --kb-padding-right: var(--wp--custom--container-inset);
-    --kb-padding-bottom: var(--wp--custom--column-inset-y);
+:where(.kt-column-has-bg) > .kt-inside-inner-col {
+    --kb-padding-top: var(--wp--custom--container-inset-y-sm);
+    --kb-padding-bottom: var(--wp--custom--container-inset-y-sm);
+    --kb-padding-left: var(--wp--custom--container-inset-x-sm);
+    --kb-padding-right: var(--wp--custom--container-inset-x-sm);
     padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
-    > .alignfull {
-        margin-left: calc(-1 * var(--kb-padding-left));
-        margin-right: calc(-1 * var(--kb-padding-right));
+}
+
+/* Section contexts: generous vertical padding, root-aligned horizontal padding */
+:where(.wp-site-blocks > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col,
+:where(.kt-has-1-columns > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col {
+    --kb-padding-top: var(--wp--custom--container-inset-y-lg);
+    --kb-padding-bottom: var(--wp--custom--container-inset-y-lg);
+    --kb-padding-left: var(--wp--style--root--padding-left);
+    --kb-padding-right: var(--wp--style--root--padding-right);
+}
+
+/* Wide containers: upgrade horizontal padding to container-inset-x-lg */
+@container kadence-column (min-width: 580px) {
+    :where(.kt-column-has-bg) > .kt-inside-inner-col {
+        --kb-padding-left: var(--wp--custom--container-inset-x-lg);
+        --kb-padding-right: var(--wp--custom--container-inset-x-lg);
     }
 }
+
 .kt-inside-inner-col {
     > .alignfull {
         margin-left: calc(-1 * var(--kb-padding-left));

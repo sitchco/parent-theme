@@ -35,60 +35,101 @@
  * See admin-editor/row-layout.css for editor markup (significantly different).
  *
  */
-:where(.wp-block-kadence-rowlayout) {
+/*
+ * ============================================================================
+ * OUTER WRAPPER RULES (.wp-block-kadence-rowlayout)
+ * Specificity: 0,1,0 - uses :where() modifiers to stay low
+ * (These don't conflict with inner wrapper rules, so lower specificity is fine)
+ * ============================================================================
+ */
+
+/* Container setup for all rows */
+.wp-block-kadence-rowlayout {
     container-name: kadence-rowlayout;
     container-type: inline-size;
-    &.alignnone,
-    &.alignwide {
-        width: 100%;
-        max-width: var(--wp--style--global--content-size);
-        margin-left: auto;
-        margin-right: auto;
-    }
-    &.alignwide {
-        max-width: var(--wp--style--global--wide-size);
+}
+
+/* Alignment constraints: alignnone and alignwide get centered with max-width */
+.wp-block-kadence-rowlayout:where(.alignnone, .alignwide) {
+    width: 100%;
+    max-width: var(--wp--style--global--content-size);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* alignwide gets wider max-width */
+.wp-block-kadence-rowlayout:where(.alignwide) {
+    max-width: var(--wp--style--global--wide-size);
+}
+
+/*
+ * Alignfull/alignwide rows with content-width constraint:
+ * The .kb-theme-content-width class already constrains content to theme width,
+ * so we don't need container-inset padding on the inner container.
+ * Instead, apply root padding to the outer (for screen edge spacing)
+ * and zero the inner padding to prevent double-constraining the content.
+ *
+ * alignfull: always needs this (spans edge-to-edge)
+ * alignwide: only with background (otherwise it's already centered with max-width)
+ */
+@media (min-width: 768px) {
+    .wp-block-kadence-rowlayout:where(.alignfull, .alignwide.kt-row-has-bg):where(:has(> .kb-theme-content-width)) {
+        padding-left: var(--wp--style--root--padding-left);
+        padding-right: var(--wp--style--root--padding-right);
     }
 }
 
 /*
- * Base horizontal padding for alignfull rows.
+ * ============================================================================
+ * INNER WRAPPER RULES (.kt-row-column-wrap)
+ * Specificity: 0,1,0 - allows Kadence editor styles (0,2,0) to override
+ * ============================================================================
+ *
+ * CASCADE ORDER (all at 0,1,0, so source order determines winner):
+ * 1. Base alignfull edge padding (horizontal only)
+ * 2. Background rows base padding (all directions, overwrites horizontal)
+ * 3. Wide container upgrade (container query, upgrades horizontal)
+ * 4. Content-width constraint (media query, zeroes horizontal)
+ */
+
+/*
+ * 1. Base horizontal padding for alignfull rows.
  * Prevents content from touching viewport edge regardless of background.
+ * On desktop, alignwide rows are centered with max-width so padding provides internal spacing.
+ * On mobile, alignwide rows fill viewport so padding provides necessary edge spacing.
  * Vertical padding is only applied when background is present (.kt-row-has-bg).
  */
-.wp-block-kadence-rowlayout.alignfull {
-    > .kt-row-column-wrap {
-        --kb-padding-left: var(--wp--custom--container-inset);
-        --kb-padding-right: var(--wp--custom--container-inset);
-        padding-left: var(--kb-padding-left);
-        padding-right: var(--kb-padding-right);
+:where(.alignfull:not(.kt-row-has-bg)) > .kt-row-column-wrap {
+    --kb-padding-left: var(--wp--style--root--padding-left);
+    --kb-padding-right: var(--wp--style--root--padding-right);
+    padding-left: var(--kb-padding-left);
+    padding-right: var(--kb-padding-right);
+}
+
+/*
+ * 2. Rows with backgrounds: section context.
+ * Base: container-inset-x-sm horizontal (narrow-safe), generous vertical.
+ */
+:where(.kt-row-has-bg) > .kt-row-column-wrap {
+    --kb-padding-top: var(--wp--custom--container-inset-y-lg);
+    --kb-padding-bottom: var(--wp--custom--container-inset-y-lg);
+    --kb-padding-left: var(--wp--custom--container-inset-x-sm);
+    --kb-padding-right: var(--wp--custom--container-inset-x-sm);
+    padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
+}
+
+/* 3. Wide containers: upgrade horizontal padding to container-inset-x-lg. */
+@container kadence-rowlayout (min-width: 580px) {
+    :where(.kt-row-has-bg) > .kt-row-column-wrap {
+        --kb-padding-left: var(--wp--custom--container-inset-x-lg);
+        --kb-padding-right: var(--wp--custom--container-inset-x-lg);
     }
 }
 
-.kt-row-has-bg {
-    > .kt-row-column-wrap {
-        --kb-padding-top: var(--wp--custom--row-inset-y);
-        --kb-padding-left: var(--wp--custom--container-inset);
-        --kb-padding-right: var(--wp--custom--container-inset);
-        --kb-padding-bottom: var(--wp--custom--row-inset-y);
-        padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
-    }
-    /*
-     * Alignfull/alignwide rows with content-width constraint:
-     * The .kb-theme-content-width class already constrains content to theme width,
-     * so we don't need container-inset padding on the inner container.
-     * Instead, apply page-gutter to the outer (for screen edge spacing)
-     * and zero the inner padding to prevent double-constraining the content.
-     */
-    @media (min-width: 768px) {
-        &:where(.alignfull, .alignwide) {
-            &:where(:has(> .kb-theme-content-width)) {
-                padding-left: var(--wp--custom--page-gutter);
-                padding-right: var(--wp--custom--page-gutter);
-                > .kt-row-column-wrap {
-                    --kb-padding-left: 0;
-                    --kb-padding-right: 0;
-                }
-            }
-        }
+/* 4. Content-width constraint: zero inner horizontal padding. */
+@media (min-width: 768px) {
+    :where(.alignfull, .alignwide):where(:has(> .kb-theme-content-width)) > .kt-row-column-wrap {
+        --kb-padding-left: 0;
+        --kb-padding-right: 0;
     }
 }
