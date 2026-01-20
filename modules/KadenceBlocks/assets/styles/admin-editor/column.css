@@ -94,5 +94,6 @@
     > .alignfull {
         margin-left: calc(-1 * var(--kb-padding-left));
         margin-right: calc(-1 * var(--kb-padding-right));
+        width: auto !important;
     }
 }
