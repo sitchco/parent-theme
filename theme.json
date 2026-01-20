@@ -123,40 +123,40 @@
             }
         },
         "custom": {
-            "containerInsetXSm": "var:preset|spacing|20",
-            "contentSpacing": "var:preset|spacing|20",
-            "gridGutterSpacing": "var:preset|spacing|30",
-            "sectionSpacing": "var:custom|grid-gutter-spacing",
-            "containerInsetXLg": "var:custom|grid-gutter-spacing",
-            "containerInsetYSm": "var:custom|content-spacing",
-            "containerInsetYLg": "var:custom|section-spacing",
-            "visualEdgeOffset": "calc(var(--wp--custom--content-spacing) * .45)"
+            "blockGap": "var:preset|spacing|20",
+            "containerOuterSm": "var:preset|spacing|30",
+            "containerOuterLg": "var:custom|container-outer-sm",
+            "containerInnerHSm": "var:preset|spacing|20",
+            "containerInnerHLg": "var:custom|container-outer-sm",
+            "containerInnerVSm": "var:custom|block-gap",
+            "containerInnerVLg": "var:custom|container-outer-lg",
+            "visualEdgeOffset": "calc(var(--wp--custom--block-gap) * .45)"
         }
     },
     "styles": {
         "spacing": {
-            "blockGap": "var:custom|content-spacing",
+            "blockGap": "var:custom|block-gap",
             "padding": {
                 "top": "0px",
-                "right": "var:custom|container-inset-x-sm",
+                "right": "var:custom|container-inner-h-sm",
                 "bottom": "0px",
-                "left": "var:custom|container-inset-x-sm"
+                "left": "var:custom|container-inner-h-sm"
             }
         },
         "blocks": {
             "core/columns": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter-spacing"
+                    "blockGap": "var:custom|container-outer-sm"
                 }
             },
             "core/row": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter-spacing"
+                    "blockGap": "var:custom|container-outer-sm"
                 }
             },
             "core/stack": {
                 "spacing": {
-                    "blockGap": "var:custom|grid-gutter-spacing"
+                    "blockGap": "var:custom|container-outer-sm"
                 }
             },
             "core/cover": {

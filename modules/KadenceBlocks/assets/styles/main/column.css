@@ -86,32 +86,32 @@
  *
  * Specificity: 0,1,0 - allows Kadence editor styles (0,2,0) to override
  *
- * Base: columns are cards (tight vertical, container-inset-x-sm horizontal).
+ * Base: columns are cards (tight vertical, container-inner-h-sm horizontal).
  * Section contexts (top-level, single-column row) get generous vertical.
- * Wide containers upgrade horizontal padding to container-inset-x-lg.
+ * Wide containers upgrade horizontal padding to container-inner-h-lg.
  */
 :where(.kt-column-has-bg) > .kt-inside-inner-col {
-    --kb-padding-top: var(--wp--custom--container-inset-y-sm);
-    --kb-padding-bottom: var(--wp--custom--container-inset-y-sm);
-    --kb-padding-left: var(--wp--custom--container-inset-x-sm);
-    --kb-padding-right: var(--wp--custom--container-inset-x-sm);
+    --kb-padding-top: var(--wp--custom--container-inner-v-sm);
+    --kb-padding-bottom: var(--wp--custom--container-inner-v-sm);
+    --kb-padding-left: var(--wp--custom--container-inner-h-sm);
+    --kb-padding-right: var(--wp--custom--container-inner-h-sm);
     padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
 }
 
 /* Section contexts: generous vertical padding, root-aligned horizontal padding */
 :where(.wp-site-blocks > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col,
 :where(.kt-has-1-columns > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col {
-    --kb-padding-top: var(--wp--custom--container-inset-y-lg);
-    --kb-padding-bottom: var(--wp--custom--container-inset-y-lg);
+    --kb-padding-top: var(--wp--custom--container-inner-v-lg);
+    --kb-padding-bottom: var(--wp--custom--container-inner-v-lg);
     --kb-padding-left: var(--wp--style--root--padding-left);
     --kb-padding-right: var(--wp--style--root--padding-right);
 }
 
-/* Wide containers: upgrade horizontal padding to container-inset-x-lg */
+/* Wide containers: upgrade horizontal padding to container-inner-h-lg */
 @container kadence-column (min-width: 580px) {
     :where(.kt-column-has-bg) > .kt-inside-inner-col {
-        --kb-padding-left: var(--wp--custom--container-inset-x-lg);
-        --kb-padding-right: var(--wp--custom--container-inset-x-lg);
+        --kb-padding-left: var(--wp--custom--container-inner-h-lg);
+        --kb-padding-right: var(--wp--custom--container-inner-h-lg);
     }
 }
 

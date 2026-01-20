@@ -1,20 +1,20 @@
 :where(.wp-block-columns.has-background) {
-    padding: 0; /* var(--wp--custom--section-spacing) var(--wp--custom--grid-gutter-spacing);*/
+    padding: 0; /* var(--wp--custom--container-outer-lg) var(--wp--custom--container-outer-sm);*/
 }
 
 :where(.wp-block-column.has-background) {
-    padding: 0; /* var(--wp--custom--grid-gutter-spacing);*/
+    padding: 0; /* var(--wp--custom--container-outer-sm);*/
 }
 
 :where(.wp-block-group.has-background) {
-    padding: 0; /*var(--wp--custom--grid-gutter-spacing);*/
+    padding: 0; /*var(--wp--custom--container-outer-sm);*/
 }
 
 :where(article.has-global-padding) {
     > :first-child:not(.alignfull) {
-        margin-block-start: var(--wp--custom--section-spacing);
+        margin-block-start: var(--wp--custom--container-outer-lg);
     }
     > :last-child:not(.alignfull) {
-        margin-block-end: var(--wp--custom--section-spacing);
+        margin-block-end: var(--wp--custom--container-outer-lg);
     }
 }

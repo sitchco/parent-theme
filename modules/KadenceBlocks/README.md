@@ -38,7 +38,7 @@ The editor CSS files include inline documentation of the HTML structure they tar
 | Filter | Purpose |
 |--------|---------|
 | `kadence_blocks_css_spacing_sizes` | Replace spacing presets with theme.json scale values |
-| `kadence_blocks_css_gap_sizes` | Replace gap presets with theme.json scale values + add hidden `content-flow` token (maps to `--wp--custom--content-spacing`) |
+| `kadence_blocks_css_gap_sizes` | Replace gap presets with theme.json scale values + add hidden `content-flow` token (maps to `--wp--custom--block-gap`) |
 | `kadence_blocks_css_font_sizes` | Replace font presets with theme.json values |
 | `kadence_blocks_column_render_block_attributes` | Inject `content-flow` as default gap when none selected (works with `gap_sizes` filter above) |
 | `kadence_blocks_measure_output_css_variables` | Enable CSS variable output for padding |
@@ -62,9 +62,9 @@ The editor CSS files include inline documentation of the HTML structure they tar
 --kb-padding-left
 
 /* Semantic spacing (defined in theme.json, used by this module) */
---wp--custom--content-spacing         /* Vertical rhythm between content */
---wp--custom--container-inset-x-sm    /* Screen edge padding (narrow contexts) */
---wp--custom--container-inset-x-lg    /* Content inset for backgrounds (wide contexts) */
+--wp--custom--block-gap               /* Vertical rhythm between content */
+--wp--custom--container-inner-h-sm    /* Horizontal padding (narrow contexts) */
+--wp--custom--container-inner-h-lg    /* Horizontal padding (wide contexts) */
 ```
 
 The `--kb-padding-*` variables enable child elements to reference parent padding. Any child element with `.alignfull` class automatically applies negative margins based on `--kb-padding-left` and `--kb-padding-right`, achieving a full-bleed effect. This works with images, groups, or any block that supports alignment - giving editors versatile layout control without nesting additional containers.
@@ -103,9 +103,9 @@ The parent theme handles the Kadence Blocks integration. Child themes customize 
 {
   "settings": {
     "custom": {
-      "contentSpacing": "var(--wp--preset--spacing--50)",
-      "containerInsetXSm": "var(--wp--preset--spacing--50)",
-      "containerInsetXLg": "var(--wp--preset--spacing--60)"
+      "blockGap": "var(--wp--preset--spacing--50)",
+      "containerInnerHSm": "var(--wp--preset--spacing--50)",
+      "containerInnerHLg": "var(--wp--preset--spacing--60)"
     }
   }
 }

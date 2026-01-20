@@ -62,7 +62,7 @@ class KadenceBlocks extends Module
     public function overrideGapSizes(array $sizes): array
     {
         $sizes = $this->overrideSpacingSizes($sizes);
-        $sizes['content-flow'] = 'var(--wp--custom--content-spacing)';
+        $sizes['content-flow'] = 'var(--wp--custom--block-gap)';
 
         return $sizes;
     }
@@ -106,7 +106,7 @@ class KadenceBlocks extends Module
      *
      * When rowGapVariable is empty, Kadence outputs no row-gap. This filter
      * injects 'content-flow' as the default, which maps to the semantic
-     * --wp--custom--content-spacing variable via overrideGapSizes.
+     * --wp--custom--block-gap variable via overrideGapSizes.
      */
     public function injectDefaultColumnGap(array $attributes): array
     {

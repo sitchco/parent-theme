@@ -65,7 +65,7 @@ addFilter('kadence.blocks.column.horizontalGapOptions', 'sitchco/kadence-overrid
 
 function gutterSizeOverride(size, _, gutter) {
     if (gutter === 'content-flow') {
-        return 'var(--wp--custom--content-spacing)';
+        return 'var(--wp--custom--block-gap)';
     }
 
     const themeSizes = themeSpacing() || [];

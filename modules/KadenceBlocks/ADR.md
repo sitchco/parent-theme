@@ -93,14 +93,14 @@ When editors reset a control (clearing their custom value), the theme default is
 
 **Solution**: The module defines aliases in `assets/styles/main/_variables.css` and `assets/styles/admin-editor/_variables.css`.
 
-**Why collapse the scale to semantic tokens**: Investigation revealed that Kadence wasn't using their spacing scale (xxs through 5xl) as a true scale - they arbitrarily assigned those values to different use cases throughout their blocks. Rather than mapping Kadence's scale 1:1 to our scale, the aliases map to semantic tokens (`--wp--custom--content-spacing`, `--wp--custom--grid-gutter-spacing`, etc.) based on how Kadence actually uses them.
+**Why collapse the scale to semantic tokens**: Investigation revealed that Kadence wasn't using their spacing scale (xxs through 5xl) as a true scale - they arbitrarily assigned those values to different use cases throughout their blocks. Rather than mapping Kadence's scale 1:1 to our scale, the aliases map to semantic tokens (`--wp--custom--block-gap`, `--wp--custom--container-outer-sm`, etc.) based on how Kadence actually uses them.
 
 **How this was discovered**: During early development, we tried to accommodate Kadence's default padding behavior (SM value for top/bottom, null for left/right). We eventually removed those defaults from the forked source, but the aliases remain as a safety net. If those defaults resurface in a plugin update, they'll resolve to sensible theme values rather than arbitrary pixel values.
 
 **Current aliases**:
 - Layout: `--global-content-width` → `--wp--style--global--content-size`
-- Row gutters: `--global-row-gutter-*` → `--wp--custom--grid-gutter-spacing`
-- Content gaps: `--global-kb-gap-*` → `--wp--custom--content-spacing`
+- Row gutters: `--global-row-gutter-*` → `--wp--custom--container-outer-sm`
+- Content gaps: `--global-kb-gap-*` → `--wp--custom--block-gap`
 - Spacing scale: `--global-kb-spacing-*` → mapped to semantic tokens based on usage
 
 **Investigated and not aliased**: Three variables were flagged during documentation validation but determined not to need aliases after investigation:
@@ -132,10 +132,10 @@ With variable indirection, child themes can target `--kb-padding-top` directly. 
 
 **Problem**: Kadence columns need a default row gap value. Without one, columns render with `row-gap: 0`, requiring editors to manually set spacing for every column. But which scale value should be the default? That's a theme decision - the module shouldn't hardcode `spacing-20` or any specific preset.
 
-**Why hide it instead of showing "Default" in the dropdown?**: Exposing `content-flow` would duplicate the spacing scale - since `--wp--custom--content-spacing` itself references a scale value, showing both would be redundant. The semantic token should only apply automatically to new blocks or when an editor clicks the reset button.
+**Why hide it instead of showing "Default" in the dropdown?**: Exposing `content-flow` would duplicate the spacing scale - since `--wp--custom--block-gap` itself references a scale value, showing both would be redundant. The semantic token should only apply automatically to new blocks or when an editor clicks the reset button.
 
 **Solution**:
-1. Add `content-flow` to `gap_sizes` so Kadence can resolve it to `var(--wp--custom--content-spacing)`
+1. Add `content-flow` to `gap_sizes` so Kadence can resolve it to `var(--wp--custom--block-gap)`
 2. Inject `content-flow` as the default via `kadence_blocks_column_render_block_attributes` when `rowGapVariable` is empty (this filter exists in upstream Kadence via the abstract block class)
 3. Use `kadence.block.column.defaultRowGapVariable` JS hook for editor parity (requires fork)
 4. Don't add it to the editor's dropdown options - the `spacingOverride` function replaces the entire dropdown with theme.json spacing, so `content-flow` is never shown as a selectable option
@@ -197,7 +197,7 @@ The JS side has more hooks than PHP (13 vs 7) because editor UI also needs to po
 - **Parent theme with theme.json values**: This module assumes usage with the sitchco-parent-theme (or a child of it) which defines the spacing and font size scales. If theme.json doesn't define these values, the preset dropdowns will be empty - there is no fallback to Kadence defaults.
 - **Forked Kadence Blocks**: The editor preview parity depends on custom JavaScript filter hooks. Plugin updates require verifying the fork still applies.
 - **Parallel implementations**: PHP and JavaScript must stay in sync. Changes to one often require changes to the other.
-- **CSS variable definitions**: The theme must define the `--wp--custom--*` variables that the module references (content-spacing, container-inset-x-sm, container-inset-x-lg, etc.)
+- **CSS variable definitions**: The theme must define the `--wp--custom--*` variables that the module references (block-gap, container-inner-h-sm, container-inner-h-lg, container-outer-sm, etc.)
 
 ### What to watch for
 

@@ -17,40 +17,40 @@
     --global-content-edge-padding: 0;
 
     /* Row gutters */
-    --global-row-gutter-xs: var(--wp--custom--grid-gutter-spacing);
-    --global-row-gutter-sm: var(--wp--custom--grid-gutter-spacing);
-    --global-row-gutter-md: var(--wp--custom--grid-gutter-spacing);
-    --global-row-gutter-lg: var(--wp--custom--grid-gutter-spacing);
+    --global-row-gutter-xs: var(--wp--custom--container-outer-sm);
+    --global-row-gutter-sm: var(--wp--custom--container-outer-sm);
+    --global-row-gutter-md: var(--wp--custom--container-outer-sm);
+    --global-row-gutter-lg: var(--wp--custom--container-outer-sm);
 
     /* Content gaps */
-    --global-kb-gap-xs: var(--wp--custom--content-spacing);
-    --global-kb-gap-sm: var(--wp--custom--content-spacing);
-    --global-kb-gap-md: var(--wp--custom--content-spacing);
-    --global-kb-gap-lg: var(--wp--custom--content-spacing);
+    --global-kb-gap-xs: var(--wp--custom--block-gap);
+    --global-kb-gap-sm: var(--wp--custom--block-gap);
+    --global-kb-gap-md: var(--wp--custom--block-gap);
+    --global-kb-gap-lg: var(--wp--custom--block-gap);
 
     /* Kadence spacing scale → semantic tokens */
     --global-kb-spacing-xxs: var(--wp--custom--visual-edge-offset);
-    --global-kb-spacing-xs: var(--wp--custom--content-spacing);
-    --global-kb-spacing-sm: var(--wp--custom--grid-gutter-spacing);
-    --global-kb-spacing-md: var(--wp--custom--section-spacing);
-    --global-kb-spacing-lg: var(--wp--custom--section-spacing);
-    --global-kb-spacing-xl: var(--wp--custom--section-spacing);
-    --global-kb-spacing-xxl: var(--wp--custom--section-spacing);
-    --global-kb-spacing-3xl: var(--wp--custom--section-spacing);
-    --global-kb-spacing-4xl: var(--wp--custom--section-spacing);
-    --global-kb-spacing-5xl: var(--wp--custom--section-spacing);
+    --global-kb-spacing-xs: var(--wp--custom--block-gap);
+    --global-kb-spacing-sm: var(--wp--custom--container-outer-sm);
+    --global-kb-spacing-md: var(--wp--custom--container-outer-lg);
+    --global-kb-spacing-lg: var(--wp--custom--container-outer-lg);
+    --global-kb-spacing-xl: var(--wp--custom--container-outer-lg);
+    --global-kb-spacing-xxl: var(--wp--custom--container-outer-lg);
+    --global-kb-spacing-3xl: var(--wp--custom--container-outer-lg);
+    --global-kb-spacing-4xl: var(--wp--custom--container-outer-lg);
+    --global-kb-spacing-5xl: var(--wp--custom--container-outer-lg);
 
-    --kb-section-setting-offset: calc(var(--dynamic__header-height) + var(--wp--custom--section-spacing));
+    --kb-section-setting-offset: calc(var(--dynamic__header-height) + var(--wp--custom--container-outer-lg));
 }
 
 /*
  * Responsive root padding: scale up on larger viewports.
- * Overrides WordPress's root padding variables directly rather than --wp--custom--container-inset-x-sm,
- * so container queries that use container-inset-x-sm for narrow contexts continue working.
+ * Overrides WordPress's root padding variables directly rather than --wp--custom--container-inner-h-sm,
+ * so container queries that use container-inner-h-sm for narrow contexts continue working.
  */
 @media (min-width: 600px) {
     body {
-        --wp--style--root--padding-left: var(--wp--custom--container-inset-x-lg);
-        --wp--style--root--padding-right: var(--wp--custom--container-inset-x-lg);
+        --wp--style--root--padding-left: var(--wp--custom--container-inner-h-lg);
+        --wp--style--root--padding-right: var(--wp--custom--container-inner-h-lg);
     }
 }

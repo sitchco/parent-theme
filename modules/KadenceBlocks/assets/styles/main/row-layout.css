@@ -65,7 +65,7 @@
 /*
  * Alignfull/alignwide rows with content-width constraint:
  * The .kb-theme-content-width class already constrains content to theme width,
- * so we don't need container-inset padding on the inner container.
+ * so we don't need container-inner padding on the inner container.
  * Instead, apply root padding to the outer (for screen edge spacing)
  * and zero the inner padding to prevent double-constraining the content.
  *
@@ -108,21 +108,21 @@
 
 /*
  * 2. Rows with backgrounds: section context.
- * Base: container-inset-x-sm horizontal (narrow-safe), generous vertical.
+ * Base: container-inner-h-sm horizontal (narrow-safe), generous vertical.
  */
 :where(.kt-row-has-bg) > .kt-row-column-wrap {
-    --kb-padding-top: var(--wp--custom--container-inset-y-lg);
-    --kb-padding-bottom: var(--wp--custom--container-inset-y-lg);
-    --kb-padding-left: var(--wp--custom--container-inset-x-sm);
-    --kb-padding-right: var(--wp--custom--container-inset-x-sm);
+    --kb-padding-top: var(--wp--custom--container-inner-v-lg);
+    --kb-padding-bottom: var(--wp--custom--container-inner-v-lg);
+    --kb-padding-left: var(--wp--custom--container-inner-h-sm);
+    --kb-padding-right: var(--wp--custom--container-inner-h-sm);
     padding: var(--kb-padding-top) var(--kb-padding-right) var(--kb-padding-bottom) var(--kb-padding-left);
 }
 
-/* 3. Wide containers: upgrade horizontal padding to container-inset-x-lg. */
+/* 3. Wide containers: upgrade horizontal padding to container-inner-h-lg. */
 @container kadence-rowlayout (min-width: 580px) {
     :where(.kt-row-has-bg) > .kt-row-column-wrap {
-        --kb-padding-left: var(--wp--custom--container-inset-x-lg);
-        --kb-padding-right: var(--wp--custom--container-inset-x-lg);
+        --kb-padding-left: var(--wp--custom--container-inner-h-lg);
+        --kb-padding-right: var(--wp--custom--container-inner-h-lg);
     }
 }
 
