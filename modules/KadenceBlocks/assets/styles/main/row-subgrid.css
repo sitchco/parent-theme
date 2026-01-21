@@ -1,0 +1,90 @@
+/**
+ * Subgrid layout for Kadence Row columns.
+ *
+ * Enables horizontal alignment of corresponding items across columns.
+ * Items at the same position share a grid row, with height determined
+ * by the tallest item at that position.
+ *
+ * Activated by .kb-subgrid-layout class (added via block toggle).
+ *
+ * ============================================================================
+ * FRONTEND HTML STRUCTURE
+ * ============================================================================
+ * The trigger class .kb-subgrid-layout is added to the outer .kb-row-layout-wrap.
+ * Target the inner .kt-row-column-wrap for grid display.
+ */
+
+/* Base row detection: count max items per column using :has() */
+.kb-subgrid-layout {
+    --kb-subgrid-rows: 1;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(2)) {
+    --kb-subgrid-rows: 2;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(3)) {
+    --kb-subgrid-rows: 3;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(4)) {
+    --kb-subgrid-rows: 4;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(5)) {
+    --kb-subgrid-rows: 5;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(6)) {
+    --kb-subgrid-rows: 6;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(7)) {
+    --kb-subgrid-rows: 7;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(8)) {
+    --kb-subgrid-rows: 8;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(9)) {
+    --kb-subgrid-rows: 9;
+}
+.kb-subgrid-layout:has(.kt-inside-inner-col > :nth-child(10)) {
+    --kb-subgrid-rows: 10;
+}
+
+/* Desktop: enable subgrid layout */
+@media (min-width: 768px) {
+    /* Add row tracks to existing grid container (Kadence already sets display: grid and grid-template-columns) */
+    :where(.kb-subgrid-layout) > .kt-row-column-wrap {
+        grid-template-rows: repeat(var(--kb-subgrid-rows), auto);
+    }
+
+    /* Each column uses subgrid for its rows */
+    :where(.kb-subgrid-layout) > .kt-row-column-wrap > .wp-block-kadence-column {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span var(--kb-subgrid-rows);
+        /*
+         * Reset container-type to enable subgrid.
+         * CSS container queries (container-type: inline-size) and subgrid are
+         * incompatible—layout containment prevents subgrid participation.
+         * Trade-off: columns won't get the container-query-based padding upgrade
+         * for wide columns (see column.css @container kadence-column).
+         * This is acceptable since subgrid layouts typically have narrower columns.
+         */
+        container-type: normal;
+    }
+
+    /* Column inner wrapper passes through subgrid */
+    :where(.kb-subgrid-layout) > .kt-row-column-wrap > .wp-block-kadence-column > .kt-inside-inner-col {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span var(--kb-subgrid-rows);
+        /*
+         * Force single column to fill available width.
+         * Without this, Kadence's justify-content: center (for flex layout)
+         * causes auto-sized grid tracks to be centered rather than stretched.
+         */
+        grid-template-columns: minmax(0, 1fr);
+        /*
+         * Override Kadence's "Inner Column Height 100%" setting.
+         * That setting applies height: 100% which breaks subgrid by forcing
+         * a fixed height instead of letting subgrid control row sizing.
+         */
+        height: auto;
+    }
+}

@@ -1,0 +1,71 @@
+/**
+ * Subgrid layout for Kadence Row columns — editor overrides.
+ *
+ * main.css is loaded in the editor, so this file only targets
+ * editor-specific class names that differ from frontend:
+ * - .innerblocks-wrap (editor) vs .kt-row-column-wrap (frontend)
+ * - .kadence-inner-column-inner (editor) vs .kt-inside-inner-col (frontend)
+ */
+
+/* Row detection for editor inner wrapper class */
+.kb-subgrid-layout {
+    --kb-subgrid-rows: 1;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(2)) {
+    --kb-subgrid-rows: 2;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(3)) {
+    --kb-subgrid-rows: 3;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(4)) {
+    --kb-subgrid-rows: 4;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(5)) {
+    --kb-subgrid-rows: 5;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(6)) {
+    --kb-subgrid-rows: 6;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(7)) {
+    --kb-subgrid-rows: 7;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(8)) {
+    --kb-subgrid-rows: 8;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(9)) {
+    --kb-subgrid-rows: 9;
+}
+.kb-subgrid-layout:has(.kadence-inner-column-inner > :nth-child(10)) {
+    --kb-subgrid-rows: 10;
+}
+
+@media (min-width: 768px) {
+    /* Editor column container (vs .kt-row-column-wrap on frontend) */
+    .kb-subgrid-layout > .innerblocks-wrap {
+        grid-template-rows: repeat(var(--kb-subgrid-rows), auto);
+    }
+
+    /*
+     * Editor column wrapper (pass-through subgrid).
+     * Note: Kadence sets display:flex on columns via a high-specificity selector:
+     * .wp-block-kadence-rowlayout.kt-row-valign-top > .innerblocks-wrap > .wp-block-kadence-column
+     * Kadence's CSS loads after ours, so we need higher specificity (0,5,0) to win.
+     */
+    .kb-subgrid-layout.wp-block-kadence-rowlayout
+        > .innerblocks-wrap
+        > .wp-block-kadence-column.wp-block-kadence-column {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span var(--kb-subgrid-rows);
+        container-type: normal;
+    }
+
+    /* Editor column inner wrapper (vs .kt-inside-inner-col on frontend) */
+    .kb-subgrid-layout > .innerblocks-wrap > .wp-block-kadence-column > .kadence-inner-column-inner {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span var(--kb-subgrid-rows);
+        grid-template-columns: minmax(0, 1fr);
+        height: auto;
+    }
+}
