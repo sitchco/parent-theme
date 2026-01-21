@@ -91,6 +91,7 @@
 }
 
 .wp-block-kadence-column .kadence-inner-column-inner {
+    > [data-align='full'],
     > .alignfull {
         margin-left: calc(-1 * var(--kb-padding-left));
         margin-right: calc(-1 * var(--kb-padding-right));
