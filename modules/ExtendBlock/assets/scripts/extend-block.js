@@ -30,16 +30,16 @@ import { fields, fieldsToAttributes } from './includes/fields.jsx';
 import { classNames, generateFieldClasses, mergeClassNames } from './includes/utils/class-names';
 import { useKadenceActiveTab, isKadenceBlock } from './includes/hooks/use-kadence-active-tab';
 
-sitchco.register(() => {
-    sitchco.extendBlock = {
-        extendBlock,
-        extendBlockClasses,
-        fields,
-        fieldsToAttributes,
-        classNames,
-        generateFieldClasses,
-        mergeClassNames,
-        useKadenceActiveTab,
-        isKadenceBlock,
-    };
-});
+window.sitchco = window.sitchco || {};
+
+window.sitchco.extendBlock = {
+    extendBlock,
+    extendBlockClasses,
+    fields,
+    fieldsToAttributes,
+    classNames,
+    generateFieldClasses,
+    mergeClassNames,
+    useKadenceActiveTab,
+    isKadenceBlock,
+};
