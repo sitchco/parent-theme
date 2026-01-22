@@ -9,7 +9,8 @@ $blockData = $context['block'] ?? [];
 
 $sliderId = 'slider-' . ($blockData['id'] ?? uniqid());
 $alignClass = !empty($blockData['align']) ? 'align' . $blockData['align'] : '';
-$className = trim(($blockData['className'] ?? '') . ' ' . $alignClass);
+$equalHeightClass = !empty($fields['equal_height']) ? 'has-equal-height-slides' : '';
+$className = trim(($blockData['className'] ?? '') . ' ' . $alignClass . ' ' . $equalHeightClass);
 
 $sliderConfig = [
     'type' => 'slide',

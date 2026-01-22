@@ -23,3 +23,18 @@
     flex: 1;
     height: 100%;
 }
+
+/* Equal height slides - all slides match the tallest */
+.sc-content-slider.has-equal-height-slides .splide__list {
+    align-items: stretch;
+}
+
+.sc-content-slider.has-equal-height-slides .splide__slide {
+    height: auto;
+}
+
+.sc-content-slider.has-equal-height-slides .splide__slide > .wp-block-kadence-column,
+.sc-content-slider.has-equal-height-slides .splide__slide > .wp-block-kadence-column > .kt-inside-inner-col,
+.sc-content-slider.has-equal-height-slides .splide__slide > .wp-block-kadence-column > .kt-inside-inner-col > * {
+    height: 100%;
+}
