@@ -93,6 +93,26 @@
             "message": ""
         },
         {
+            "key": "field_68f7cf60bd000",
+            "label": "Equal Height Slides",
+            "name": "equal_height",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Make all slides match the height of the tallest slide",
+            "required": 0,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Enabled",
+            "ui_off_text": "Disabled",
+            "message": ""
+        },
+        {
             "key": "field_68f7cf60bc165",
             "label": "Slides per View (Desktop)",
             "name": "per_view_desktop",
