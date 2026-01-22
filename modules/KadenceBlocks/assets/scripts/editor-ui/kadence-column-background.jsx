@@ -26,12 +26,10 @@ function hasColumnBackground(attributes) {
     return false;
 }
 
-sitchco.ready(() => {
-    const { extendBlockClasses } = sitchco.extendBlock;
-
+export default function ({ extendBlockClasses }) {
     extendBlockClasses({
         blocks: 'kadence/column',
         namespace: 'sitchco/kadence-column-background',
         classGenerator: (attributes) => (hasColumnBackground(attributes) ? ['kt-column-has-bg'] : []),
     });
-});
+}
