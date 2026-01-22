@@ -5,10 +5,12 @@
  * via the kadence-blocks-splide dependency.
  */
 
-.sc-content-slider {
+:root {
     /* Define default CSS variables */
     --wp--custom--carousel-gap: var(--wp--preset--spacing--30, 1.5rem);
+}
 
+.sc-content-slider {
     position: relative;
     width: 100%;
 }
