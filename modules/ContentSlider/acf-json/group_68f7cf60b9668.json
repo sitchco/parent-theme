@@ -160,6 +160,26 @@
             "step": 1,
             "prepend": "",
             "append": ""
+        },
+        {
+            "key": "field_68f7cf60be000",
+            "label": "Advanced Options (JSON)",
+            "name": "advanced_options",
+            "aria-label": "",
+            "type": "textarea",
+            "instructions": "Optional JSON object to override or extend Splide options. Example: {\"fixedWidth\": \"360px\", \"autoWidth\": true}",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "{\"fixedWidth\": \"360px\"}",
+            "maxlength": "",
+            "rows": 3,
+            "new_lines": ""
         }
     ],
     "location": [
