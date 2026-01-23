@@ -130,7 +130,8 @@
             "containerInnerHLg": "var:custom|container-outer-sm",
             "containerInnerVSm": "var:custom|block-gap",
             "containerInnerVLg": "var:custom|container-outer-lg",
-            "visualEdgeOffset": "calc(var(--wp--custom--block-gap) * .45)"
+            "visualEdgeOffset": "calc(var(--wp--custom--block-gap) * .45)",
+            "carouselGap": "var:custom|container-outer-sm"
         }
     },
     "styles": {
