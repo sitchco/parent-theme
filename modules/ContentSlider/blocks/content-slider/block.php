@@ -31,6 +31,14 @@ $sliderConfig = [
     ],
 ];
 
+// Merge advanced options from JSON field
+if (!empty($fields['advanced_options'])) {
+    $advancedConfig = json_decode($fields['advanced_options'], true);
+    if (is_array($advancedConfig)) {
+        $sliderConfig = array_merge($sliderConfig, $advancedConfig);
+    }
+}
+
 $context['slider'] = [
     'id' => $sliderId,
     'class' => trim('sc-content-slider kb-splide splide ' . $className),
