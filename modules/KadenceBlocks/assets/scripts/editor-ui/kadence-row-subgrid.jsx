@@ -1,6 +1,4 @@
-sitchco.ready(() => {
-    const { extendBlock, fields } = sitchco.extendBlock;
-
+export default function ({ extendBlock, fields }) {
     extendBlock({
         blocks: 'kadence/rowlayout',
         namespace: 'sitchco/kadence-row-subgrid',
@@ -18,4 +16,4 @@ sitchco.ready(() => {
             }),
         ],
     });
-});
+}

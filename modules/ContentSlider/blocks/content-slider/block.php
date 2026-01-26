@@ -9,7 +9,8 @@ $blockData = $context['block'] ?? [];
 
 $sliderId = 'slider-' . ($blockData['id'] ?? uniqid());
 $alignClass = !empty($blockData['align']) ? 'align' . $blockData['align'] : '';
-$className = trim(($blockData['className'] ?? '') . ' ' . $alignClass);
+$equalHeightClass = !empty($fields['equal_height']) ? 'has-equal-height-slides' : '';
+$className = trim(($blockData['className'] ?? '') . ' ' . $alignClass . ' ' . $equalHeightClass);
 
 $sliderConfig = [
     'type' => 'slide',
@@ -29,6 +30,14 @@ $sliderConfig = [
         0 => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
     ],
 ];
+
+// Merge advanced options from JSON field
+if (!empty($fields['advanced_options'])) {
+    $advancedConfig = json_decode($fields['advanced_options'], true);
+    if (is_array($advancedConfig)) {
+        $sliderConfig = array_merge($sliderConfig, $advancedConfig);
+    }
+}
 
 $context['slider'] = [
     'id' => $sliderId,
