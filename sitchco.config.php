@@ -46,6 +46,8 @@ return [
         'core/columns',
         'core/column',
         'core/image',
+        /** Kadence */
+        'kadence/icon',
         /** Widgets */
         'core/archives',
         'core/calendar',
