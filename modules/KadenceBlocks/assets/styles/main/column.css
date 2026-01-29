@@ -25,8 +25,7 @@
  */
 
 .kt-inside-inner-col,
-.kadence-inner-column-inner,
-.kt-tab-inner-content-inner {
+.kadence-inner-column-inner {
     /* Zero margin to allow default gap instead (see content-flow in KadenceBlocks.php and column-gap-defaults.js */
     > * {
         margin-block-start: 0;
