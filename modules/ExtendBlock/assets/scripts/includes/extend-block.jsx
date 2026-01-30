@@ -2,9 +2,21 @@ import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
+import { useEffect } from '@wordpress/element';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, mergeClassNames } from './utils/class-names';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
+
+/**
+ * Checks if a block is a dynamic block (rendered server-side).
+ * Currently identifies Kadence blocks as dynamic.
+ *
+ * @param {string} blockName - The block name to check
+ * @returns {boolean}
+ */
+function isDynamicBlock(blockName) {
+    return isKadenceBlock(blockName);
+}
 
 /**
  * Checks if a block name matches the target blocks.
@@ -64,19 +76,31 @@ function collectAllFields(panels) {
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} allFields - All field definitions
+ * @param {boolean} includeClassesAttribute - Whether to add extendBlockClasses attribute for dynamic blocks
  * @returns {Function} Filter function
  */
-function createAttributeFilter(targetBlocks, allFields) {
+function createAttributeFilter(targetBlocks, allFields, includeClassesAttribute = false) {
     return (settings, name) => {
         if (!isTargetBlock(name, targetBlocks)) {
             return settings;
         }
+        const attributes = {
+            ...settings.attributes,
+            ...fieldsToAttributes(allFields),
+        };
+
+        // Add extendBlockClasses attribute for dynamic blocks
+        // This is an object keyed by namespace to allow multiple extensions to contribute classes
+        if (includeClassesAttribute && isDynamicBlock(name)) {
+            attributes.extendBlockClasses = {
+                type: 'object',
+                default: {},
+            };
+        }
+
         return {
             ...settings,
-            attributes: {
-                ...settings.attributes,
-                ...fieldsToAttributes(allFields),
-            },
+            attributes,
         };
     };
 }
@@ -86,14 +110,17 @@ function createAttributeFilter(targetBlocks, allFields) {
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} panels - Panel configurations
+ * @param {Object[]} allFields - All field definitions (for class sync)
+ * @param {string} namespace - Unique namespace for this extension
  * @param {Object} options - Additional options
  * @param {Function} [options.shouldRender] - Custom render condition
  * @param {Function} [options.useSetup] - Custom setup hook
  * @param {boolean} [options.kadenceTabAware] - Whether to auto-detect Kadence tabs
+ * @param {Function} [options.classGenerator] - Custom class generator override
  * @returns {Function} Higher-order component
  */
-function createInspectorFilter(targetBlocks, panels, options = {}) {
-    const { shouldRender, useSetup, kadenceTabAware } = options;
+function createInspectorFilter(targetBlocks, panels, allFields, namespace, options = {}) {
+    const { shouldRender, useSetup, kadenceTabAware, classGenerator } = options;
     return createHigherOrderComponent((BlockEdit) => {
         return (props) => {
             if (!isTargetBlock(props.name, targetBlocks)) {
@@ -101,6 +128,29 @@ function createInspectorFilter(targetBlocks, panels, options = {}) {
             }
 
             const { attributes, setAttributes } = props;
+            const isDynamic = isDynamicBlock(props.name);
+
+            // Sync generated classes to extendBlockClasses attribute for dynamic blocks
+            // Each extension stores its classes under its namespace key
+            useEffect(() => {
+                if (!isDynamic) {
+                    return;
+                }
+                const newClasses = classGenerator
+                    ? classGenerator(attributes)
+                    : generateFieldClasses(allFields, attributes);
+                const classString = newClasses.join(' ');
+
+                const currentClasses = attributes.extendBlockClasses || {};
+                if (currentClasses[namespace] !== classString) {
+                    setAttributes({
+                        extendBlockClasses: {
+                            ...currentClasses,
+                            [namespace]: classString,
+                        },
+                    });
+                }
+            }, [attributes, isDynamic, setAttributes]);
 
             // Auto-detect Kadence tab if enabled and this is a Kadence block
             const isKadence = kadenceTabAware && isKadenceBlock(props.name);
@@ -108,9 +158,9 @@ function createInspectorFilter(targetBlocks, panels, options = {}) {
                 isKadence
                     ? props
                     : {
-                          clientId: null,
-                          name: '',
-                      }
+                        clientId: null,
+                        name: '',
+                    }
             );
 
             // Run custom setup hook if provided
@@ -268,12 +318,20 @@ export function extendBlock(config) {
 
     // Collect all fields
     const allFields = collectAllFields(panels);
+
+    // Check if any target blocks are dynamic (need extendBlockClasses attribute)
+    const hasDynamicBlocks = blocks.some(isDynamicBlock);
+
     // Only register attribute and class filters if we have fields
     if (allFields.length > 0) {
-        // 1. Register attributes
-        addFilter('blocks.registerBlockType', `${namespace}/add-attributes`, createAttributeFilter(blocks, allFields));
+        // 1. Register attributes (include extendBlockClasses for dynamic blocks)
+        addFilter(
+            'blocks.registerBlockType',
+            `${namespace}/add-attributes`,
+            createAttributeFilter(blocks, allFields, hasDynamicBlocks)
+        );
 
-        // 3. Add classes to saved content
+        // 3. Add classes to saved content (for static blocks)
         addFilter(
             'blocks.getSaveContent.extraProps',
             `${namespace}/add-save-classes`,
@@ -292,10 +350,11 @@ export function extendBlock(config) {
         addFilter(
             'editor.BlockEdit',
             `${namespace}/add-controls`,
-            createInspectorFilter(blocks, panels, {
+            createInspectorFilter(blocks, panels, allFields, namespace, {
                 shouldRender,
                 useSetup,
                 kadenceTabAware: enableKadenceTabAware,
+                classGenerator,
             })
         );
     }
