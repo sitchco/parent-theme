@@ -67,26 +67,6 @@ class SyncedPatternsModule extends Module
 
         // Add admin notice if patterns need syncing
         add_action('admin_notices', [$this, 'maybeShowSyncNotice']);
-
-        // Replace pattern asset placeholders at render time
-        add_filter('render_block', [$this, 'replacePatternAssetPlaceholders'], 10, 2);
-    }
-
-    /**
-     * Replace {{PATTERN_ASSETS}} placeholder with actual theme URI.
-     *
-     * This allows patterns to reference images in the patterns/images directory
-     * without hardcoding environment-specific URLs.
-     */
-    public function replacePatternAssetPlaceholders(string $block_content, array $block): string
-    {
-        if (strpos($block_content, '{{PATTERN_ASSETS}}') === false) {
-            return $block_content;
-        }
-
-        $pattern_assets_url = get_stylesheet_directory_uri() . '/patterns/images';
-
-        return str_replace('{{PATTERN_ASSETS}}', $pattern_assets_url, $block_content);
     }
 
     /**
