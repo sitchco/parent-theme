@@ -103,3 +103,37 @@ wp synced-patterns sync --force
 2. Go to Patterns tab
 3. Find your pattern under "My Patterns" or search by name
 4. Insert - it behaves as a synced pattern
+
+## Pattern Assets
+
+Store pattern-specific images and videos in the child theme's `/patterns/assets/` directory:
+
+```
+patterns/
+├── assets/
+│   ├── images/
+│   │   └── placeholder-image.svg
+│   └── videos/
+│       └── placeholder-video.mp4
+├── my-pattern.php
+└── another-pattern.php
+```
+
+### Referencing Assets
+
+Use root-relative paths to ensure assets work across all environments:
+
+```html
+<!-- Image -->
+<img src="/wp-content/themes/{theme}/patterns/assets/images/placeholder-image.svg" />
+
+<!-- Video (in Kadence block attributes) -->
+"local":"/wp-content/themes/{theme}/patterns/assets/videos/placeholder-video.mp4"
+```
+
+### Tips for Pattern Assets
+
+- **Use root-relative paths** (`/wp-content/...`) not full URLs
+- **For SVG images**, add `image-is-svg` class to the figure element
+- **Don't include media library IDs** in block attributes for theme assets
+- **Keep assets small** - these are version-controlled in Git
