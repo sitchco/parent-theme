@@ -1,21 +1,23 @@
 # Synced Patterns Module
 
-This module synchronizes version-controlled WordPress block patterns from the child theme's `/patterns/` directory to the database as reusable synced patterns.
+This module synchronizes version-controlled WordPress block patterns from the theme's `/patterns/` directory to the database as reusable synced patterns.
+
+**Smart Activation:** This module only activates when patterns with `Synced: true` exist. If no patterns are marked for syncing, the module remains dormant with no performance overhead.
 
 ## How It Works
 
-Patterns in the child theme's `/patterns/` directory with the `Synced: true` header are automatically registered as `wp_block` posts in WordPress. This gives you:
+Patterns with the `Synced: true` header are automatically registered as `wp_block` posts in WordPress. This gives you:
 
 - **Version Control**: Patterns live in Git with full history
 - **Synced Behavior**: Edit once in the CMS, updates propagate everywhere
 - **Cross-Environment Deployment**: Patterns deploy with the theme
 - **Code Review**: Pattern changes go through PR review
 
-## Creating a Pattern
+## Creating a Synced Pattern
 
 1. Build your layout in the WordPress editor
-2. Copy the block markup (Options menu → Code editor)
-3. Create a PHP file in your child theme's `/patterns/` directory:
+2. Copy the block markup (Options menu > Code editor)
+3. Create a PHP file in your theme's `/patterns/` directory:
 
 ```php
 <?php
@@ -35,6 +37,17 @@ Patterns in the child theme's `/patterns/` directory with the `Synced: true` hea
 
 4. Run `wp synced-patterns sync` to create the synced pattern
 
+## Regular vs Synced Patterns
+
+| Feature | Regular Pattern | Synced Pattern (`Synced: true`) |
+|---------|-----------------|--------------------------------|
+| Storage | Theme file only | Theme file + wp_block post |
+| After Insert | Fully editable copy | References shared wp_block |
+| Edit Propagation | None | All instances update |
+| Use Case | Starter templates | Consistent global elements |
+
+**Tip:** If you want patterns as starter templates (editable after insertion), don't add `Synced: true`.
+
 ## Pattern Headers
 
 | Header | Required | Description |
@@ -47,7 +60,7 @@ Patterns in the child theme's `/patterns/` directory with the `Synced: true` hea
 | `Synced` | Yes* | Set to `true` to enable database sync |
 | `Sync-Strategy` | No | How to handle updates (see below) |
 
-*Required for synced patterns. Patterns without `Synced: true` are registered as regular (non-synced) theme patterns.
+*Required for synced patterns. Patterns without `Synced: true` are registered as regular theme patterns.
 
 ## Sync Strategies
 
@@ -88,9 +101,9 @@ wp synced-patterns sync --force
 ## Workflow
 
 ### Initial Setup
-1. Create pattern file with `Synced: true` in child theme's `/patterns/` directory
+1. Create pattern file with `Synced: true` in theme's `/patterns/` directory
 2. Run `wp synced-patterns sync`
-3. Pattern appears in CMS under Patterns → My Patterns
+3. Pattern appears in CMS under Patterns > My Patterns
 
 ### Updating a Pattern
 1. Edit the pattern PHP file
@@ -106,13 +119,13 @@ wp synced-patterns sync --force
 
 ## Pattern Assets
 
-Store pattern-specific images and videos in the child theme's `/patterns/assets/` directory:
+Store pattern-specific images and videos in the theme's `/patterns/assets/` directory:
 
 ```
 patterns/
 ├── assets/
 │   ├── images/
-│   │   └── placeholder-image.svg
+│   │   └── placeholder-image.png
 │   └── videos/
 │       └── placeholder-video.mp4
 ├── my-pattern.php
@@ -125,15 +138,12 @@ Use root-relative paths to ensure assets work across all environments:
 
 ```html
 <!-- Image -->
-<img src="/wp-content/themes/{theme}/patterns/assets/images/placeholder-image.svg" />
+<img src="/wp-content/themes/{theme}/patterns/assets/images/placeholder-image.png" />
 
 <!-- Video (in Kadence block attributes) -->
 "local":"/wp-content/themes/{theme}/patterns/assets/videos/placeholder-video.mp4"
 ```
 
-### Tips for Pattern Assets
+## Theme Inheritance
 
-- **Use root-relative paths** (`/wp-content/...`) not full URLs
-- **For SVG images**, add `image-is-svg` class to the figure element
-- **Don't include media library IDs** in block attributes for theme assets
-- **Keep assets small** - these are version-controlled in Git
+Child theme patterns take precedence over parent theme patterns with the same slug. This allows child themes to override parent patterns.

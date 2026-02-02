@@ -11,6 +11,9 @@ use Sitchco\Parent\Modules\SyncedPatterns\Commands\SyncCommand;
  * Synchronizes theme pattern files (with "Synced: true" header) to wp_block posts,
  * enabling version-controlled patterns that behave as synced patterns in the CMS.
  *
+ * This module is "smart" - it only activates when patterns with "Synced: true" exist.
+ * If no patterns are marked for syncing, the module remains dormant with no overhead.
+ *
  * ## Usage
  *
  * Add "Synced: true" to any pattern file header:
@@ -48,6 +51,7 @@ class SyncedPatternsModule extends Module
 {
     private PatternParser $parser;
     private PatternSync $sync;
+    private ?bool $hasSyncedPatterns = null;
 
     public function __construct()
     {
@@ -57,16 +61,33 @@ class SyncedPatternsModule extends Module
 
     public function init(): void
     {
-        // Register WP-CLI commands
+        // Always register WP-CLI commands (they handle empty state gracefully)
         if (defined('WP_CLI') && WP_CLI) {
             $this->registerCliCommands();
         }
 
-        // Auto-sync on theme switch (optional - can be disabled)
+        // Only register hooks if there are synced patterns
+        if (!$this->hasSyncedPatterns()) {
+            return;
+        }
+
+        // Auto-sync on theme switch
         add_action('after_switch_theme', [$this, 'onThemeSwitch']);
 
         // Add admin notice if patterns need syncing
         add_action('admin_notices', [$this, 'maybeShowSyncNotice']);
+    }
+
+    /**
+     * Check if any synced patterns exist (cached).
+     */
+    private function hasSyncedPatterns(): bool
+    {
+        if ($this->hasSyncedPatterns === null) {
+            $this->hasSyncedPatterns = $this->sync->hasSyncedPatterns();
+        }
+
+        return $this->hasSyncedPatterns;
     }
 
     /**

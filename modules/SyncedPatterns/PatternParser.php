@@ -38,13 +38,13 @@ class PatternParser
         }
 
         $headers = $this->parseHeaders($filePath);
-        $blockContent = $this->extractBlockContent($content);
+        $blockContent = $this->extractBlockContent($content, $filePath);
 
         return [
             'file' => $filePath,
             'headers' => $headers,
             'content' => $blockContent,
-            'hash' => $this->generateHash($blockContent),
+            'hash' => $this->generateHash($blockContent, $headers),
         ];
     }
 
@@ -94,12 +94,22 @@ class PatternParser
 
     /**
      * Extract block content from the pattern file (everything after the PHP closing tag).
+     *
+     * Pattern files use a hybrid format: PHP header for metadata, then HTML block markup.
+     * The ?> delimiter separates these sections. This follows WordPress block pattern conventions.
      */
-    private function extractBlockContent(string $fileContent): string
+    private function extractBlockContent(string $fileContent, string $filePath = ''): string
     {
         // Find the closing PHP tag and get everything after it
         $closingTagPos = strpos($fileContent, '?>');
         if ($closingTagPos === false) {
+            if ($filePath) {
+                trigger_error(
+                    "Pattern file missing closing PHP tag (?>): {$filePath}. " .
+                    "Pattern files require <?php header ?> followed by HTML block content.",
+                    E_USER_WARNING
+                );
+            }
             return '';
         }
 
@@ -108,11 +118,18 @@ class PatternParser
     }
 
     /**
-     * Generate a hash of the content for change detection.
+     * Generate a hash of the content and relevant headers for change detection.
+     * Includes headers that are synced to the database (title, categories).
      */
-    private function generateHash(string $content): string
+    private function generateHash(string $content, array $headers): string
     {
-        return md5($content);
+        $hashData = [
+            'content' => $content,
+            'title' => $headers['title'] ?? '',
+            'categories' => $headers['categories'] ?? [],
+        ];
+
+        return md5(serialize($hashData));
     }
 
     /**

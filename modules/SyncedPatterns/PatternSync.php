@@ -20,6 +20,7 @@ class PatternSync
 
     /**
      * Get all synced patterns from the active theme and parent theme.
+     * Child theme patterns take precedence over parent theme patterns with the same slug.
      *
      * @return array Array of parsed pattern data
      */
@@ -27,20 +28,29 @@ class PatternSync
     {
         $patterns = [];
 
-        // Check child theme first
-        $childThemeDir = get_stylesheet_directory() . '/patterns';
-        if (is_dir($childThemeDir)) {
-            $patterns = array_merge($patterns, $this->getPatternsFromDirectory($childThemeDir));
-        }
-
-        // Check parent theme if different
+        // Load parent theme patterns first
         $parentThemeDir = get_template_directory() . '/patterns';
+        $childThemeDir = get_stylesheet_directory() . '/patterns';
+
         if ($parentThemeDir !== $childThemeDir && is_dir($parentThemeDir)) {
             $patterns = array_merge($patterns, $this->getPatternsFromDirectory($parentThemeDir));
         }
 
+        // Then merge child theme patterns, allowing them to override parent patterns
+        if (is_dir($childThemeDir)) {
+            $patterns = array_merge($patterns, $this->getPatternsFromDirectory($childThemeDir));
+        }
+
         // Filter to only synced patterns
         return array_filter($patterns, fn($pattern) => $this->parser->isSyncedPattern($pattern));
+    }
+
+    /**
+     * Check if any synced patterns exist in the theme.
+     */
+    public function hasSyncedPatterns(): bool
+    {
+        return !empty($this->getThemePatterns());
     }
 
     /**
@@ -50,6 +60,10 @@ class PatternSync
     {
         $patterns = [];
         $files = glob($directory . '/*.php');
+
+        if ($files === false) {
+            return $patterns;
+        }
 
         foreach ($files as $file) {
             $pattern = $this->parser->parse($file);
@@ -185,6 +199,32 @@ class PatternSync
     }
 
     /**
+     * Find all synced pattern posts in a single query.
+     * Returns an associative array keyed by pattern slug.
+     *
+     * @return array<string, \WP_Post>
+     */
+    private function findAllSyncedPosts(): array
+    {
+        $posts = get_posts([
+            'post_type' => 'wp_block',
+            'post_status' => 'publish',
+            'meta_key' => self::META_SLUG,
+            'posts_per_page' => -1,
+        ]);
+
+        $indexed = [];
+        foreach ($posts as $post) {
+            $slug = get_post_meta($post->ID, self::META_SLUG, true);
+            if ($slug) {
+                $indexed[$slug] = $post;
+            }
+        }
+
+        return $indexed;
+    }
+
+    /**
      * Create a new wp_block post for a pattern.
      */
     private function createPost(array $pattern): array
@@ -246,23 +286,27 @@ class PatternSync
         update_post_meta($postId, self::META_HASH, $pattern['hash']);
         update_post_meta($postId, self::META_SOURCE, 'theme');
 
-        // Store pattern categories for reference
+        // Store pattern categories for reference (or remove if empty)
         if (!empty($pattern['headers']['categories'])) {
             update_post_meta($postId, '_synced_pattern_categories', $pattern['headers']['categories']);
+        } else {
+            delete_post_meta($postId, '_synced_pattern_categories');
         }
     }
 
     /**
      * Get sync status for all theme patterns.
+     * Uses a single batched query to fetch all synced posts.
      */
     public function getStatus(): array
     {
         $patterns = $this->getThemePatterns();
+        $syncedPosts = $this->findAllSyncedPosts();
         $status = [];
 
         foreach ($patterns as $pattern) {
             $slug = $pattern['headers']['slug'];
-            $existingPost = $this->findExistingPost($slug);
+            $existingPost = $syncedPosts[$slug] ?? null;
 
             if (!$existingPost) {
                 $status[$slug] = [

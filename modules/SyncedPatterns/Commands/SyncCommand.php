@@ -72,14 +72,22 @@ class SyncCommand
             WP_CLI::log('Skipped: ' . implode(', ', $results['skipped']));
         }
 
-        if (!empty($results['errors'])) {
+        $hasErrors = !empty($results['errors']);
+
+        if ($hasErrors) {
             foreach ($results['errors'] as $slug => $message) {
-                WP_CLI::error("Error syncing {$slug}: {$message}", false);
+                WP_CLI::warning("Error syncing {$slug}: {$message}");
             }
         }
 
         $total = count($results['created']) + count($results['updated']);
-        WP_CLI::success("Sync complete. {$total} pattern(s) synced.");
+
+        if ($hasErrors) {
+            $errorCount = count($results['errors']);
+            WP_CLI::error("Sync completed with {$errorCount} error(s). {$total} pattern(s) synced.");
+        } else {
+            WP_CLI::success("Sync complete. {$total} pattern(s) synced.");
+        }
     }
 
     /**
@@ -106,7 +114,7 @@ class SyncCommand
         $status = $this->sync->getStatus();
 
         if (empty($status)) {
-            WP_CLI::log('No synced patterns found in theme.');
+            WP_CLI::log('No synced patterns found in theme. Add "Synced: true" to pattern headers.');
             return;
         }
 
