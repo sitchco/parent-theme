@@ -61,13 +61,30 @@ class ExtendBlockModule extends Module
         $classes = esc_attr($classes);
 
         // Inject classes into the first element's class attribute
-        // Match the first class="..." in the block content
-        $block_content = preg_replace(
-            '/^(<[^>]*\bclass=["\'])([^"\']*)/i',
-            '$1$2 ' . $classes,
-            $block_content,
-            1
-        );
+        // Pattern prefix to skip leading whitespace and HTML comments
+        $prefix = '(\s*(?:<!--.*?-->\s*)*)';
+
+        // First, try to match an existing class attribute
+        if (preg_match('/^' . $prefix . '<[^>]*\bclass=["\'][^"\']*["\'][^>]*>/is', $block_content)) {
+            // Append to existing class attribute
+            $block_content = preg_replace_callback(
+                '/^(' . $prefix . '<[^>]*\bclass=["\'])([^"\']*)/is',
+                function ($matches) use ($classes) {
+                    $existing = $matches[3];
+                    return $matches[1] . ($existing !== '' ? $existing . ' ' : '') . $classes;
+                },
+                $block_content,
+                1
+            );
+        } else {
+            // No class attribute exists, add one after the tag name
+            $block_content = preg_replace(
+                '/^(' . $prefix . '<[a-z][a-z0-9]*)/is',
+                '$1 class="' . $classes . '"',
+                $block_content,
+                1
+            );
+        }
 
         return $block_content;
     }

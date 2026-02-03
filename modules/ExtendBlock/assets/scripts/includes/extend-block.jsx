@@ -2,20 +2,26 @@ import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useMemo } from '@wordpress/element';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, mergeClassNames } from './utils/class-names';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 
 /**
+ * Dynamic Kadence blocks that render server-side and need PHP filter treatment.
+ * Most Kadence blocks are static (fully rendered by the editor), so we explicitly
+ * opt-in only the ones that need special handling.
+ */
+const DYNAMIC_KADENCE_BLOCKS = ['kadence/rowlayout', 'kadence/accordion'];
+
+/**
  * Checks if a block is a dynamic block (rendered server-side).
- * Currently identifies Kadence blocks as dynamic.
  *
  * @param {string} blockName - The block name to check
  * @returns {boolean}
  */
 function isDynamicBlock(blockName) {
-    return isKadenceBlock(blockName);
+    return DYNAMIC_KADENCE_BLOCKS.includes(blockName);
 }
 
 /**
@@ -130,16 +136,25 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             const { attributes, setAttributes } = props;
             const isDynamic = isDynamicBlock(props.name);
 
+            // Extract only the field attribute values to avoid depending on full attributes object
+            const fieldNames = allFields.map((f) => f.name);
+            const fieldValues = fieldNames.map((name) => attributes[name]);
+
+            // Memoize the class string based only on relevant field values
+            const classString = useMemo(() => {
+                const newClasses = classGenerator
+                    ? classGenerator(attributes)
+                    : generateFieldClasses(allFields, attributes);
+                return newClasses.join(' ');
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+            }, fieldValues);
+
             // Sync generated classes to extendBlockClasses attribute for dynamic blocks
             // Each extension stores its classes under its namespace key
             useEffect(() => {
                 if (!isDynamic) {
                     return;
                 }
-                const newClasses = classGenerator
-                    ? classGenerator(attributes)
-                    : generateFieldClasses(allFields, attributes);
-                const classString = newClasses.join(' ');
 
                 const currentClasses = attributes.extendBlockClasses || {};
                 if (currentClasses[namespace] !== classString) {
@@ -150,7 +165,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                         },
                     });
                 }
-            }, [attributes, isDynamic, setAttributes]);
+            }, [classString, isDynamic, namespace, setAttributes, attributes.extendBlockClasses]);
 
             // Auto-detect Kadence tab if enabled and this is a Kadence block
             const isKadence = kadenceTabAware && isKadenceBlock(props.name);
