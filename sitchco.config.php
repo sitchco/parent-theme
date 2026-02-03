@@ -9,7 +9,6 @@ use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
 use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
-use Sitchco\Parent\Modules\SyncedPatterns\SyncedPatternsModule;
 use Sitchco\Parent\Modules\Theme\Theme;
 
 return [
@@ -23,7 +22,6 @@ return [
         SiteHeaderModule::class,
         SiteFooterModule::class,
         ContentSlider::class,
-        SyncedPatternsModule::class,
         Theme::class,
         KadenceBlocks::class,
     ],
