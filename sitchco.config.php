@@ -8,6 +8,7 @@ use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
 use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
 use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
+use Sitchco\Parent\Modules\SavePatternsToTheme\SavePatternsToThemeModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\Modules\Theme\Theme;
 
@@ -24,6 +25,7 @@ return [
         ContentSlider::class,
         Theme::class,
         KadenceBlocks::class,
+        SavePatternsToThemeModule::class,
     ],
     'disallowedBlocks' => [
         /** TEXT */
