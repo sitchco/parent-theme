@@ -40,6 +40,10 @@ return [
         /** Design */
         'core/more',
         'core/nextpage',
+        'core/accordion',
+        'core/accordion-item',
+        'core/accordion-heading',
+        'core/accordion-panel',
         /** Layout */
         'core/group',
         'core/cover',

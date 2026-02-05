@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\KadenceBlocks;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 
 /**
@@ -14,7 +15,9 @@ use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
  */
 class KadenceBlocks extends Module
 {
-    public const DEPENDENCIES = [ExtendBlockModule::class];
+    public const DEPENDENCIES = [ExtendBlockModule::class, SvgSprite::class];
+
+    public function __construct(protected SvgSprite $svgSprite) {}
 
     public function init(): void
     {
@@ -34,6 +37,7 @@ class KadenceBlocks extends Module
                 'sitchco/extend-block',
             ]);
             $assets->inlineScriptData('kadence-blocks-editor-ui', 'themeSettings', wp_get_global_settings());
+            $assets->inlineScriptData('kadence-blocks-editor-ui', 'sitchcoIcons', $this->getIconList());
         }, 1);
 
         add_filter('kadence_blocks_column_render_block_attributes', [$this, 'injectDefaultColumnGap']);
@@ -42,6 +46,7 @@ class KadenceBlocks extends Module
         add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideFontSizes']);
         add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideConfigDefaults']);
         add_filter('kadence_blocks_measure_output_css_variables', [$this, 'enableCssVariablesForPadding'], 10, 5);
+        add_filter('render_block_kadence/accordion', [$this, 'replaceAccordionIcons'], 10, 2);
     }
 
     /**
@@ -147,5 +152,64 @@ class KadenceBlocks extends Module
         }
 
         return $use_variables;
+    }
+
+    /**
+     * Get list of available icons for editor UI.
+     *
+     * @return array<array{label: string, value: string}>
+     */
+    protected function getIconList(): array
+    {
+        $iconList = apply_filters(SvgSprite::hookName('icon-list'), []);
+        $icons = collect($iconList)
+            ->flatMap(fn($item) => $item['icons'])
+            ->sort()
+            ->map(fn($name) => [
+                'label' => ucfirst(str_replace('-', ' ', $name)),
+                'value' => $name,
+            ])
+            ->prepend(['label' => 'Default', 'value' => ''])
+            ->values()
+            ->all();
+
+        return $icons;
+    }
+
+    /**
+     * Replace Kadence accordion icon trigger with sitchco icons.
+     *
+     * Replaces empty spans used for CSS-based icons with actual SVG icons
+     * (collapsed icon shown by default, expanded icon shown when active).
+     */
+    public function replaceAccordionIcons(string $block_content, array $block): string
+    {
+        // Get icon names from accordion block attributes (with defaults)
+        $collapsedIcon = $block['attrs']['accordionIconCollapsed'] ?? 'plus';
+        $expandedIcon = $block['attrs']['accordionIconExpanded'] ?? 'minus';
+
+        // Skip replacement if using default empty values (use CSS icons instead)
+        if (empty($collapsedIcon) && empty($expandedIcon)) {
+            return $block_content;
+        }
+
+        // Use defaults if only one is set
+        $collapsedIcon = $collapsedIcon ?: 'plus';
+        $expandedIcon = $expandedIcon ?: 'minus';
+
+        $collapsedIconHtml = $this->svgSprite->renderIcon($collapsedIcon, null, ['kt-accordion-icon-collapsed']);
+        $expandedIconHtml = $this->svgSprite->renderIcon($expandedIcon, null, ['kt-accordion-icon-expanded']);
+
+        // Use regex to match icon trigger spans more flexibly
+        // Matches: <span class="...kt-blocks-accordion-icon-trigger..."></span>
+        // Allows for varying attribute order, additional classes, or whitespace
+        return preg_replace(
+            '/<span\s+[^>]*\bclass=["\'][^"\']*\bkt-blocks-accordion-icon-trigger\b[^"\']*["\'][^>]*>\s*<\/span>/i',
+            '<span class="kt-blocks-accordion-icon-trigger kt-blocks-accordion-icon-trigger--sitchco">'
+            . $collapsedIconHtml
+            . $expandedIconHtml
+            . '</span>',
+            $block_content
+        );
     }
 }

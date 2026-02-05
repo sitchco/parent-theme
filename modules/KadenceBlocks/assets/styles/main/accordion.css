@@ -1,0 +1,33 @@
+/* Accordion icon replacement using sitchco icons */
+.kt-blocks-accordion-icon-trigger--sitchco {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Hide the CSS-based pseudo-element icons */
+    &::before,
+    &::after {
+        display: none !important;
+    }
+
+    /* Show collapsed icon by default */
+    .kt-accordion-icon-collapsed {
+        display: flex;
+    }
+
+    /* Hide expanded icon by default */
+    .kt-accordion-icon-expanded {
+        display: none;
+    }
+}
+
+/* Active/expanded state - swap icons */
+.kt-accordion-panel-active .kt-blocks-accordion-icon-trigger--sitchco {
+    .kt-accordion-icon-collapsed {
+        display: none;
+    }
+
+    .kt-accordion-icon-expanded {
+        display: flex;
+    }
+}
