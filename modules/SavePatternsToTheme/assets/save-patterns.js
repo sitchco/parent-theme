@@ -79,11 +79,9 @@
         }
 
         const patternId = getPatternIdFromUrl();
-        console.log('Save to Theme: Pattern ID from URL:', patternId, 'URL:', window.location.search);
 
         // Find any open dropdown menu with role="menu"
         const menus = document.querySelectorAll('[role="menu"]');
-        console.log('Save to Theme: Found menus:', menus.length);
 
         for (const menu of menus) {
             // Check if already added
@@ -93,14 +91,11 @@
 
             // Find the "Export as JSON" menu item
             const menuItems = menu.querySelectorAll('[role="menuitem"]');
-            console.log('Save to Theme: Menu items in this menu:', menuItems.length);
 
             let exportItem = null;
 
             for (const item of menuItems) {
                 const text = item.textContent.trim();
-                console.log('Save to Theme: Menu item text:', text);
-
                 if (text.includes('Export as JSON') || text.includes('Export')) {
                     exportItem = item;
                     break;
@@ -108,11 +103,8 @@
             }
 
             if (!exportItem) {
-                console.log('Save to Theme: No Export item found in this menu');
                 continue;
             }
-
-            console.log('Save to Theme: Found Export menu item, adding Save to Theme');
 
             // Clone the export item to get exact same structure and styles
             const saveMenuItem = exportItem.cloneNode(true);
@@ -165,7 +157,6 @@
 
             // Insert after Export as JSON
             exportItem.after(saveMenuItem);
-            console.log('Save to Theme: Menu item added successfully');
             return true;
         }
         return false;
@@ -177,11 +168,9 @@
     async function handleBulkSaveClick() {
         const patternIds = getSelectedPatternIds();
         if (patternIds.length === 0) {
-            alert('Could not determine selected patterns. Check browser console for debug info.');
+            alert('No synced patterns selected. Only synced (wp_block) patterns can be saved to the theme.');
             return;
         }
-
-        console.log('Save to Theme: Found pattern IDs:', patternIds);
 
         const button = document.querySelector('[data-save-to-theme]');
         const originalText = button.textContent;
@@ -207,8 +196,6 @@
             alert('Could not determine pattern ID.');
             return;
         }
-
-        console.log('Save to Theme: Saving pattern ID:', patternId);
 
         try {
             const response = await savePatterns([patternId]);
@@ -251,61 +238,71 @@
     }
 
     /**
-     * Get selected pattern IDs from bulk selection
+     * Get selected pattern IDs from bulk selection using title-based matching.
+     * Extracts titles from selected DataViews cards and matches them against
+     * synced patterns from wp.data to resolve post IDs.
      */
     function getSelectedPatternIds() {
         const patternIds = [];
         if (typeof wp === 'undefined' || !wp.data) {
-            console.log('wp.data not available');
             return patternIds;
         }
 
         const coreStore = wp.data.select('core');
         const syncedPatterns = coreStore.getEntityRecords('postType', 'wp_block', { per_page: -1 });
         if (!syncedPatterns || syncedPatterns.length === 0) {
-            console.log('No synced patterns found in store');
             return patternIds;
         }
 
-        console.log('Synced patterns from store:', syncedPatterns);
+        // Build a title-to-IDs lookup map (multiple patterns can share a title)
+        const titleToIds = new Map();
 
-        const allCards = document.querySelectorAll('.dataviews-view-grid__card');
-        const totalCards = allCards.length;
-        const syncedCount = syncedPatterns.length;
-        const themePatternCount = totalCards - syncedCount;
-
-        console.log(
-            `Total cards: ${totalCards}, Synced patterns: ${syncedCount}, Theme patterns: ${themePatternCount}`
-        );
-
-        allCards.forEach((card, index) => {
-            if (card.classList.contains('is-selected')) {
-                if (index >= themePatternCount) {
-                    const syncedIndex = index - themePatternCount;
-                    if (syncedPatterns[syncedIndex]) {
-                        console.log(
-                            `Card ${index} -> Synced pattern index ${syncedIndex} -> ID ${syncedPatterns[syncedIndex].id}`
-                        );
-
-                        patternIds.push(syncedPatterns[syncedIndex].id);
-                    }
-                } else {
-                    console.log(`Card ${index} is a theme pattern (not a synced wp_block), skipping`);
+        for (const pattern of syncedPatterns) {
+            const title = (pattern.title?.raw || pattern.title?.rendered || '').trim();
+            if (title) {
+                if (!titleToIds.has(title)) {
+                    titleToIds.set(title, []);
                 }
+
+                titleToIds.get(title).push(pattern.id);
             }
-        });
-        return [...new Set(patternIds)];
+        }
+
+        const selectedCards = document.querySelectorAll('.dataviews-view-grid__card.is-selected');
+
+        for (const card of selectedCards) {
+            // Extract title text from the card's heading or content area
+            const titleEl =
+                card.querySelector('.dataviews-view-grid__title-field [data-wp-block-title]') ||
+                card.querySelector('.dataviews-view-grid__title-field span') ||
+                card.querySelector('.dataviews-view-grid__title-field');
+
+            const cardTitle = titleEl ? titleEl.textContent.trim() : '';
+            if (!cardTitle) {
+                continue;
+            }
+
+            const ids = titleToIds.get(cardTitle);
+            if (ids && ids.length > 0) {
+                // Consume the first available ID so duplicates get distinct IDs
+                patternIds.push(ids.shift());
+            }
+        }
+        return patternIds;
     }
 
     /**
      * Initialize - watch for UI changes and add buttons
      */
     function init() {
-        console.log('Save to Theme: Initializing...');
+        let debounceTimer = null;
 
         const observer = new MutationObserver(() => {
-            addBulkActionButton();
-            addSinglePatternMenuItem();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                addBulkActionButton();
+                addSinglePatternMenuItem();
+            }, 200);
         });
 
         observer.observe(document.body, {

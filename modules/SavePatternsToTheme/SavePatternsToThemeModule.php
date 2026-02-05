@@ -23,6 +23,9 @@ class SavePatternsToThemeModule extends Module
 
     private string $patternsDir;
 
+    /** @var array<string, true> Slugs used within the current batch to prevent collisions. */
+    private array $usedSlugs = [];
+
     public function __construct()
     {
         $this->patternsDir = get_stylesheet_directory() . '/patterns';
@@ -69,6 +72,7 @@ class SavePatternsToThemeModule extends Module
     public function handleRestRequest(WP_REST_Request $request): WP_REST_Response|WP_Error
     {
         $patternIds = $request->get_param('pattern_ids');
+        $this->usedSlugs = [];
 
         $created = [];
         $updated = [];
@@ -98,7 +102,7 @@ class SavePatternsToThemeModule extends Module
         }
 
         return new WP_REST_Response([
-            'success' => true,
+            'success' => empty($errors),
             'created' => $created,
             'updated' => $updated,
             'unchanged' => $unchanged,
@@ -121,15 +125,10 @@ class SavePatternsToThemeModule extends Module
         wp_enqueue_script(
             'save-patterns-to-theme',
             $this->path('assets/save-patterns.js')->url(),
-            ['wp-dom-ready', 'wp-api-fetch'],
-            '1.0.1',
+            ['wp-dom-ready', 'wp-api-fetch', 'wp-data', 'wp-core-data'],
+            filemtime($this->path('assets/save-patterns.js')->value()),
             true,
         );
-
-        wp_localize_script('save-patterns-to-theme', 'savePatternsToTheme', [
-            'restUrl' => rest_url('theme/v1/save-patterns'),
-            'nonce' => wp_create_nonce('wp_rest'),
-        ]);
     }
 
     /**
@@ -156,14 +155,19 @@ class SavePatternsToThemeModule extends Module
             }
         }
 
+        // Clean up stale file if the pattern was previously saved under a different title
+        $existingFile = $this->findExistingFileForPost($postId);
+        if ($existingFile && $existingFile !== $filepath) {
+            unlink($existingFile);
+        }
+
         $newContent = $this->formatPatternFile($post, $slug);
 
         // Check if file exists and compare hashes
         if (file_exists($filepath)) {
             $existingContent = file_get_contents($filepath);
 
-            // Compare hashes to detect changes
-            if (md5($existingContent) === md5($newContent)) {
+            if ($existingContent === $newContent) {
                 return self::RESULT_UNCHANGED;
             }
 
@@ -191,7 +195,18 @@ class SavePatternsToThemeModule extends Module
         $slug = sanitize_title($title);
         // Remove any leading numbers and dashes that sanitize_title might leave
         $slug = preg_replace('/^[\d-]+/', '', $slug);
-        return $slug ?: 'pattern';
+        $slug = $slug ?: 'pattern';
+
+        // Deduplicate against slugs already used in this batch
+        $candidate = $slug;
+        $counter = 2;
+        while (isset($this->usedSlugs[$candidate])) {
+            $candidate = $slug . '-' . $counter;
+            $counter++;
+        }
+
+        $this->usedSlugs[$candidate] = true;
+        return $candidate;
     }
 
     /**
@@ -200,11 +215,11 @@ class SavePatternsToThemeModule extends Module
     private function formatPatternFile(\WP_Post $post, string $slug): string
     {
         $themeName = wp_get_theme()->get('TextDomain') ?: 'theme';
-        $title = esc_html($post->post_title);
+        $title = str_replace('*/', '', $post->post_title);
         $fullSlug = "{$themeName}/{$slug}";
 
         // Extract keywords from categories if available
-        $keywords = $this->getPatternKeywords($post->ID);
+        $keywords = str_replace('*/', '', $this->getPatternKeywords($post->ID));
         $keywordsLine = $keywords ? " * Keywords: {$keywords}\n" : '';
 
         $header = <<<PHP
@@ -212,13 +227,15 @@ class SavePatternsToThemeModule extends Module
         /**
          * Title: {$title}
          * Slug: {$fullSlug}
+         * Source Post ID: {$post->ID}
          * Description:
         {$keywordsLine} */
         ?>
 
         PHP;
 
-        return $header . $post->post_content . "\n";
+        $content = str_replace(['<?php', '<?', '?>'], '', $post->post_content);
+        return $header . $content . "\n";
     }
 
     /**
@@ -233,5 +250,25 @@ class SavePatternsToThemeModule extends Module
         }
 
         return implode(', ', $terms);
+    }
+
+    /**
+     * Find an existing pattern file that was saved from a given post ID.
+     */
+    private function findExistingFileForPost(int $postId): ?string
+    {
+        $files = glob($this->patternsDir . '/*.php');
+        if (!$files) {
+            return null;
+        }
+
+        foreach ($files as $file) {
+            $headers = get_file_data($file, ['source_post_id' => 'Source Post ID']);
+            if ((int) $headers['source_post_id'] === $postId) {
+                return $file;
+            }
+        }
+
+        return null;
     }
 }
