@@ -287,7 +287,9 @@ class SavePatternsToThemeModule extends Module
         $title = str_replace('*/', '', $post->post_title);
         $fullSlug = "{$themeName}/{$slug}";
 
-        // Extract keywords from categories if available
+        // Extract categories (slugs) and keywords (names) from taxonomy
+        $categories = str_replace('*/', '', $this->getPatternCategories($post->ID));
+        $categoriesLine = $categories ? " * Categories: {$categories}\n" : '';
         $keywords = str_replace('*/', '', $this->getPatternKeywords($post->ID));
         $keywordsLine = $keywords ? " * Keywords: {$keywords}\n" : '';
 
@@ -298,7 +300,7 @@ class SavePatternsToThemeModule extends Module
          * Slug: {$fullSlug}
          * Source Post ID: {$post->ID}
          * Description:
-        {$keywordsLine} */
+        {$categoriesLine}{$keywordsLine} */
         ?>
 
         PHP;
@@ -306,6 +308,20 @@ class SavePatternsToThemeModule extends Module
         $content = str_replace(['<?php', '<?', '?>'], '', $post->post_content);
         $content = $this->sanitizePatternContent($content);
         return $header . $content . "\n";
+    }
+
+    /**
+     * Get category slugs for a pattern post.
+     */
+    private function getPatternCategories(int $postId): string
+    {
+        $terms = wp_get_post_terms($postId, 'wp_pattern_category', ['fields' => 'slugs']);
+
+        if (is_wp_error($terms) || empty($terms)) {
+            return '';
+        }
+
+        return implode(', ', $terms);
     }
 
     /**
