@@ -299,7 +299,7 @@ class SavePatternsToThemeModule extends Module
      */
     private function formatPatternFile(\WP_Post $post, string $slug): string
     {
-        $themeName = wp_get_theme()->get('TextDomain') ?: 'theme';
+        $themeName = basename(get_stylesheet_directory());
         $title = str_replace('*/', '', $post->post_title);
         $fullSlug = "{$themeName}/{$slug}";
 
