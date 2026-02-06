@@ -214,6 +214,22 @@ class SavePatternsToThemeModule extends Module
         }
 
         $slug = $this->generateSlug($post->post_title);
+
+        // Resolve cross-request slug collisions with files owned by different posts
+        $candidate = $slug;
+        $counter = 2;
+        while (file_exists($this->patternsDir . '/' . $candidate . '.php')) {
+            $headers = get_file_data($this->patternsDir . '/' . $candidate . '.php', [
+                'source_post_id' => 'Source Post ID',
+            ]);
+            if ((int) $headers['source_post_id'] === $postId || empty($headers['source_post_id'])) {
+                break;
+            }
+            $candidate = $slug . '-' . $counter;
+            $counter++;
+        }
+        $slug = $candidate;
+
         $filename = $slug . '.php';
         $filepath = $this->patternsDir . '/' . $filename;
 
