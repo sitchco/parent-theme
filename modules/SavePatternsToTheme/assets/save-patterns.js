@@ -238,54 +238,23 @@
     }
 
     /**
-     * Get selected pattern IDs from bulk selection using title-based matching.
-     * Extracts titles from selected DataViews cards and matches them against
-     * synced patterns from wp.data to resolve post IDs.
+     * Get selected pattern IDs from bulk selection by extracting post IDs
+     * from each selected card's edit link href.
      */
     function getSelectedPatternIds() {
         const patternIds = [];
-        if (typeof wp === 'undefined' || !wp.data) {
-            return patternIds;
-        }
-
-        const coreStore = wp.data.select('core');
-        const syncedPatterns = coreStore.getEntityRecords('postType', 'wp_block', { per_page: -1 });
-        if (!syncedPatterns || syncedPatterns.length === 0) {
-            return patternIds;
-        }
-
-        // Build a title-to-IDs lookup map (multiple patterns can share a title)
-        const titleToIds = new Map();
-
-        for (const pattern of syncedPatterns) {
-            const title = (pattern.title?.raw || pattern.title?.rendered || '').trim();
-            if (title) {
-                if (!titleToIds.has(title)) {
-                    titleToIds.set(title, []);
-                }
-
-                titleToIds.get(title).push(pattern.id);
-            }
-        }
-
         const selectedCards = document.querySelectorAll('.dataviews-view-grid__card.is-selected');
 
         for (const card of selectedCards) {
-            // Extract title text from the card's heading or content area
-            const titleEl =
-                card.querySelector('.dataviews-view-grid__title-field [data-wp-block-title]') ||
-                card.querySelector('.dataviews-view-grid__title-field span') ||
-                card.querySelector('.dataviews-view-grid__title-field');
-
-            const cardTitle = titleEl ? titleEl.textContent.trim() : '';
-            if (!cardTitle) {
+            const link = card.querySelector('a[href*="postId="], a[href*="/wp_block/"]');
+            if (!link) {
                 continue;
             }
 
-            const ids = titleToIds.get(cardTitle);
-            if (ids && ids.length > 0) {
-                // Consume the first available ID so duplicates get distinct IDs
-                patternIds.push(ids.shift());
+            const href = link.getAttribute('href');
+            const match = href.match(/postId=(\d+)/) || href.match(/\/wp_block\/(\d+)/);
+            if (match) {
+                patternIds.push(parseInt(match[1], 10));
             }
         }
         return patternIds;
