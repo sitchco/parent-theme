@@ -90,11 +90,11 @@ function createAttributeFilter(targetBlocks, allFields, includeClassesAttribute 
         if (!isTargetBlock(name, targetBlocks)) {
             return settings;
         }
+
         const attributes = {
             ...settings.attributes,
             ...fieldsToAttributes(allFields),
         };
-
         // Add extendBlockClasses attribute for dynamic blocks
         // This is an object keyed by namespace to allow multiple extensions to contribute classes
         if (includeClassesAttribute && isDynamicBlock(name)) {
@@ -103,7 +103,6 @@ function createAttributeFilter(targetBlocks, allFields, includeClassesAttribute 
                 default: {},
             };
         }
-
         return {
             ...settings,
             attributes,
@@ -146,7 +145,6 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                     ? classGenerator(attributes)
                     : generateFieldClasses(allFields, attributes);
                 return newClasses.join(' ');
-                // eslint-disable-next-line react-hooks/exhaustive-deps
             }, fieldValues);
 
             // Sync generated classes to extendBlockClasses attribute for dynamic blocks
@@ -156,7 +154,10 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                     return;
                 }
 
-                const currentClasses = attributes.extendBlockClasses || {};
+                const currentClasses =
+                    typeof attributes.extendBlockClasses === 'object' && attributes.extendBlockClasses !== null
+                        ? attributes.extendBlockClasses
+                        : {};
                 if (currentClasses[namespace] !== classString) {
                     setAttributes({
                         extendBlockClasses: {
@@ -173,9 +174,9 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                 isKadence
                     ? props
                     : {
-                        clientId: null,
-                        name: '',
-                    }
+                          clientId: null,
+                          name: '',
+                      }
             );
 
             // Run custom setup hook if provided
@@ -336,7 +337,6 @@ export function extendBlock(config) {
 
     // Check if any target blocks are dynamic (need extendBlockClasses attribute)
     const hasDynamicBlocks = blocks.some(isDynamicBlock);
-
     // Only register attribute and class filters if we have fields
     if (allFields.length > 0) {
         // 1. Register attributes (include extendBlockClasses for dynamic blocks)

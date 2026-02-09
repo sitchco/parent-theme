@@ -46,7 +46,7 @@ class ExtendBlockModule extends Module
         // Handle both object format (new) and string format (legacy)
         if (is_array($extendBlockClasses)) {
             // Combine all class strings from all namespaces
-            $classes = implode(' ', array_filter(array_values($extendBlockClasses)));
+            $classes = implode(' ', array_filter(array_map('strval', array_values($extendBlockClasses))));
         } else {
             // Legacy string format
             $classes = $extendBlockClasses;
@@ -74,15 +74,17 @@ class ExtendBlockModule extends Module
                     return $matches[1] . ($existing !== '' ? $existing . ' ' : '') . $classes;
                 },
                 $block_content,
-                1
+                1,
             );
         } else {
             // No class attribute exists, add one after the tag name
-            $block_content = preg_replace(
+            $block_content = preg_replace_callback(
                 '/^(' . $prefix . '<[a-z][a-z0-9]*)/is',
-                '$1 class="' . $classes . '"',
+                function ($matches) use ($classes) {
+                    return $matches[1] . ' class="' . $classes . '"';
+                },
                 $block_content,
-                1
+                1,
             );
         }
 
