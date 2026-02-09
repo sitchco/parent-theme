@@ -7,7 +7,7 @@ use Sitchco\Framework\Module;
 
 class PatternsModule extends Module
 {
-    const FEATURES = ['registerPatternCategories'];
+    const FEATURES = ['registerPatternCategories', 'saveToTheme'];
 
     public function __construct(private readonly ConfigRegistry $configRegistry) {}
 
@@ -22,5 +22,11 @@ class PatternsModule extends Module
                 register_block_pattern_category($slug, ['label' => $label]);
             }
         });
+    }
+
+    public function saveToTheme(): void
+    {
+        $service = new SavePatternsToTheme($this->path('assets/save-patterns.js'));
+        $service->init();
     }
 }
