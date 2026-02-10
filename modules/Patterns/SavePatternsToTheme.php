@@ -155,6 +155,15 @@ class SavePatternsToTheme
             }
         }
 
+        if ($created || $updated) {
+            $stylesheet = basename(get_stylesheet_directory());
+            delete_transient('wp_theme_files_patterns-' . $stylesheet);
+            $template = basename(get_template_directory());
+            if ($template !== $stylesheet) {
+                delete_transient('wp_theme_files_patterns-' . $template);
+            }
+        }
+
         return new WP_REST_Response([
             'success' => empty($errors),
             'created' => $created,
