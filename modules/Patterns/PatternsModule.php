@@ -4,12 +4,16 @@ namespace Sitchco\Parent\Modules\Patterns;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
+use Sitchco\Framework\ModuleAssets;
 
 class PatternsModule extends Module
 {
     const FEATURES = ['registerPatternCategories', 'saveToTheme'];
 
-    public function __construct(private readonly ConfigRegistry $configRegistry) {}
+    public function __construct(
+        private readonly ConfigRegistry $configRegistry,
+        private readonly SavePatternsToTheme $savePatterns,
+    ) {}
 
     public function registerPatternCategories(): void
     {
@@ -26,7 +30,19 @@ class PatternsModule extends Module
 
     public function saveToTheme(): void
     {
-        $service = new SavePatternsToTheme($this->path('assets/save-patterns.js'));
-        $service->init();
+        if (wp_get_environment_type() !== 'local') {
+            return;
+        }
+
+        $this->enqueueAdminAssets(function (ModuleAssets $assets) {
+            $assets->enqueueScript('save-patterns-to-theme', 'save-patterns.js', [
+                'wp-dom-ready',
+                'wp-api-fetch',
+                'wp-data',
+                'wp-core-data',
+            ]);
+        });
+
+        add_action('rest_api_init', [$this->savePatterns, 'registerRestRoute']);
     }
 }

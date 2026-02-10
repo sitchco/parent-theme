@@ -2,7 +2,6 @@
 
 namespace Sitchco\Parent\Modules\Patterns;
 
-use Sitchco\Support\FilePath;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -95,23 +94,9 @@ class SavePatternsToTheme
     /** @var array<string, true> Slugs used within the current batch to prevent collisions. */
     private array $usedSlugs = [];
 
-    public function __construct(private readonly FilePath $scriptPath)
+    public function __construct()
     {
         $this->patternsDir = get_stylesheet_directory() . '/patterns';
-    }
-
-    public function init(): void
-    {
-        // Only activate in local environment
-        if (wp_get_environment_type() !== 'local') {
-            return;
-        }
-
-        // Register REST API endpoint
-        add_action('rest_api_init', [$this, 'registerRestRoute']);
-
-        // Enqueue admin scripts for the patterns page
-        add_action('admin_enqueue_scripts', [$this, 'enqueueAdminScripts']);
     }
 
     /**
@@ -177,27 +162,6 @@ class SavePatternsToTheme
             'unchanged' => $unchanged,
             'errors' => $errors,
         ]);
-    }
-
-    /**
-     * Enqueue admin scripts for the patterns editor.
-     */
-    public function enqueueAdminScripts(string $hook): void
-    {
-        // Load on site editor where patterns are managed
-        $validHooks = ['site-editor.php', 'appearance_page_gutenberg-edit-site'];
-
-        if (!in_array($hook, $validHooks, true)) {
-            return;
-        }
-
-        wp_enqueue_script(
-            'save-patterns-to-theme',
-            $this->scriptPath->url(),
-            ['wp-dom-ready', 'wp-api-fetch', 'wp-data', 'wp-core-data'],
-            filemtime($this->scriptPath->value()),
-            true,
-        );
     }
 
     /**
