@@ -123,6 +123,17 @@
             }
         },
         "custom": {
+            "_docs": {
+                "blockGap": "Vertical rhythm between content elements (paragraphs, headings, blocks) within a container.",
+                "containerOuterSm": "Spacing between major layout elements (column gaps, section margins)—direction-agnostic.",
+                "containerOuterLg": "Larger spacing between major layout elements for wider contexts—direction-agnostic.",
+                "containerInnerHSm": "Horizontal padding inside containers for narrow contexts (small containers or narrow viewports).",
+                "containerInnerHLg": "Horizontal padding inside containers for wide contexts (large containers or wide viewports).",
+                "containerInnerVSm": "Vertical padding for compact containers like cards in multi-column layouts.",
+                "containerInnerVLg": "Vertical padding for section-level containers (rows with backgrounds, full-width sections).",
+                "visualEdgeOffset": "Optical margin adjustment for elements with hard visual boundaries (images) to maintain consistent perceived spacing.",
+                "carouselGap": "Spacing between carousel/slider slides."
+            },
             "blockGap": "var:preset|spacing|20",
             "containerOuterSm": "var:preset|spacing|30",
             "containerOuterLg": "var:custom|container-outer-sm",
