@@ -35,6 +35,11 @@ class PatternsModule extends Module
         }
 
         $this->enqueueAdminAssets(function (ModuleAssets $assets) {
+            $screen = get_current_screen();
+            $validScreens = ['site-editor', 'appearance_page_gutenberg-edit-site'];
+            if (!$screen || !in_array($screen->id, $validScreens, true)) {
+                return;
+            }
             $assets->enqueueScript('save-patterns-to-theme', 'save-patterns.js', [
                 'wp-dom-ready',
                 'wp-api-fetch',
