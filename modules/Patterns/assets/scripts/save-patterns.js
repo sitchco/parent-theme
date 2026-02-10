@@ -29,22 +29,31 @@ function getPatternIdFromUrl() {
 }
 
 /**
- * Look up a pattern's post ID by its title using wp.data store.
+ * Fetch all wp_block patterns via resolveSelect and build a Map<title, id[]>.
+ * resolveSelect waits for the resolver to complete, fixing the race condition.
+ * The id[] array handles duplicate titles — shift() pops IDs in order.
  */
-function getPatternIdByTitle(title) {
-    if (!title || typeof wp === 'undefined' || !wp.data) {
-        return null;
+async function getPatternMap() {
+    if (typeof wp === 'undefined' || !wp.data) {
+        return new Map();
     }
 
-    const patterns = wp.data.select('core').getEntityRecords('postType', 'wp_block', {
-        per_page: 100,
-    });
+    const patterns = await wp.data.resolveSelect('core').getEntityRecords('postType', 'wp_block', { per_page: -1 });
     if (!patterns) {
-        return null;
+        return new Map();
     }
 
-    const match = patterns.find((p) => p.title.raw === title);
-    return match ? match.id : null;
+    const map = new Map();
+
+    for (const p of patterns) {
+        const title = p.title.raw;
+        if (!map.has(title)) {
+            map.set(title, []);
+        }
+
+        map.get(title).push(p.id);
+    }
+    return map;
 }
 
 /**
@@ -139,7 +148,7 @@ function addSinglePatternMenuItem() {
             }
         }
 
-        saveMenuItem.addEventListener('click', (e) => {
+        saveMenuItem.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             // Get pattern ID - try URL first (detail/edit page)
@@ -154,7 +163,11 @@ function addSinglePatternMenuItem() {
                     if (card) {
                         const titleEl = card.querySelector('.dataviews-view-grid__title-field span');
                         if (titleEl) {
-                            id = getPatternIdByTitle(titleEl.textContent.trim());
+                            const patternMap = await getPatternMap();
+                            const ids = patternMap.get(titleEl.textContent.trim());
+                            if (ids && ids.length > 0) {
+                                id = ids[0];
+                            }
                         }
                     }
                 }
@@ -198,7 +211,7 @@ function addSinglePatternMenuItem() {
  * Handle bulk save click from patterns list
  */
 async function handleBulkSaveClick() {
-    const patternIds = getSelectedPatternIds();
+    const patternIds = await getSelectedPatternIds();
     if (patternIds.length === 0) {
         alert('No synced patterns selected. Only synced (wp_block) patterns can be saved to the theme.');
         return;
@@ -273,7 +286,8 @@ function showResultMessage(response) {
  * Get selected pattern IDs from bulk selection by finding checked
  * checkboxes and resolving each pattern's title to a post ID via wp.data.
  */
-function getSelectedPatternIds() {
+async function getSelectedPatternIds() {
+    const patternMap = await getPatternMap();
     const patternIds = [];
     const checkedBoxes = document.querySelectorAll('.dataviews-view-grid__card input[type="checkbox"]:checked');
 
@@ -283,9 +297,9 @@ function getSelectedPatternIds() {
             continue;
         }
 
-        const id = getPatternIdByTitle(title);
-        if (id) {
-            patternIds.push(id);
+        const ids = patternMap.get(title);
+        if (ids && ids.length > 0) {
+            patternIds.push(ids.shift());
         }
     }
     return patternIds;
