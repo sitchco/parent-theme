@@ -57,6 +57,14 @@
         display: grid;
         grid-template-rows: subgrid;
         grid-row: span var(--kb-subgrid-rows);
+        /*
+         * Force column grid track to fill available width.
+         * Kadence's kt-row-valign-top sets justify-content: flex-start on
+         * columns (for flex layout alignment). When we override to display:grid,
+         * that justify-content prevents auto-sized grid tracks from stretching,
+         * causing columns with shorter content to render narrower.
+         */
+        grid-template-columns: minmax(0, 1fr);
         container-type: normal;
     }
 
