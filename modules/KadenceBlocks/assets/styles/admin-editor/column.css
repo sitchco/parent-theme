@@ -90,6 +90,26 @@
     }
 }
 
+/*
+ * Nested Section (Column-in-Column) width constraints.
+ *
+ * Mirrors main/column.css for editor parity.
+ * See main/column.css for full documentation.
+ *
+ * Specificity: 0,2,0 — structural constraints; Kadence user-set widths
+ * override via inline styles (1,0,0).
+ */
+.kadence-inner-column-inner {
+    > .wp-block-kadence-column:where(:not(.alignfull):not([data-align='full'])) {
+        max-width: var(--wp--style--global--content-size);
+        margin-inline: auto;
+    }
+
+    > .wp-block-kadence-column:where(.alignwide, [data-align='wide']) {
+        max-width: var(--wp--style--global--wide-size);
+    }
+}
+
 .wp-block-kadence-column .kadence-inner-column-inner {
     > [data-align='full'],
     > .alignfull {

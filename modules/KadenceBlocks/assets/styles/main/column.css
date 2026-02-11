@@ -114,7 +114,31 @@
     }
 }
 
+/*
+ * Nested Section (Column-in-Column) width constraints.
+ *
+ * At the top level, .is-layout-constrained on the article provides max-width
+ * for child blocks: content-size by default, wide-size for .alignwide, and
+ * unconstrained for .alignfull. But when a Section is nested inside another
+ * Section's .kt-inside-inner-col, that constraint is lost.
+ *
+ * These rules replicate is-layout-constrained behavior for the nested case.
+ * Only matches Section-in-Section (columns inside multi-column rows are
+ * children of .kt-row-column-wrap, not .kt-inside-inner-col).
+ *
+ * Specificity: 0,2,0 — structural constraints; Kadence user-set widths
+ * override via inline styles (1,0,0).
+ */
 .kt-inside-inner-col {
+    > .wp-block-kadence-column:where(:not(.alignfull)) {
+        max-width: var(--wp--style--global--content-size);
+        margin-inline: auto;
+    }
+
+    > .wp-block-kadence-column:where(.alignwide) {
+        max-width: var(--wp--style--global--wide-size);
+    }
+
     > .alignfull {
         margin-left: calc(-1 * var(--kb-padding-left));
         margin-right: calc(-1 * var(--kb-padding-right));
