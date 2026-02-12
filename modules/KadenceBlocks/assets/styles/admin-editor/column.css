@@ -97,16 +97,31 @@
  * See main/column.css for full documentation.
  *
  * Specificity: 0,2,0 — structural constraints; Kadence user-set widths
- * override via inline styles (1,0,0).
+ * in <style> blocks (.kadence-column{ID}, 0,1,0) do not override these rules.
  */
 .kadence-inner-column-inner {
     > .wp-block-kadence-column:where(:not(.alignfull):not([data-align='full'])) {
         max-width: var(--wp--style--global--content-size);
         margin-inline: auto;
+        width: 100%;
     }
 
     > .wp-block-kadence-column:where(.alignwide, [data-align='wide']) {
         max-width: var(--wp--style--global--wide-size);
+    }
+}
+
+.wp-block-kadence-column > .kadence-inner-column-inner.section-is-flex {
+    > .wp-block-kadence-column:where(:not(.alignfull):not([data-align='full'])) {
+        max-width: var(--wp--style--global--content-size);
+    }
+
+    > .wp-block-kadence-column:where(.alignwide, [data-align='wide']) {
+        max-width: var(--wp--style--global--wide-size);
+    }
+
+    > .wp-block-kadence-column:where(.alignfull, [data-align='full']) {
+        max-width: none;
     }
 }
 
@@ -116,5 +131,6 @@
         margin-left: calc(-1 * var(--kb-padding-left));
         margin-right: calc(-1 * var(--kb-padding-right));
         width: auto !important;
+        align-self: stretch;
     }
 }
