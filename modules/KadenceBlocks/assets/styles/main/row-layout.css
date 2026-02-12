@@ -63,6 +63,16 @@
 }
 
 /*
+ * alignfull content constraint: targets inner wrapper (not outer) to preserve
+ * edge-to-edge backgrounds. Defaults to none; child themes opt in by setting
+ * custom.extraWideSize in theme.json.
+ */
+.wp-block-kadence-rowlayout.aligncenter /* > .kt-row-column-wrap*/ {
+    max-width: var(--wp--custom--extra-wide-size, none);
+    margin-inline: auto;
+}
+
+/*
  * Alignfull/alignwide rows with content-width constraint:
  * The .kb-theme-content-width class already constrains content to theme width,
  * so we don't need container-inner padding on the inner container.

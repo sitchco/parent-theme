@@ -29,6 +29,7 @@ class KadenceBlocks extends Module
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript('kadence-blocks-editor-ui', 'editor-ui.js', [
                 'wp-blocks',
+                'wp-components',
                 'wp-element',
                 'wp-hooks',
                 'sitchco/extend-block',

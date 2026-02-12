@@ -121,3 +121,11 @@
     }
     /* Note: Outer wrapper padding handled by main/row-layout.css */
 }
+
+/*
+ * aligncenter "Extra Wide" constraint (editor mirror of main/row-layout.css rule).
+ */
+.wp-block.wp-block-kadence-rowlayout.aligncenter {
+    max-width: var(--wp--custom--extra-wide-size, none);
+    width: 100%;
+}
