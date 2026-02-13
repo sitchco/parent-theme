@@ -44,3 +44,11 @@ $context['slider'] = [
     'class' => trim('sc-content-slider kb-splide splide ' . $className),
     'config' => $sliderConfig,
 ];
+
+$context['wrapper_attributes'] = [
+    'style' => implode('; ', [
+        '--slides-per-view-desktop: ' . (int) ($fields['per_view_desktop'] ?? 3),
+        '--slides-per-view-tablet: ' . (int) ($fields['per_view_tablet'] ?? 2),
+        '--slides-per-view-mobile: ' . (int) ($fields['per_view_mobile'] ?? 1),
+    ]),
+];
