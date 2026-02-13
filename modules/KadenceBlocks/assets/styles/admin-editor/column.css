@@ -31,6 +31,15 @@
  *
  */
 
+/* Clip child backgrounds to rounded corners in editor.
+ * Kadence sets inline border-radius: 0px on .kadence-inner-column-inner,
+ * so we clip at the parent column instead.
+ * Not needed on frontend — .kt-inside-inner-col gets border-radius directly.
+ */
+:where(.wp-block-kadence-column):where(.rounded-t-sm, .rounded-t-lg, .rounded-b-sm, .rounded-b-lg) {
+    overflow: hidden;
+}
+
 /* Corresponding admin rule for content-flow default */
 .kadence-inner-column-inner {
     display: flex;
