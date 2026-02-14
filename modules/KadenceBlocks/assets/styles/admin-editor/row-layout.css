@@ -115,17 +115,10 @@
 
 /* 4. Content-width constraint: zero inner horizontal padding. */
 @media (min-width: 768px) {
-    :where(.alignfull, .alignwide):where(:has(> .innerblocks-wrap.kb-theme-content-width)) > .innerblocks-wrap {
+    :where(.alignfull, .alignwide, .alignxwide):where(:has(> .innerblocks-wrap.kb-theme-content-width))
+        > .innerblocks-wrap {
         --kb-padding-left: 0;
         --kb-padding-right: 0;
     }
     /* Note: Outer wrapper padding handled by main/row-layout.css */
-}
-
-/*
- * alignxwide "Extra Wide" constraint (editor mirror of main/row-layout.css rule).
- */
-.wp-block.wp-block-kadence-rowlayout.alignxwide {
-    max-width: var(--wp--custom--extra-wide-size, none);
-    width: 100%;
 }

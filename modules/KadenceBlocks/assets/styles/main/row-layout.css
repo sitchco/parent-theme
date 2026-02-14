@@ -50,7 +50,7 @@
 }
 
 /* Alignment constraints: alignnone and alignwide get centered with max-width */
-.wp-block-kadence-rowlayout:where(.alignnone, .alignwide) {
+.wp-block-kadence-rowlayout:where(.alignnone, .alignwide, .alignxwide) {
     width: 100%;
     max-width: var(--wp--style--global--content-size);
     margin-left: auto;
@@ -69,7 +69,6 @@
  */
 .wp-block-kadence-rowlayout.alignxwide /* > .kt-row-column-wrap*/ {
     max-width: var(--wp--custom--extra-wide-size, none);
-    margin-inline: auto;
 }
 
 /*
