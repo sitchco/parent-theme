@@ -140,10 +140,19 @@
         max-width: var(--wp--style--global--wide-size);
     }
 
+    > .wp-block-kadence-column:where(.alignxwide) {
+        max-width: var(--wp--custom--extra-wide-size, none);
+    }
+
     > .alignfull {
         margin-left: calc(-1 * var(--kb-padding-left));
         margin-right: calc(-1 * var(--kb-padding-right));
         width: auto;
         align-self: stretch;
     }
+}
+
+.wp-block-kadence-column.alignxwide {
+    max-width: var(--wp--custom--extra-wide-size, none);
+    margin-inline: auto;
 }
