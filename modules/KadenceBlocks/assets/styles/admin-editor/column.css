@@ -100,13 +100,18 @@
 }
 
 /*
- * Nested Section (Column-in-Column) width constraints.
+ * Nested Section (Column/Row-in-Column) width constraints.
  *
  * Mirrors main/column.css for editor parity.
  * See main/column.css for full documentation.
  *
- * Specificity: 0,2,0 — structural constraints; Kadence user-set widths
+ * Base rules (0,2,0): structural constraints; Kadence user-set widths
  * in <style> blocks (.kadence-column{ID}, 0,1,0) do not override these rules.
+ *
+ * .section-is-flex rules (0,4,0): when the parent column has Flex Alignment
+ * set, Kadence generates dynamic styles at (0,3,0) with `> * { max-width:
+ * 100% }` that override the base constraints. The elevated specificity here
+ * beats those dynamic rules. Covers both nested Columns and nested Rows.
  */
 .kadence-inner-column-inner {
     > .wp-block-kadence-column:where(:not(.alignfull):not([data-align='full'])) {
@@ -125,20 +130,29 @@
 }
 
 .wp-block-kadence-column > .kadence-inner-column-inner.section-is-flex {
-    > .wp-block-kadence-column:where(:not(.alignfull):not([data-align='full'])) {
+    > :is(.wp-block-kadence-column, .wp-block-kadence-rowlayout):where(:not(.alignfull):not([data-align='full'])) {
         max-width: var(--wp--style--global--content-size);
     }
 
-    > .wp-block-kadence-column:where(.alignwide, [data-align='wide']) {
+    > :is(.wp-block-kadence-column, .wp-block-kadence-rowlayout):where(.alignwide, [data-align='wide']) {
         max-width: var(--wp--style--global--wide-size);
     }
 
-    > .wp-block-kadence-column:where(.alignxwide, [data-align='xwide']) {
+    > :is(.wp-block-kadence-column, .wp-block-kadence-rowlayout):where(.alignxwide, [data-align='xwide']) {
         max-width: var(--wp--custom--extra-wide-size, none);
     }
 
-    > .wp-block-kadence-column:where(.alignfull, [data-align='full']) {
+    > :is(.wp-block-kadence-column, .wp-block-kadence-rowlayout):where(.alignfull, [data-align='full']) {
         max-width: none;
+    }
+
+    /*
+     * Rows lack the base width/centering rules that Columns get from the
+     * .kadence-inner-column-inner block above, so add them here.
+     */
+    > .wp-block-kadence-rowlayout:where(:not(.alignfull):not([data-align='full'])) {
+        margin-inline: auto;
+        width: 100%;
     }
 }
 
