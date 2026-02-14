@@ -14,7 +14,7 @@ const ALIGNMENTS = [
         icon: stretchWide,
     },
     {
-        value: 'center',
+        value: 'xwide',
         label: 'Extra Wide',
         icon: stretchWide,
     },

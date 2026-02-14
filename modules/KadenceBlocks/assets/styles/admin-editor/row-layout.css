@@ -123,9 +123,9 @@
 }
 
 /*
- * aligncenter "Extra Wide" constraint (editor mirror of main/row-layout.css rule).
+ * alignxwide "Extra Wide" constraint (editor mirror of main/row-layout.css rule).
  */
-.wp-block.wp-block-kadence-rowlayout.aligncenter {
+.wp-block.wp-block-kadence-rowlayout.alignxwide {
     max-width: var(--wp--custom--extra-wide-size, none);
     width: 100%;
 }

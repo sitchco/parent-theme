@@ -67,7 +67,7 @@
  * edge-to-edge backgrounds. Defaults to none; child themes opt in by setting
  * custom.extraWideSize in theme.json.
  */
-.wp-block-kadence-rowlayout.aligncenter /* > .kt-row-column-wrap*/ {
+.wp-block-kadence-rowlayout.alignxwide /* > .kt-row-column-wrap*/ {
     max-width: var(--wp--custom--extra-wide-size, none);
     margin-inline: auto;
 }
