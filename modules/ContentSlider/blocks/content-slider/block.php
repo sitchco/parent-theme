@@ -9,8 +9,9 @@ $blockData = $context['block'] ?? [];
 
 $sliderId = 'slider-' . ($blockData['id'] ?? uniqid());
 $alignClass = !empty($blockData['align']) ? 'align' . $blockData['align'] : '';
-$equalHeightClass = !empty($fields['equal_height']) ? 'has-equal-height-slides' : '';
-$className = trim(($blockData['className'] ?? '') . ' ' . $alignClass . ' ' . $equalHeightClass);
+$verticalAlignment = $fields['vertical_alignment'] ?? 'stretch';
+$alignmentClass = $verticalAlignment !== 'stretch' ? 'is-vertically-aligned-' . $verticalAlignment : '';
+$className = trim(($blockData['className'] ?? '') . ' ' . $alignClass . ' ' . $alignmentClass);
 
 $sliderConfig = [
     'type' => 'slide',
@@ -46,6 +47,7 @@ $context['slider'] = [
 ];
 
 $context['wrapper_attributes'] = [
+    'class' => $alignmentClass,
     'style' => implode('; ', [
         '--slides-per-view-desktop: ' . (int) ($fields['per_view_desktop'] ?? 3),
         '--slides-per-view-tablet: ' . (int) ($fields['per_view_tablet'] ?? 2),

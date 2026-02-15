@@ -93,24 +93,35 @@
             "message": ""
         },
         {
-            "key": "field_68f7cf60bd000",
-            "label": "Equal Height Slides",
-            "name": "equal_height",
+            "key": "field_699224b6e08f1",
+            "label": "Vertical Alignment",
+            "name": "vertical_alignment",
             "aria-label": "",
-            "type": "true_false",
-            "instructions": "Make all slides match the height of the tallest slide",
+            "type": "select",
+            "instructions": "Controls how slides align when they have different heights",
             "required": 0,
-            "conditional_logic": false,
+            "conditional_logic": 0,
             "wrapper": {
                 "width": "",
                 "class": "",
                 "id": ""
             },
-            "default_value": 0,
-            "ui": 1,
-            "ui_on_text": "Enabled",
-            "ui_off_text": "Disabled",
-            "message": ""
+            "choices": {
+                "stretch": "Stretch",
+                "top": "Top",
+                "center": "Center",
+                "bottom": "Bottom"
+            },
+            "default_value": "stretch",
+            "return_format": "value",
+            "multiple": 0,
+            "allow_null": 0,
+            "allow_in_bindings": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": "",
+            "create_options": 0,
+            "save_options": 0
         },
         {
             "key": "field_68f7cf60bc165",
@@ -221,5 +232,5 @@
     "description": "",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1764870822
+    "modified": 1771185463
 }

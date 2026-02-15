@@ -7,31 +7,52 @@
 
 .sc-content-slider {
     position: relative;
-    width: 100%;
-}
 
-.sc-content-slider .splide__slide {
-    display: flex;
-    flex-direction: column;
-}
+    .splide__slide {
+        display: flex;
+        flex-direction: column;
 
-/* Ensure inner block content fills the slide */
-.sc-content-slider .splide__slide > * {
-    flex: 1;
-    height: 100%;
-}
+        > * {
+            flex: 1;
+            height: 100%;
+        }
 
-/* Equal height slides - all slides match the tallest */
-.sc-content-slider.has-equal-height-slides .splide__list {
-    align-items: stretch;
-}
+        > .wp-block-kadence-column {
+            &,
+            > .kt-inside-inner-col,
+            > .kt-inside-inner-col > * {
+                height: 100%;
+            }
+        }
+    }
 
-.sc-content-slider.has-equal-height-slides .splide__slide {
-    height: auto;
-}
+    /* Non-stretch alignments */
+    &.is-vertically-aligned-top .splide__list {
+        align-items: start;
+    }
+    &.is-vertically-aligned-center .splide__list {
+        align-items: center;
+    }
+    &.is-vertically-aligned-bottom .splide__list {
+        align-items: end;
+    }
 
-.sc-content-slider.has-equal-height-slides .splide__slide > .wp-block-kadence-column,
-.sc-content-slider.has-equal-height-slides .splide__slide > .wp-block-kadence-column > .kt-inside-inner-col,
-.sc-content-slider.has-equal-height-slides .splide__slide > .wp-block-kadence-column > .kt-inside-inner-col > * {
-    height: 100%;
+    &.is-vertically-aligned-top,
+    &.is-vertically-aligned-center,
+    &.is-vertically-aligned-bottom {
+        .splide__slide {
+            > * {
+                flex: initial;
+                height: auto;
+            }
+
+            > .wp-block-kadence-column {
+                &,
+                > .kt-inside-inner-col,
+                > .kt-inside-inner-col > * {
+                    height: auto;
+                }
+            }
+        }
+    }
 }

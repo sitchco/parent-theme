@@ -5,22 +5,34 @@
  * without requiring carousel navigation to edit content.
  */
 
-/* Slider container wrapper */
-.wp-block-sitchco-content-slider .acf-innerblocks-container {
-    display: grid;
-    grid-template-columns: repeat(var(--slides-per-view-desktop, 3), 1fr);
-    gap: 0.5rem;
-}
+.wp-block-sitchco-content-slider {
+    .acf-innerblocks-container {
+        display: grid;
+        grid-template-columns: repeat(var(--slides-per-view-desktop, 3), 1fr);
+        gap: 0.5rem;
 
-/* Responsive grid for editor preview */
-@media (max-width: 1024px) {
-    .wp-block-sitchco-content-slider .acf-innerblocks-container {
-        grid-template-columns: repeat(var(--slides-per-view-tablet, 2), 1fr);
+        @media (max-width: 1024px) {
+            grid-template-columns: repeat(var(--slides-per-view-tablet, 2), 1fr);
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: repeat(var(--slides-per-view-mobile, 1), 1fr);
+        }
     }
-}
 
-@media (max-width: 768px) {
-    .wp-block-sitchco-content-slider .acf-innerblocks-container {
-        grid-template-columns: repeat(var(--slides-per-view-mobile, 1), 1fr);
+    /* Stretch inner column to fill grid cell (background visibility) */
+    .kadence-inner-column-inner {
+        height: 100%;
+    }
+
+    /* Vertical alignment overrides (class is on inner wrapper div, not the outer block element) */
+    .is-vertically-aligned-top > .acf-innerblocks-container {
+        align-items: start;
+    }
+    .is-vertically-aligned-center > .acf-innerblocks-container {
+        align-items: center;
+    }
+    .is-vertically-aligned-bottom > .acf-innerblocks-container {
+        align-items: end;
     }
 }
