@@ -4,6 +4,8 @@
  * @var array $context
  */
 
+use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
+
 $fields = $context['fields'] ?? [];
 $blockData = $context['block'] ?? [];
 
@@ -26,17 +28,19 @@ $sliderConfig = [
     'accessibility' => true,
     'ariaLabel' => 'Content slider',
     'breakpoints' => [
-        1024 => ['perPage' => (int) ($fields['per_view_desktop'] ?? 3)],
-        768 => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
-        0 => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
+        '1024' => ['perPage' => (int) ($fields['per_view_desktop'] ?? 3)],
+        '768' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
+        '480' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
     ],
 ];
 
-// Merge advanced options from JSON field
-if (!empty($fields['advanced_options'])) {
-    $advancedConfig = json_decode($fields['advanced_options'], true);
-    if (is_array($advancedConfig)) {
-        $sliderConfig = array_merge($sliderConfig, $advancedConfig);
+// Merge variation overrides from block style selection
+$variationNames = wp_get_block_style_variation_name_from_class($blockData['className'] ?? '');
+if (!empty($variationNames)) {
+    $variationSlug = $variationNames[0];
+    $variations = apply_filters(ContentSlider::hookName('variations'), []);
+    if (!empty($variations[$variationSlug]['splide'])) {
+        $sliderConfig = array_replace_recursive($sliderConfig, $variations[$variationSlug]['splide']);
     }
 }
 
@@ -49,8 +53,8 @@ $context['slider'] = [
 $context['wrapper_attributes'] = [
     'class' => $alignmentClass,
     'style' => implode('; ', [
-        '--slides-per-view-desktop: ' . (int) ($fields['per_view_desktop'] ?? 3),
-        '--slides-per-view-tablet: ' . (int) ($fields['per_view_tablet'] ?? 2),
-        '--slides-per-view-mobile: ' . (int) ($fields['per_view_mobile'] ?? 1),
+        '--slides-per-view-desktop: ' . ($sliderConfig['perPage'] ?? 3),
+        '--slides-per-view-tablet: ' . ($sliderConfig['breakpoints']['768']['perPage'] ?? 2),
+        '--slides-per-view-mobile: ' . ($sliderConfig['breakpoints']['480']['perPage'] ?? 1),
     ]),
 ];

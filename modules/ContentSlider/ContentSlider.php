@@ -3,6 +3,8 @@
 namespace Sitchco\Parent\Modules\ContentSlider;
 
 use Sitchco\Framework\Module;
+use Sitchco\Utils\Cache;
+use Sitchco\Utils\Logger;
 
 /**
  * Content Slider Module
@@ -18,6 +20,7 @@ use Sitchco\Framework\Module;
  */
 class ContentSlider extends Module
 {
+    const HOOK_SUFFIX = 'content-slider';
     /**
      * Module initialization
      *
@@ -40,7 +43,51 @@ class ContentSlider extends Module
             );
         }
 
-        // Block registration and asset loading is handled automatically by the framework
-        // via BlockRegistrationModuleExtension. No manual asset enqueuing needed.
+        // Register block style variations and hook the variations filter
+        // Priority 15 ensures sitchco/content-slider block type exists (registered at init:10)
+        add_action(
+            'init',
+            function () {
+                $variations = $this->scanVariations();
+                foreach ($variations as $slug => $config) {
+                    register_block_style('sitchco/content-slider', [
+                        'name' => $slug,
+                        'label' => $config['title'],
+                    ]);
+                }
+                add_filter(static::hookName('variations'), fn(array $v) => array_merge($v, $variations), 5);
+            },
+            15,
+        );
+    }
+
+    private function scanVariations(): array
+    {
+        return Cache::remember('content_slider_variations', function () {
+            $variations = [];
+            $dirs = array_unique(
+                array_filter(
+                    [
+                        get_template_directory() . '/modules/ContentSlider/variations',
+                        get_stylesheet_directory() . '/modules/ContentSlider/variations',
+                    ],
+                    'is_dir',
+                ),
+            );
+
+            foreach ($dirs as $dir) {
+                foreach (glob($dir . '/*.json') as $file) {
+                    $slug = basename($file, '.json');
+                    $data = json_decode(file_get_contents($file), true);
+                    if (!is_array($data) || empty($data['title']) || !isset($data['splide'])) {
+                        Logger::warning("ContentSlider: Invalid variation file skipped: {$file}");
+                        continue;
+                    }
+                    $variations[$slug] = $data;
+                }
+            }
+
+            return $variations;
+        });
     }
 }
