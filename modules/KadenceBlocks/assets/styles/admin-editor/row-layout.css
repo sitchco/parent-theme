@@ -86,9 +86,11 @@
  * 1. Base horizontal padding for alignfull rows.
  * Prevents content from touching viewport edge regardless of background.
  */
-:where(.alignfull:not(.kt-row-has-bg)) > .innerblocks-wrap {
+:where(.has-global-padding > .alignfull:not(.kt-row-has-bg)) > .innerblocks-wrap {
     --kb-padding-left: var(--wp--style--root--padding-left);
     --kb-padding-right: var(--wp--style--root--padding-right);
+}
+:where(.alignfull:not(.kt-row-has-bg)) > .innerblocks-wrap {
     padding-left: var(--kb-padding-left);
     padding-right: var(--kb-padding-right);
 }

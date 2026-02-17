@@ -108,9 +108,11 @@
  * On mobile, alignwide rows fill viewport so padding provides necessary edge spacing.
  * Vertical padding is only applied when background is present (.kt-row-has-bg).
  */
-:where(.alignfull:not(.kt-row-has-bg)) > .kt-row-column-wrap {
+:where(.has-global-padding > .alignfull:not(.kt-row-has-bg)) > .kt-row-column-wrap {
     --kb-padding-left: var(--wp--style--root--padding-left);
     --kb-padding-right: var(--wp--style--root--padding-right);
+}
+:where(.alignfull:not(.kt-row-has-bg)) > .kt-row-column-wrap {
     padding-left: var(--kb-padding-left);
     padding-right: var(--kb-padding-right);
 }
