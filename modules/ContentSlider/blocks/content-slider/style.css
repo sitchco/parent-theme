@@ -37,6 +37,14 @@
         align-items: end;
     }
 
+    /* Hide nav when all items fit on screen */
+    &:not(.is-overflow) .splide__arrows {
+        display: none;
+    }
+    &:not(.is-overflow) .splide__pagination {
+        display: none;
+    }
+
     &.is-vertically-aligned-top,
     &.is-vertically-aligned-center,
     &.is-vertically-aligned-bottom {
