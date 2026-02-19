@@ -196,6 +196,10 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                         <InspectorControls key={panelIndex} group={panel.group || 'settings'}>
                             <PanelBody title={panel.title} initialOpen={panel.initialOpen ?? true}>
                                 {panel.fields?.map((field) => {
+                                    if (field.condition && !field.condition(attributes)) {
+                                        return null;
+                                    }
+
                                     const value = attributes[field.name];
                                     const onChange = (newValue) => setAttributes({ [field.name]: newValue });
                                     return (
