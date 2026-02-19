@@ -15,6 +15,7 @@ use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 class KadenceBlocks extends Module
 {
     public const DEPENDENCIES = [ExtendBlockModule::class];
+    public const HOOK_SUFFIX = 'kadence-blocks';
 
     public function init(): void
     {
@@ -35,6 +36,11 @@ class KadenceBlocks extends Module
                 'sitchco/extend-block',
             ]);
             $assets->inlineScriptData('kadence-blocks-editor-ui', 'themeSettings', wp_get_global_settings());
+            $assets->inlineScriptData(
+                'kadence-blocks-editor-ui',
+                'contentWidthPresets',
+                $this->getContentWidthPresets(),
+            );
         }, 1);
 
         add_filter('kadence_blocks_column_render_block_attributes', [$this, 'injectDefaultColumnGap']);
@@ -43,6 +49,7 @@ class KadenceBlocks extends Module
         add_filter('kadence_blocks_css_font_sizes', [$this, 'overrideFontSizes']);
         add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideConfigDefaults']);
         add_filter('kadence_blocks_measure_output_css_variables', [$this, 'enableCssVariablesForPadding'], 10, 5);
+        add_filter('kadence_blocks_rowlayout_skip_max_width_css', [$this, 'handleRowCssMaxWidth'], 10, 4);
     }
 
     /**
@@ -148,5 +155,36 @@ class KadenceBlocks extends Module
         }
 
         return $use_variables;
+    }
+
+    public function getContentWidthPresets(): array
+    {
+        $presets = [
+            'theme' => ['label' => 'Theme Content'],
+            'wide' => ['label' => 'Wide'],
+        ];
+
+        $settings = wp_get_global_settings();
+        if (!empty($settings['custom']['extraWideSize'])) {
+            $presets['xwide'] = ['label' => 'Extra Wide'];
+        }
+
+        return apply_filters(static::hookName('content-width-presets'), $presets);
+    }
+
+    /**
+     * Skip fork's inline max-width CSS when a named content width preset is active.
+     * The theme handles max-width via per-preset CSS class rules instead.
+     */
+    public function handleRowCssMaxWidth(bool $skip, array $attributes, string $unique_id, string $inner_selector): bool
+    {
+        $inner_content_width = $attributes['innerContentWidth'] ?? '';
+        if ($inner_content_width && $inner_content_width !== 'custom') {
+            $presets = $this->getContentWidthPresets();
+            if (isset($presets[$inner_content_width])) {
+                return true;
+            }
+        }
+        return $skip;
     }
 }

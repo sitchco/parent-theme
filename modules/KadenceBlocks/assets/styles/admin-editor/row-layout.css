@@ -124,3 +124,21 @@
     }
     /* Note: Outer wrapper padding handled by main/row-layout.css */
 }
+
+/*
+ * ============================================================================
+ * CONTENT WIDTH PRESET RULES (EDITOR)
+ * Same preset max-widths as frontend, targeting .innerblocks-wrap.
+ * ============================================================================
+ */
+.wp-block-kadence-rowlayout .innerblocks-wrap.kb-content-width-theme {
+    max-width: var(--wp--style--global--content-size);
+}
+
+.wp-block-kadence-rowlayout .innerblocks-wrap.kb-content-width-wide {
+    max-width: var(--wp--style--global--wide-size);
+}
+
+.wp-block-kadence-rowlayout .innerblocks-wrap.kb-content-width-xwide {
+    max-width: var(--wp--custom--extra-wide-size);
+}

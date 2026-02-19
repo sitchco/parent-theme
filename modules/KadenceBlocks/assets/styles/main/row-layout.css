@@ -144,3 +144,23 @@
         --kb-padding-right: 0;
     }
 }
+
+/*
+ * ============================================================================
+ * CONTENT WIDTH PRESET RULES
+ * Per-preset max-width for named content width presets.
+ * The base .kb-theme-content-width class (centering, outer padding, inner
+ * padding zeroing) continues to apply to all named presets unchanged.
+ * ============================================================================
+ */
+.kb-theme-content-width.kb-content-width-theme {
+    max-width: var(--wp--style--global--content-size);
+}
+
+.kb-theme-content-width.kb-content-width-wide {
+    max-width: var(--wp--style--global--wide-size);
+}
+
+.kb-theme-content-width.kb-content-width-xwide {
+    max-width: var(--wp--custom--extra-wide-size);
+}
