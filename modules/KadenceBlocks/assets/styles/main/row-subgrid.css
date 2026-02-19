@@ -94,5 +94,15 @@
          * a fixed height instead of letting subgrid control row sizing.
          */
         height: auto;
+        /*
+         * Reset flex alignment properties to grid-safe defaults.
+         * Kadence outputs align-items/justify-content for flex layout, but in
+         * grid context these properties change axis meaning (e.g. align-items
+         * shifts from horizontal to vertical). Resetting to 'start' prevents
+         * stale flex values from causing unexpected alignment in subgrid.
+         */
+        align-items: start;
+        justify-content: start;
+        align-content: start;
     }
 }

@@ -75,5 +75,9 @@
         grid-row: span var(--kb-subgrid-rows);
         grid-template-columns: minmax(0, 1fr);
         height: auto;
+        /* Reset flex alignment to grid-safe defaults (see main/row-subgrid.css) */
+        align-items: start;
+        justify-content: start;
+        align-content: start;
     }
 }
