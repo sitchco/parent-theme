@@ -52,12 +52,7 @@ class SiteHeaderModule extends Module
 
     public function addPageContextToSiteHeader(array $context): array
     {
-        $header_overlay = get_field('header_overlay');
-        if ($header_overlay === 'overlay') {
-            $context['site_header']->is_overlaid = true;
-        } elseif ($header_overlay === 'separate') {
-            $context['site_header']->is_overlaid = false;
-        }
+        $context['site_header']->is_overlaid = !empty(get_field('header_overlay'));
         return $context;
     }
 }
