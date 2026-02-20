@@ -1,0 +1,413 @@
+# Gravity Forms Theming & Block Editor Integration
+
+Reference documentation for aligning Gravity Forms with a WordPress theme's design system.
+
+## Table of Contents
+
+- [Theme Modes](#theme-modes)
+- [Orbital CSS Architecture](#orbital-css-architecture)
+- [Block Editor Controls](#block-editor-controls)
+- [CSS Custom Properties Reference](#css-custom-properties-reference)
+- [Style Priority Cascade](#style-priority-cascade)
+- [PHP Filters & Hooks](#php-filters--hooks)
+- [Block Editor Control Visibility](#block-editor-control-visibility)
+- [Theme Layers API](#theme-layers-api)
+- [Key File Paths](#key-file-paths)
+- [Strategy Notes](#strategy-notes)
+
+---
+
+## Theme Modes
+
+Gravity Forms ships with three theme modes, controlled by the `rg_gforms_default_theme` WordPress option and configurable at **Forms > Settings > Default Form Theme**:
+
+| Mode | Slug | Description |
+|------|------|-------------|
+| **Orbital** | `orbital` | Modern CSS custom property system. 782+ variables. Full block editor style controls. |
+| **GF 2.5** | `gravity-theme` | Traditional hardcoded CSS. ~2 CSS variables. No block editor style controls. |
+| **Legacy** | `legacy` | Pre-2.5 markup. No framework. |
+
+### Wrapper Classes by Theme
+
+```
+Orbital:      gform_wrapper gform-theme gform-theme--foundation gform-theme--framework gform-theme--orbital
+GF 2.5:       gform_wrapper gravity-theme gform-theme--no-framework
+Legacy:       gform_wrapper gform_legacy_markup_wrapper gform-theme--no-framework
+```
+
+### Why Orbital is the Right Choice
+
+The GF 2.5 theme uses hardcoded CSS values (colors like `#204ce5`, `#607382`; border-radius `5px`, `3px`; font sizes `15px`, `14px`). Customizing it requires fighting specificity with CSS overrides. Orbital's variable-driven architecture lets you set values at the source. Use Orbital and control it from the theme.
+
+---
+
+## Orbital CSS Architecture
+
+Orbital uses four layered stylesheets, enqueued in order:
+
+| Order | Handle | Purpose |
+|-------|--------|---------|
+| 1 | `gravity_forms_theme_reset` | CSS reset for forms |
+| 2 | `gravity_forms_theme_foundation` | Grid, layout, structural styles |
+| 3 | `gravity_forms_theme_framework` | All `--gf-*` variable definitions + component base styles (342KB) |
+| 4 | `gravity_forms_orbital_theme` | Orbital-specific overrides (essentially empty; all driven by variables) |
+
+Additionally in the block editor:
+- `gravity_forms_theme_framework_admin`
+- `gravity_forms_theme_foundation_admin`
+
+### How Styles Are Rendered
+
+1. Block attributes (or filter defaults) are collected
+2. `Block_Styles_Handler::form_css_properties()` converts settings into `--gf-*` CSS custom properties
+3. `Form_CSS_Properties_Output_Engine` injects an inline `<style>` block scoped to the form instance:
+
+```html
+<style>
+#gform_wrapper_5[data-form-index="0"].gform-theme,
+[data-parent-form="5_0"] {
+  --gf-color-primary: #204ce5;
+  --gf-color-primary-rgb: 32, 76, 229;
+  --gf-radius: 3px;
+  --gf-ctrl-border-color: #686e77;
+  /* ...~50 more properties... */
+}
+</style>
+```
+
+4. The framework CSS (`gravity_forms_theme_framework`) consumes these variables to style all form elements.
+
+---
+
+## Block Editor Controls
+
+When Orbital is active, the `gravityforms/form` block exposes these sidebar inspector panels:
+
+### Block Attributes (Style Settings)
+
+| Attribute | Type | Default | Controls |
+|-----------|------|---------|----------|
+| `theme` | string | `""` (inherits site default) | Theme selector dropdown |
+| `inputSize` | string | `md` | Size selector (sm/md/lg) |
+| `inputBorderRadius` | string | `3` | Border radius in pixels |
+| `inputBorderColor` | string | `#686e77` | Color picker |
+| `inputBackgroundColor` | string | `#fff` | Color picker |
+| `inputColor` | string | `#112337` | Color picker (input text) |
+| `inputPrimaryColor` | string | `""` (falls back to button bg) | Color picker (accent) |
+| `labelFontSize` | string | `14` | Font size in pixels |
+| `labelColor` | string | `#112337` | Color picker |
+| `descriptionFontSize` | string | `13` | Font size in pixels |
+| `descriptionColor` | string | `#585e6a` | Color picker |
+| `buttonPrimaryBackgroundColor` | string | `#204ce5` | Color picker |
+| `buttonPrimaryColor` | string | `#fff` | Color picker |
+| `inputImageChoiceAppearance` | string | `card` | Appearance selector |
+| `inputImageChoiceStyle` | string | `square` | Style selector |
+| `inputImageChoiceSize` | string | `md` | Size selector |
+
+### Inspector Panels
+
+- **Form Styles** — Theme selector, reset defaults button
+- **Input Styles** — Size, border color, border radius, background, text color, accent color
+- **Label Styles** — Font size, color
+- **Description Styles** — Font size, color
+- **Button Styles** — Background color, text color
+- **Image Choice Styles** — Appearance, style, size (only if form has image choices)
+
+---
+
+## CSS Custom Properties Reference
+
+All properties generated by `Block_Styles_Handler::form_css_properties()`:
+
+### Color System
+
+GF generates a full color palette from two base inputs: `buttonPrimaryBackgroundColor` and `inputBackgroundColor`. Each palette group includes base, RGB, contrast, darker, and lighter variants.
+
+```
+Primary (button colors):
+  --gf-color-primary              Button background
+  --gf-color-primary-rgb          RGB components
+  --gf-color-primary-contrast     Button text / contrast
+  --gf-color-primary-contrast-rgb
+  --gf-color-primary-darker       Programmatic darker variant
+  --gf-color-primary-lighter      Programmatic lighter variant
+
+Secondary (input background):
+  --gf-color-secondary
+  --gf-color-secondary-rgb
+  --gf-color-secondary-contrast   Input text color
+  --gf-color-secondary-contrast-rgb
+  --gf-color-secondary-darker
+  --gf-color-secondary-lighter
+
+Outside Control (labels/descriptions):
+  --gf-color-out-ctrl-light[-rgb|-darker|-lighter]
+  --gf-color-out-ctrl-dark[-rgb|-darker|-lighter]
+
+Inside Control (input fields):
+  --gf-color-in-ctrl[-rgb|-contrast|-contrast-rgb|-darker|-lighter]
+  --gf-color-in-ctrl-primary[-rgb|-contrast|-contrast-rgb|-darker|-lighter]
+  --gf-color-in-ctrl-light[-rgb|-darker|-lighter]
+  --gf-color-in-ctrl-dark[-rgb|-darker|-lighter]
+```
+
+Color generation uses `GFCommon::generate_block_styles_palette()`, `darken_color()`, `lighten_color()`, and `is_dark_color()`.
+
+### Typography
+
+```
+--gf-font-size-secondary         Label font size (from labelFontSize)
+--gf-font-size-tertiary          Description font size (from descriptionFontSize)
+```
+
+Note: Gravity Forms does NOT expose a font-family property. It inherits from the page. Override with theme CSS if needed.
+
+### Border & Radius
+
+```
+--gf-radius                      Input border radius in px (from inputBorderRadius)
+--gf-ctrl-border-color           Input border color (from inputBorderColor)
+```
+
+### Control Sizing
+
+These reference size-variant variables defined in the framework CSS (e.g., `--gf-ctrl-size-sm`, `--gf-ctrl-size-md`, `--gf-ctrl-size-lg`):
+
+```
+--gf-ctrl-size                   Input height
+--gf-ctrl-choice-size            Checkbox/radio size
+--gf-ctrl-checkbox-check-size    Checkbox check mark size
+--gf-ctrl-radio-check-size       Radio dot size
+--gf-ctrl-btn-font-size          Button font size
+--gf-ctrl-btn-padding-x          Button horizontal padding
+--gf-ctrl-btn-size               Button height
+--gf-ctrl-btn-border-color-secondary
+--gf-ctrl-file-btn-bg-color-hover
+```
+
+### Labels
+
+```
+--gf-ctrl-label-color-primary    Primary label color (from labelColor)
+--gf-ctrl-label-color-secondary  Sub-label color (from labelColor)
+--gf-label-space-y-secondary     Label spacing (size-dependent)
+```
+
+### Image Choice Fields
+
+```
+--gf-field-img-choice-size
+--gf-field-img-choice-card-space
+--gf-field-img-choice-check-ind-size
+--gf-field-img-choice-check-ind-icon-size
+```
+
+### Icons (SVG Data URIs)
+
+```
+--gf-icon-ctrl-number            Number field spinner arrows
+--gf-icon-ctrl-select            Select dropdown arrow
+--gf-icon-ctrl-search            Search icon
+```
+
+### Other
+
+```
+--gf-field-pg-steps-number-color  Page/step number color
+```
+
+### Foundation-Level Variables (from CSS, not dynamic)
+
+These are defined in the framework CSS and not overridden by the block settings handler:
+
+```
+--gf-form-gap-x / --gf-form-gap-y
+--gf-form-footer-margin-y-start / --gf-form-footer-gap
+--gf-field-gap-x / --gf-field-gap-y
+--gf-label-width / --gf-label-req-gap
+```
+
+---
+
+## Style Priority Cascade
+
+Settings merge with the following priority (highest wins):
+
+1. **Block attributes** — per-instance values set in the block editor sidebar
+2. **Form `styles` property** — set via shortcode `style_settings` parameter
+3. **`gform_default_styles` filter** — global defaults from PHP
+4. **Hardcoded defaults** — in `GF_Form_Display_Service_Provider::BLOCK_STYLES_DEFAULTS`
+
+From `Form_CSS_Properties_Output_Engine::generate_props_block()`:
+
+```php
+$style_settings = ! empty( $block_settings )
+    ? array_merge( $form_style, $block_settings )
+    : $form_style;
+
+if ( ! rgar( $style_settings, 'theme' ) || '' == $style_settings['theme'] ) {
+    $style_settings['theme'] = get_option( 'rg_gforms_default_theme', 'orbital' );
+}
+```
+
+---
+
+## PHP Filters & Hooks
+
+### `gform_default_styles`
+
+Set global defaults for all forms. These become the baseline that block attributes override:
+
+```php
+add_filter('gform_default_styles', function () {
+    return [
+        'theme'                        => 'orbital',
+        'inputSize'                    => 'md',
+        'inputBorderRadius'            => 10,
+        'inputBorderColor'             => '#767676',
+        'inputBackgroundColor'         => '#fff',
+        'inputColor'                   => '#2C2C2C',
+        'inputPrimaryColor'            => '#8C5FCD',
+        'labelFontSize'                => 14,
+        'labelColor'                   => '#2C2C2C',
+        'descriptionFontSize'          => 13,
+        'descriptionColor'             => '#767676',
+        'buttonPrimaryBackgroundColor' => '#8C5FCD',
+        'buttonPrimaryColor'           => '#fff',
+    ];
+});
+```
+
+Whitelisted keys are validated by `GFFormDisplay::validate_form_styles()`.
+
+### `gform_form_theme_slug`
+
+Force a specific theme for all forms:
+
+```php
+add_filter('gform_form_theme_slug', fn() => 'orbital', 10, 2);
+```
+
+### `gform_disable_form_theme_css`
+
+Disable the theme CSS entirely (keep framework):
+
+```php
+add_filter('gform_disable_form_theme_css', '__return_true');
+```
+
+### `gform_disable_css`
+
+Disable all Gravity Forms CSS:
+
+```php
+add_filter('gform_disable_css', '__return_true');
+```
+
+### CSS Override Strategy
+
+Because all Orbital styling flows through `--gf-*` variables, theme CSS can override them. The theme stylesheet loads after the inline `<style>` block, so equal or higher specificity wins:
+
+```css
+.gform-theme--orbital {
+    --gf-color-primary: var(--wp--preset--color--purple);
+    --gf-color-primary-contrast: var(--wp--preset--color--white);
+    --gf-radius: 10px;
+    --gf-ctrl-border-color: var(--wp--preset--color--slate);
+    --gf-ctrl-label-color-primary: var(--wp--preset--color--charcoal);
+}
+```
+
+---
+
+## Block Editor Control Visibility
+
+### How It Works Internally
+
+In `scripts-admin.min.js`, two JS variables gate the style panels:
+
+```javascript
+Re = "orbital" === theme || orbitalDefault && "" === theme
+Ne = Re && formExists && !isLegacyMarkup
+```
+
+- `Re` = "Is this form using Orbital?" (explicitly or via default inheritance)
+- `Ne` = "Should style panels render?"
+
+Every style panel is conditionally rendered: `Ne && React.createElement(PanelBody, ...)`. When `Ne` is false, the panels don't exist in the DOM at all.
+
+### Hiding Controls When Using Orbital
+
+There is no built-in setting to use Orbital but hide the style controls. The check is hardcoded to the `"orbital"` string. Options for hiding them:
+
+**Option A: Admin CSS** — hide the panels visually:
+```css
+/* Target GF-specific panel bodies in the block editor */
+.gform-block-settings .components-panel__body { display: none; }
+```
+
+**Option B: JavaScript filter** — use `wp.hooks.addFilter` on `blocks.registerBlockType` to modify the `gravityforms/form` block's edit component wrapper or strip attributes.
+
+**Option C: Editor script** — enqueue a small JS file that removes the panels after render using WordPress block editor hooks.
+
+Option B or C is preferred as it prevents the controls from rendering at all rather than just hiding them.
+
+---
+
+## Theme Layers API
+
+Gravity Forms provides an extensibility API for creating custom theme layers. Layers are **additive** — they stack on top of existing layers rather than replacing them.
+
+### Fluent API (PHP)
+
+```php
+use Gravity_Forms\Gravity_Forms\Theme_Layers\API\Fluent\Theme_Layer_Builder;
+
+$layer = new Theme_Layer_Builder();
+$layer->set_name('my-custom-theme')
+      ->set_short_title('My Theme')
+      ->set_form_css_properties([$this, 'form_css_properties'])
+      ->set_styles([$this, 'styles'])
+      ->register();
+```
+
+### JSON API
+
+```php
+gforms_register_theme_json('/path/to/gf-theme.json');
+```
+
+**Known Bug:** The JSON API's `form_css_properties()` method in `class-json-theme-layer.php:163` has dead code (`return array();` before the actual return). CSS property output via JSON themes is broken.
+
+### Limitations
+
+- Custom layers cannot remove existing block editor controls
+- The built-in `block_styles` handler always runs for Orbital forms
+- A custom layer adds a second inline `<style>` block per form rather than replacing the first
+- For most use cases, `gform_default_styles` + CSS overrides is simpler and more effective
+
+---
+
+## Key File Paths
+
+All paths relative to `wp-content/plugins/gravityforms/`:
+
+| File | Purpose |
+|------|---------|
+| `includes/blocks/class-gf-block-form.php` | Block registration for `gravityforms/form` |
+| `includes/blocks/class-gf-blocks-service-provider.php` | Block attribute definitions (all style settings) |
+| `includes/blocks/config/class-gf-blocks-config.php` | Config data passed to block editor JS |
+| `includes/form-display/class-gf-form-display-service-provider.php` | CSS registration, block styles handler init |
+| `includes/form-display/block-styles/block-styles-handler.php` | Converts block settings to `--gf-*` CSS variables |
+| `includes/form-display/block-styles/views/class-form-view.php` | Adds theme wrapper classes |
+| `includes/theme-layers/framework/engines/output-engines/class-form-css-properties-output-engine.php` | Generates inline `<style>` blocks |
+| `includes/theme-layers/framework/engines/output-engines/class-asset-enqueue-output-engine.php` | Enqueues CSS/JS assets in correct order |
+| `includes/theme-layers/api/fluent/class-theme-layer-builder.php` | Fluent API for custom theme layers |
+| `includes/theme-layers/api/json/functions.php` | `gforms_register_theme_json()` |
+| `includes/theme-layers/api/json/layers/class-json-theme-layer.php` | JSON theme layer (CSS properties bug) |
+| `common.php` (lines ~8034-8100) | `GFCommon::generate_block_styles_palette()` |
+| `form_display.php` (lines ~5623-5640) | `validate_form_styles()` whitelist |
+| `settings.php` (lines ~563-597) | Default theme setting UI |
+| `assets/js/dist/scripts-admin.min.js` | Block editor JS (control visibility logic) |
+| `assets/css/dist/gravity-forms-theme-framework.min.css` | Framework CSS (consumes `--gf-*` variables) |
+| `assets/css/dist/gravity-forms-orbital-theme.min.css` | Orbital theme CSS (essentially empty) |

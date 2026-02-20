@@ -1,0 +1,26 @@
+/*
+ * Gravity Forms Design System Bridge
+ *
+ * Variable overrides are handled in PHP (bridgeInlineStyles) which wraps each
+ * --gf-* value with var(--wp--custom--gf-*, <original>). Child themes override
+ * any GF variable via theme.json custom settings, e.g.:
+ *
+ *   { "custom": { "gfColorPrimary": "var:preset|color|purple" } }
+ *
+ * This CSS handles only what the PHP bridge can't: element-level normalization
+ * and editor UI that isn't controlled by the orbitalDefault config flag.
+ */
+
+.gform_wrapper.gform-theme {
+    /* Buttons inherit font-family from theme rather than browser form defaults */
+    .gform_button,
+    .gform-theme-button {
+        font-family: inherit !important;
+    }
+}
+
+/* Hide the Form Styles panel in the block editor sidebar — not gated by
+   orbitalDefault like the other style controls, so CSS is needed. */
+.gform-block__panel.gform-block__form-styles {
+    display: none;
+}
