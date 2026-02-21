@@ -3,8 +3,9 @@ import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
 import { useEffect, useMemo } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
-import { generateFieldClasses, mergeClassNames } from './utils/class-names';
+import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames } from './utils/class-names';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 
 /**
@@ -74,7 +75,7 @@ function normalizePanels(config) {
  * @returns {Object[]} All fields
  */
 function collectAllFields(panels) {
-    return panels.flatMap((p) => p.fields || []);
+    return panels.flatMap((p) => p.fields || []).flat();
 }
 
 /**
@@ -195,7 +196,10 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                     {panels.map((panel, panelIndex) => (
                         <InspectorControls key={panelIndex} group={panel.group || 'settings'}>
                             <PanelBody title={panel.title} initialOpen={panel.initialOpen ?? true}>
-                                {panel.fields?.map((field) => {
+                                {panel.fields?.flat().map((field) => {
+                                    if (!field.render) {
+                                        return null;
+                                    }
                                     if (field.condition && !field.condition(attributes)) {
                                         return null;
                                     }
@@ -208,6 +212,8 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                                             field={field}
                                             value={value}
                                             onChange={onChange}
+                                            attributes={attributes}
+                                            setAttributes={setAttributes}
                                         />
                                     );
                                 })}
@@ -254,15 +260,28 @@ function createSaveClassFilter(targetBlocks, allFields, classGenerator) {
  * @returns {Function} Higher-order component
  */
 function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
+    const hasResponsiveFields = allFields.some((f) => f.responsive);
     return createHigherOrderComponent((BlockListBlock) => {
         return (props) => {
             if (!isTargetBlock(props.name, targetBlocks)) {
                 return <BlockListBlock {...props} />;
             }
 
+            const deviceType = useSelect(
+                (select) => {
+                    if (!hasResponsiveFields) {
+                        return 'Desktop';
+                    }
+                    return select('core/editor')?.getDeviceType?.() || 'Desktop';
+                },
+                [hasResponsiveFields]
+            );
+
             const newClasses = classGenerator
                 ? classGenerator(props.attributes)
-                : generateFieldClasses(allFields, props.attributes);
+                : hasResponsiveFields
+                  ? generateEditorFieldClasses(allFields, props.attributes, deviceType)
+                  : generateFieldClasses(allFields, props.attributes);
             if (newClasses.length === 0) {
                 return <BlockListBlock {...props} />;
             }
