@@ -96,25 +96,24 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
     const currentValue = attributes[attrName];
     const handleChange = (newValue) => setAttributes({ [attrName]: newValue });
 
-    // For sub-breakpoints, prepend a "not set" option to select fields
-    const isSubBreakpoint = deviceType !== 'Desktop';
-    const renderField =
-        isSubBreakpoint && field.options
-            ? {
-                  ...field,
-                  label: undefined,
-                  options: [
-                      {
-                          label: '\u2014',
-                          value: '',
-                      },
-                      ...field.options,
-                  ],
-              }
-            : {
-                  ...field,
-                  label: undefined,
-              };
+    const resolvedOptions = typeof field.options === 'function' ? field.options(deviceType) : field.options;
+
+    const renderField = resolvedOptions
+        ? {
+              ...field,
+              label: undefined,
+              options: [
+                  {
+                      label: '',
+                      value: '',
+                  },
+                  ...resolvedOptions,
+              ],
+          }
+        : {
+              ...field,
+              label: undefined,
+          };
     return (
         <div className="components-base-control kb-small-responsive-control">
             <div className="kadence-title-bar">
