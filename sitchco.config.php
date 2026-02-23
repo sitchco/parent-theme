@@ -42,6 +42,8 @@ return [
         /** MEDIA */
         'core/file',
         'core/gallery',
+        'core/media-text',
+        'core/table',
         /** Design */
         'core/more',
         'core/nextpage',
