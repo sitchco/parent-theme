@@ -17,6 +17,23 @@
     .gform-theme-button {
         font-family: inherit !important;
     }
+
+    .gform_footer,
+    .gform_page_footer {
+        .gform_page_button_wrapper,
+        .wp-block-button {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--gf-form-footer-gap);
+        }
+
+        /* Keep buttons from stretching inside its flex parent */
+        .gform_next_button,
+        .gform_previous_button,
+        .wp-block-button__link {
+            align-self: center;
+        }
+    }
 }
 
 /* Hide the Form Styles panel in the block editor sidebar — not gated by

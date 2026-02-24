@@ -29,6 +29,8 @@ class GravityForms extends Module
         add_filter('gform_form_after_open', [$this, 'bridgeInlineStyles'], 1000, 2);
         add_filter('gform_get_form_confirmation_filter', [$this, 'bridgeInlineStyles'], 1000, 2);
         add_filter('gform_submit_button', [$this, 'replaceSubmitButton'], 10, 2);
+        add_filter('gform_next_button', [$this, 'replacePaginationButton'], 10, 2);
+        add_filter('gform_previous_button', [$this, 'replacePaginationButton'], 10, 2);
     }
 
     /**
@@ -113,6 +115,40 @@ class GravityForms extends Module
             esc_attr(implode(' ', $wrapper_classes)),
             $attrs_string,
             $text,
+        );
+    }
+
+    /**
+     * Converts pagination <input> elements to <button> elements so
+     * pseudo-elements and inner markup are available for styling.
+     *
+     * Preserves all original attributes and classes. Only fires on
+     * <input> elements — if GF is configured to render link-type buttons
+     * (already <button>), the markup passes through unchanged.
+     */
+    public function replacePaginationButton(string $button_html, array $form): string
+    {
+        if (!preg_match('/<input\b/i', $button_html)) {
+            return $button_html;
+        }
+
+        preg_match('/value=["\']([^"\']*)["\']/', $button_html, $m);
+        $text = $m[1] ?? '';
+
+        // Extract all attributes except value and type
+        preg_match_all('/\b([\w-]+)=["\']([^"\']*)["\']/', $button_html, $matches, PREG_SET_ORDER);
+        $attrs = [];
+        foreach ($matches as $match) {
+            if (!in_array($match[1], ['value', 'type'], true)) {
+                $attrs[] = sprintf('%s="%s"', $match[1], esc_attr($match[2]));
+            }
+        }
+        $attrs_string = $attrs ? ' ' . implode(' ', $attrs) : '';
+
+        return sprintf(
+            '<div class="gform_page_button_wrapper"><button type="button"%s>%s</button></div>',
+            $attrs_string,
+            esc_html($text),
         );
     }
 }
