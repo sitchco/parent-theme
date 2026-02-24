@@ -4,46 +4,48 @@ import { InspectorControls, InspectorAdvancedControls } from '@wordpress/block-e
 import { ToggleControl } from '@wordpress/components';
 import { Fragment } from '@wordpress/element';
 
-addFilter('blocks.registerBlockType', 'sitchco/extend-core-image', (settings, name) => {
-    if (name !== 'core/image') {
-        return settings;
-    }
-    return {
-        ...settings,
-        attributes: {
-            ...settings.attributes,
-            inlineSvg: {
-                type: 'boolean',
-                default: false,
-            },
-        },
-    };
-});
-
-const addInlineSvgToggle = createHigherOrderComponent((BlockEdit) => {
-    return (props) => {
-        if (props.name !== 'core/image') {
-            return <BlockEdit {...props} />;
+export default function () {
+    addFilter('blocks.registerBlockType', 'sitchco/extend-core-image', (settings, name) => {
+        if (name !== 'core/image') {
+            return settings;
         }
+        return {
+            ...settings,
+            attributes: {
+                ...settings.attributes,
+                inlineSvg: {
+                    type: 'boolean',
+                    default: false,
+                },
+            },
+        };
+    });
 
-        const { attributes, setAttributes } = props;
-        const { inlineSvg } = attributes;
-        return (
-            <Fragment>
-                <BlockEdit {...props} />
-                <InspectorControls>
-                    <InspectorAdvancedControls>
-                        <ToggleControl
-                            label="Inline SVG"
-                            checked={!!inlineSvg}
-                            onChange={(value) => setAttributes({ inlineSvg: value })}
-                            help="For SVG images only. Outputs as inline SVG markup instead of an <img> tag."
-                        />
-                    </InspectorAdvancedControls>
-                </InspectorControls>
-            </Fragment>
-        );
-    };
-}, 'addInlineSvgToggle');
+    const addInlineSvgToggle = createHigherOrderComponent((BlockEdit) => {
+        return (props) => {
+            if (props.name !== 'core/image') {
+                return <BlockEdit {...props} />;
+            }
 
-addFilter('editor.BlockEdit', 'sitchco/add-inline-svg-toggle', addInlineSvgToggle);
+            const { attributes, setAttributes } = props;
+            const { inlineSvg } = attributes;
+            return (
+                <Fragment>
+                    <BlockEdit {...props} />
+                    <InspectorControls>
+                        <InspectorAdvancedControls>
+                            <ToggleControl
+                                label="Inline SVG"
+                                checked={!!inlineSvg}
+                                onChange={(value) => setAttributes({ inlineSvg: value })}
+                                help="For SVG images only. Outputs as inline SVG markup instead of an <img> tag."
+                            />
+                        </InspectorAdvancedControls>
+                    </InspectorControls>
+                </Fragment>
+            );
+        };
+    }, 'addInlineSvgToggle');
+
+    addFilter('editor.BlockEdit', 'sitchco/add-inline-svg-toggle', addInlineSvgToggle);
+}

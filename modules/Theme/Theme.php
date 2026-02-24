@@ -53,9 +53,10 @@ class Theme extends Module
                 'wp-compose',
                 'wp-block-editor',
                 'wp-rich-text',
+                'sitchco/ui-framework',
             ]);
             $assets->inlineScriptData('parent-editor-ui', 'themeSettings', wp_get_global_settings());
-        }, 1);
+        }, 5);
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
