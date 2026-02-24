@@ -45,6 +45,12 @@ class ExtendBlockModule extends Module
 
         // Handle both object format (new) and string format (legacy)
         if (is_array($extendBlockClasses)) {
+            // Allow modules to exclude specific namespaces for a given block
+            $extendBlockClasses = apply_filters(
+                static::hookName('inject-classes'),
+                $extendBlockClasses,
+                $block['blockName'],
+            );
             // Combine all class strings from all namespaces
             $classes = implode(' ', array_filter(array_map('strval', array_values($extendBlockClasses))));
         } else {

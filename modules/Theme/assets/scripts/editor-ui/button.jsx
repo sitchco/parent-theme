@@ -26,14 +26,16 @@ export default function ({ extendBlock, fields }) {
         );
     }
 
-    extendBlock({
-        blocks: sitchco.hooks.applyFilters('theme.extendButton.blocks', ['core/button']),
-        namespace: 'sitchco/button',
-        panel: {
-            title: 'Button Attributes',
-            group: 'styles',
-            initialOpen: true,
-        },
-        fields: fieldList,
-    });
+    extendBlock(
+        sitchco.hooks.applyFilters('extendBlock.button', {
+            blocks: ['core/button'],
+            namespace: 'sitchco/button',
+            panel: {
+                title: 'Button Attributes',
+                group: 'styles',
+                initialOpen: true,
+            },
+            fields: fieldList,
+        })
+    );
 }

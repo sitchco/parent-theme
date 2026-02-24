@@ -4,10 +4,13 @@ namespace Sitchco\Parent\Modules\GravityForms;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 
 class GravityForms extends Module
 {
     public const HOOK_SUFFIX = 'gravity-forms';
+
+    public const DEPENDENCIES = [ExtendBlockModule::class];
 
     public function init()
     {
@@ -22,6 +25,7 @@ class GravityForms extends Module
                 'wp-element',
                 'wp-hooks',
                 'sitchco/extend-block',
+                'sitchco/ui-framework',
             ]);
         }, 1);
 
@@ -31,6 +35,9 @@ class GravityForms extends Module
         add_filter('gform_submit_button', [$this, 'replaceSubmitButton'], 10, 2);
         add_filter('gform_next_button', [$this, 'replacePaginationButton'], 10, 2);
         add_filter('gform_previous_button', [$this, 'replacePaginationButton'], 10, 2);
+        add_filter('register_block_type_args', [$this, 'registerBlockAttributes'], 10, 2);
+        add_filter('render_block_data', [$this, 'prepareButtonThemeClass']);
+        add_filter(ExtendBlockModule::hookName('inject-classes'), [$this, 'injectClasses'], 10, 2);
     }
 
     /**
@@ -116,6 +123,78 @@ class GravityForms extends Module
             $attrs_string,
             $text,
         );
+    }
+
+    /**
+     * Registers custom attributes added by the JS extendBlock system so the
+     * REST API block renderer accepts them without "Invalid parameter(s)" errors.
+     */
+    public function registerBlockAttributes(array $args, string $block_name): array
+    {
+        if ('gravityforms/form' !== $block_name) {
+            return $args;
+        }
+
+        $args['attributes']['theme'] = [
+            'type' => 'string',
+            'default' => '',
+        ];
+        $args['attributes']['icon'] = [
+            'type' => 'string',
+            'default' => '',
+        ];
+        $args['attributes']['extendBlockClasses'] = [
+            'type' => 'object',
+            'default' => [],
+        ];
+
+        return $args;
+    }
+
+    /**
+     * Excludes the button namespace from wrapper class injection since
+     * those classes are applied to the submit button instead.
+     */
+    public function injectClasses(array $classes, string $block_name): array
+    {
+        if ('gravityforms/form' === $block_name) {
+            unset($classes['sitchco/button']);
+        }
+
+        return $classes;
+    }
+
+    /**
+     * Hooks the submit-button-classes filter before the GF block renders,
+     * so button attribute classes are baked into replaceSubmitButton's output directly.
+     */
+    public function prepareButtonThemeClass(array $block): array
+    {
+        if ('gravityforms/form' !== $block['blockName']) {
+            return $block;
+        }
+
+        $attrs = $block['attrs'] ?? [];
+        $classes = [];
+
+        if (!empty($attrs['theme'])) {
+            $classes[] = 'has-theme-' . sanitize_html_class($attrs['theme']);
+        }
+
+        if (!empty($attrs['icon'])) {
+            $classes[] = 'has-icon';
+            $classes[] = 'has-icon-' . sanitize_html_class($attrs['icon']);
+        }
+
+        if (empty($classes)) {
+            return $block;
+        }
+
+        add_filter(static::hookName('submit-button-classes'), function (array $existing) use ($classes) {
+            return array_merge($existing, $classes);
+        });
+
+        return $block;
     }
 
     /**
