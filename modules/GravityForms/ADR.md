@@ -411,3 +411,25 @@ All paths relative to `wp-content/plugins/gravityforms/`:
 | `assets/js/dist/scripts-admin.min.js` | Block editor JS (control visibility logic) |
 | `assets/css/dist/gravity-forms-theme-framework.min.css` | Framework CSS (consumes `--gf-*` variables) |
 | `assets/css/dist/gravity-forms-orbital-theme.min.css` | Orbital theme CSS (essentially empty) |
+
+---
+
+## Strategy Notes
+
+### Extending a Dynamic Block with Custom Attributes
+
+The `gravityforms/form` block is dynamic — its editor preview is fetched via a REST API call to `/wp/v2/block-renderer/gravityforms/form`. WordPress validates all attributes in the request against the block's server-side registered schema. Custom attributes added only via the JS `blocks.registerBlockType` filter cause an "Invalid parameter(s): attributes" error because the server doesn't recognize them.
+
+**Solution:** Register the same attributes server-side via `register_block_type_args`. This is not needed for static blocks like `core/button` since they render entirely in the editor.
+
+### Routing Classes to the Submit Button Instead of the Form Wrapper
+
+The ExtendBlock system's `injectExtendBlockClasses` filter adds classes to the first element of a dynamic block's rendered HTML — for `gravityforms/form`, that's the `<form>` wrapper. But button attribute classes (`has-theme-*`, `has-icon-*`) need to land on the `.wp-block-button` wrapper inside the form.
+
+**Solution:** A two-part approach:
+
+1. **`render_block_data` filter** (`prepareButtonThemeClass`) — fires before the block renders and feeds the classes into the `submit-button-classes` filter. By the time `replaceSubmitButton` builds the markup, the classes are already included.
+
+2. **`inject-classes` filter** (`injectClasses`) — excludes the `sitchco/button` namespace from ExtendBlockModule's wrapper injection for `gravityforms/form`, preventing duplicate classes on the form element.
+
+This is preferable to a `render_block` post-processing approach (regex-replacing classes into already-rendered HTML) because the classes are baked into the markup at creation time.
