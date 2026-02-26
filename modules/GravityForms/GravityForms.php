@@ -27,7 +27,7 @@ class GravityForms extends Module
                 'sitchco/ui-framework',
                 'sitchco/extend-block',
             ]);
-        }, 1);
+        });
 
         add_filter('gform_config_data_gform_admin_config', [$this, 'hideBlockStyleControls']);
         add_filter('gform_form_after_open', [$this, 'bridgeInlineStyles'], 1000, 2);
