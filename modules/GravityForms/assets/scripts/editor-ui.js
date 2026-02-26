@@ -1,6 +1,5 @@
-if (window.sitchco?.hooks) {
-    sitchco.hooks.addFilter('extendBlock.button', function (config) {
-        config.blocks = [...config.blocks, 'gravityforms/form'];
-        return config;
-    });
+import extendForm from './editor-ui/form.jsx';
+
+if (window.sitchco?.extendBlock) {
+    [extendForm].forEach((m) => m(sitchco.extendBlock));
 }

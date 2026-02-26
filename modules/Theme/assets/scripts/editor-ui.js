@@ -21,6 +21,21 @@ if (window.sitchco?.hooks) {
         5,
         'parent-theme'
     );
+
+    sitchco.hooks.addFilter(
+        'theme.icon-options',
+        function (options) {
+            return [
+                ...options,
+                {
+                    label: 'Select Icon',
+                    value: '',
+                },
+            ];
+        },
+        5,
+        'parent-theme'
+    );
 }
 if (window.sitchco?.extendBlock) {
     [extendButton].forEach((m) => m(sitchco.extendBlock));

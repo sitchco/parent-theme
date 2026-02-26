@@ -12,7 +12,7 @@ class GravityForms extends Module
 
     public const DEPENDENCIES = [ExtendBlockModule::class];
 
-    public function init()
+    public function init(): void
     {
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle(static::HOOK_SUFFIX, 'main.css');
@@ -24,8 +24,8 @@ class GravityForms extends Module
                 'wp-components',
                 'wp-element',
                 'wp-hooks',
-                'sitchco/extend-block',
                 'sitchco/ui-framework',
+                'sitchco/extend-block',
             ]);
         }, 1);
 
