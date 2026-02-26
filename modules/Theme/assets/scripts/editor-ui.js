@@ -1,8 +1,9 @@
-import extendImage from './editor-ui/heading.jsx';
-import extendHeading from './editor-ui/image.jsx';
+import extendHeading from './editor-ui/heading.jsx';
+import extendImage from './editor-ui/image.jsx';
 import extendButton from './editor-ui/button.jsx';
 
-if (window.sitchco?.hooks) {
+// Phase 1: configure theme filters
+sitchco.editorInit(() => {
     sitchco.hooks.addFilter(
         'theme.color-options',
         function (options) {
@@ -36,11 +37,11 @@ if (window.sitchco?.hooks) {
         5,
         'parent-theme'
     );
-}
-if (window.sitchco?.extendBlock) {
-    [extendButton].forEach((m) => m(sitchco.extendBlock));
-}
+});
 
-extendImage();
-
-extendHeading();
+// Phase 2: register components
+sitchco.editorReady(() => {
+    extendButton(sitchco.extendBlock);
+    extendImage();
+    extendHeading();
+});

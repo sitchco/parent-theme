@@ -17,6 +17,7 @@ class ExtendBlockModule extends Module
                 'wp-components',
                 'wp-data',
                 'wp-element',
+                'sitchco/editor-ui-framework',
             ]);
         }, 1);
 

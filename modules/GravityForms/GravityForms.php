@@ -24,7 +24,7 @@ class GravityForms extends Module
                 'wp-components',
                 'wp-element',
                 'wp-hooks',
-                'sitchco/ui-framework',
+                'sitchco/editor-ui-framework',
                 'sitchco/extend-block',
             ]);
         });

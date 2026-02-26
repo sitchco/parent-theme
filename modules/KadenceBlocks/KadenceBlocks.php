@@ -41,7 +41,7 @@ class KadenceBlocks extends Module
                 'contentWidthPresets',
                 $this->getContentWidthPresets(),
             );
-        }, 1);
+        });
 
         add_filter('kadence_blocks_column_render_block_attributes', [$this, 'injectDefaultColumnGap']);
         add_filter('kadence_blocks_css_spacing_sizes', [$this, 'overrideSpacingSizes']);

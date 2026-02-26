@@ -1,3 +1,4 @@
+// These stay synchronous (Kadence's own WP hooks, no sitchco dependency)
 import './editor-ui/column-gap-defaults.js';
 import './editor-ui/measure-css-variables.js';
 import './editor-ui/overrides.js';
@@ -7,8 +8,8 @@ import extendKadenceColumnBackground from './editor-ui/kadence-column-background
 import extendKadenceColumnAlignment from './editor-ui/column-alignment-toolbar.jsx';
 import extendKadenceRowSubgrid from './editor-ui/kadence-row-subgrid.jsx';
 
-if (window.sitchco?.extendBlock) {
+sitchco.editorReady(() => {
     [extendKadenceColumnBackground, extendKadenceColumnAlignment, extendKadenceRowSubgrid].forEach((m) =>
         m(sitchco.extendBlock)
     );
-}
+});

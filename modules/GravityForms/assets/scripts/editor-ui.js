@@ -1,5 +1,5 @@
 import extendForm from './editor-ui/form.jsx';
 
-if (window.sitchco?.extendBlock) {
+sitchco.editorReady(() => {
     [extendForm].forEach((m) => m(sitchco.extendBlock));
-}
+});
