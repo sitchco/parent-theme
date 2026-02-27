@@ -128,6 +128,7 @@ class KadenceBlocks extends Module
         return $attributes;
     }
 
+    // Exposes --kb-padding-top (and siblings); consumed by SiteHeader overlay push-down calc.
     /**
      * Enable CSS custom property output for padding on Kadence blocks.
      *

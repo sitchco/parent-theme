@@ -40,6 +40,7 @@
     --global-kb-spacing-4xl: var(--wp--custom--container-outer-lg);
     --global-kb-spacing-5xl: var(--wp--custom--container-outer-lg);
 
+    /* Published by KadenceBlocks; consumed by SiteHeader overlay push-down calc. */
     --kb-section-setting-offset: calc(var(--dynamic__header-height) + var(--wp--custom--container-outer-lg));
 }
 
