@@ -1,11 +1,18 @@
 /* Contract: --dynamic__header-height — set by core UIFramework. */
-html:not(:has(body.has-overlay-header)) {
-    scroll-padding-top: var(--dynamic__header-height);
+html {
+    scroll-behavior: smooth;
+    @media (prefers-reduced-motion: reduce) {
+        scroll-behavior: auto;
+    }
+    &:has(body.has-sticky-header) {
+        scroll-padding-top: var(--dynamic__header-height);
+    }
 }
 
 .has-site-header-sticky {
     position: sticky;
-    top: 0;
+    /* Kadence contract: --kb-admin-bar-visible set on body.admin-bar; 0px fallback for non-admin. */
+    top: var(--kb-admin-bar-visible, 0px);
     width: 100%;
     z-index: 1000;
 
@@ -13,8 +20,6 @@ html:not(:has(body.has-overlay-header)) {
         position: fixed;
         left: 0;
         right: 0;
-        /* Kadence contract: --kb-admin-bar-visible set on body.admin-bar; 0px fallback for non-admin. */
-        top: var(--kb-admin-bar-visible, 0px);
     }
 }
 
