@@ -5,13 +5,14 @@ namespace Sitchco\Parent\Modules\Theme;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Utils\Logger;
 
 class Theme extends Module
 {
-    const HOOK_SUFFIX = 'theme';
+    const HOOK_SUFFIX = 'parent-theme';
 
-    const DEPENDENCIES = [TimberModule::class];
+    const DEPENDENCIES = [ExtendBlockModule::class, TimberModule::class];
 
     const FEATURES = ['disableAdminBar'];
 
@@ -45,7 +46,7 @@ class Theme extends Module
             $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
         });
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript('parent-editor-ui', 'editor-ui.js', [
+            $assets->enqueueScript('editor-ui', 'editor-ui.js', [
                 'wp-blocks',
                 'wp-element',
                 'wp-hooks',
@@ -53,9 +54,10 @@ class Theme extends Module
                 'wp-compose',
                 'wp-block-editor',
                 'wp-rich-text',
+                'sitchco/editor-ui-framework',
             ]);
-            $assets->inlineScriptData('parent-editor-ui', 'themeSettings', wp_get_global_settings());
-        }, 1);
+            $assets->inlineScriptData('editor-ui', 'themeSettings', wp_get_global_settings());
+        });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');
         });
