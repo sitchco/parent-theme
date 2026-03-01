@@ -5,6 +5,14 @@ body {
     flex-direction: column;
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
+body {
+    overflow-x: clip;
+}
+
 .wrap {
     flex: 1;
 }
