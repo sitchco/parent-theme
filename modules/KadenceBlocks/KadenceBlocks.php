@@ -5,6 +5,7 @@ namespace Sitchco\Parent\Modules\KadenceBlocks;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
+use WP_HTML_Tag_Processor;
 
 /**
  * Integration layer for Kadence Blocks plugin.
@@ -50,6 +51,7 @@ class KadenceBlocks extends Module
         add_filter('option_kadence_blocks_config_blocks', [$this, 'overrideConfigDefaults']);
         add_filter('kadence_blocks_measure_output_css_variables', [$this, 'enableCssVariablesForPadding'], 10, 5);
         add_filter('kadence_blocks_rowlayout_skip_max_width_css', [$this, 'handleRowCssMaxWidth'], 10, 4);
+        add_filter('render_block_kadence/tab', [$this, 'addTabFullWidthContentClasses'], 10, 2);
     }
 
     /**
@@ -171,6 +173,21 @@ class KadenceBlocks extends Module
         }
 
         return apply_filters(static::hookName('content-width-presets'), $presets);
+    }
+
+    /**
+     * Add layout constraint classes to tabs with full-width content enabled.
+     */
+    public function addTabFullWidthContentClasses(string $html, array $block): string
+    {
+        if (empty($block['attrs']['fullWidthContent'])) {
+            return $html;
+        }
+        $p = new WP_HTML_Tag_Processor($html);
+        if ($p->next_tag(['class_name' => 'kt-tab-inner-content-inner'])) {
+            $p->add_class('is-layout-constrained');
+        }
+        return $p->get_updated_html();
     }
 
     /**

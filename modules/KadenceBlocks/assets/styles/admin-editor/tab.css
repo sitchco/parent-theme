@@ -1,0 +1,42 @@
+/*
+ * Approximates in the editor what is-layout-constrained provides on the front
+ * end (added via the render_block_kadence/tab PHP filter).
+ *
+ * Scenario: In the editor, a tab with full-width content enabled has child
+ * blocks inside it. Kadence's blocks-tabs.css sets all child blocks to
+ * max-width: none !important (0,3,0). Without these overrides, every block
+ * stretches to full width instead of being constrained to page layout widths.
+ *
+ * These selectors use 0,4,0 + !important to win the specificity battle and
+ * re-constrain children to content/wide/xwide sizes as appropriate.
+ */
+.wp-block-kadence-tab.kt-tab-full-width > .kt-tab-inner-content-inner {
+    > .block-editor-block-list__block:where(:not([data-align='full']):not(.alignfull)) {
+        max-width: var(--wp--style--global--content-size) !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    > .block-editor-block-list__block:where([data-align='wide'], .alignwide) {
+        max-width: var(--wp--style--global--wide-size) !important;
+    }
+
+    > .block-editor-block-list__block:where([data-align='xwide'], .alignxwide) {
+        max-width: var(--wp--custom--extra-wide-size, none) !important;
+    }
+
+    > :not(:first-child) {
+        margin-block-start: var(--wp--custom--block-gap);
+    }
+}
+
+/*
+ * Editor equivalent of main/tabs.css:21-24.
+ * Sets edge padding variables for alignfull rows without backgrounds inside
+ * full-width tabs. The actual padding application comes from
+ * admin-editor/row-layout.css:93-96 which already matches.
+ */
+:where(.kt-tab-full-width > .kt-tab-inner-content-inner > .alignfull:not(.kt-row-has-bg)) > .innerblocks-wrap {
+    --kb-padding-left: var(--wp--style--root--padding-left);
+    --kb-padding-right: var(--wp--style--root--padding-right);
+}

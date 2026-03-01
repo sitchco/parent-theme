@@ -1,0 +1,75 @@
+/*
+ * Scenario: A default-width tabs block on a page has a tab with full-width
+ * content enabled. Inside that tab, an alignfull block (e.g. a row with a
+ * background) should reach the viewport edges. Without this rule, the block
+ * stops short, leaving a gap on both sides.
+ */
+.has-global-padding
+    > .wp-block-kadence-tabs:not(.alignfull)
+    :where(.kt-tab-full-width > .kt-tab-inner-content-inner > .alignfull) {
+    margin-right: calc(var(--wp--style--root--padding-right) * -1) !important;
+    margin-left: calc(var(--wp--style--root--padding-left) * -1) !important;
+}
+
+/*
+ * Scenario: A full-width tab contains an alignfull row without a background.
+ * At the article level, row-layout.css:111 sets --kb-padding-left/right via
+ * :where(.has-global-padding > .alignfull...), but the tab inner content div
+ * doesn't have has-global-padding, so that rule won't match. Without this,
+ * column content is flush against the viewport edge.
+ */
+:where(.kt-tab-full-width > .kt-tab-inner-content-inner > .alignfull:not(.kt-row-has-bg)) > .kt-row-column-wrap {
+    --kb-padding-left: var(--wp--style--root--padding-left);
+    --kb-padding-right: var(--wp--style--root--padding-right);
+}
+
+.wp-block-kadence-tabs {
+    max-width: none !important;
+    ul.kt-tabs-title-list,
+    .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
+        max-width: var(--wp--style--global--content-size);
+        margin-inline: auto;
+        .editor-styles-wrapper & {
+            margin-inline: auto !important;
+        }
+    }
+    &.alignwide {
+        .kt-tabs-title-list,
+        .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
+            max-width: var(--wp--style--global--wide-size);
+        }
+    }
+    &.alignxwide {
+        .kt-tabs-title-list,
+        .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
+            max-width: var(--wp--custom--extra-wide-size);
+        }
+    }
+    &.alignfull {
+        .kt-tabs-title-list,
+        .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
+            max-width: none;
+        }
+    }
+    .kt-tabs-wrap {
+        .wp-block-kadence-tab,
+        .kt-tabs-content-wrap {
+        }
+        .wp-block-kadence-tab {
+            border: none;
+            padding: var(--wp--custom--block-gap) 0 0;
+            .editor-styles-wrapper & {
+                padding-top: 0;
+            }
+        }
+        .kt-tabs-content-wrap {
+            padding: 0;
+            .editor-styles-wrapper & {
+                padding-top: var(--wp--custom--block-gap);
+            }
+        }
+    }
+    :where(.kt-tab-inner-content-inner > *) {
+        /*margin-block-start: var(--wp--custom--block-gap);*/
+    }
+}
