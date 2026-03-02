@@ -5,7 +5,14 @@
  * @returns {string}
  */
 export function classNames(...classes) {
-    return classes.flat().filter(Boolean).join(' ');
+    return [
+        ...new Set(
+            classes
+                .flat()
+                .filter(Boolean)
+                .flatMap((c) => c.split(/\s+/))
+        ),
+    ].join(' ');
 }
 
 /**

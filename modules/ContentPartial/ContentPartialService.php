@@ -21,6 +21,11 @@ class ContentPartialService
      */
     protected array $blockPatternPaths = [];
 
+    /**
+     * @var array<string, ContentPartialPost>
+     */
+    private array $resolvedPartials = [];
+
     protected ContentPartialRepository $repository;
 
     public function __construct(ContentPartialRepository $repository)
@@ -51,7 +56,13 @@ class ContentPartialService
                 continue;
             }
             TimberUtil::addContext("partials/site-{$templateArea}", ["site_{$templateArea}" => $partial]);
+            $this->resolvedPartials[$templateArea] = $partial;
         }
+    }
+
+    public function getPartial(string $area): ?ContentPartialPost
+    {
+        return $this->resolvedPartials[$area] ?? null;
     }
 
     public function ensureTaxonomyTermExists(\WP_Screen $currentScreen): void

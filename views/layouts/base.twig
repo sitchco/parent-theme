@@ -12,6 +12,7 @@
 {% block site_header %}
     {{ include_with_context('partials/site-header.twig') }}
 {% endblock %}
+{% do action('sitchco/after_site_header') %}
 <div class="wrap" role="document">
     <main id="main">
         <div class="wrapper">

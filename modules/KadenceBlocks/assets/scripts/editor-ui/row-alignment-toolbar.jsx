@@ -1,29 +1,7 @@
 import { addFilter } from '@wordpress/hooks';
 import { ToolbarGroup } from '@wordpress/components';
-import { stretchWide, stretchFullWidth, alignNone } from '@wordpress/icons';
-
-const ALIGNMENTS = [
-    {
-        value: undefined,
-        label: 'None',
-        icon: alignNone,
-    },
-    {
-        value: 'wide',
-        label: 'Wide',
-        icon: stretchWide,
-    },
-    {
-        value: 'xwide',
-        label: 'Extra Wide',
-        icon: stretchWide,
-    },
-    {
-        value: 'full',
-        label: 'Full',
-        icon: stretchFullWidth,
-    },
-];
+import { alignNone } from '@wordpress/icons';
+import { ALIGNMENTS } from './alignments.js';
 
 function RowAlignmentToolbar({ align, setAttributes }) {
     const activeIcon = ALIGNMENTS.find((a) => a.value === align)?.icon ?? alignNone;

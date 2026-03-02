@@ -84,5 +84,5 @@ textarea:not([rows]) {
 
 /* Anything that has been anchored to should have extra scroll margin */
 :target {
-    scroll-margin-block: 5ex;
+    scroll-margin-block: calc(2ex + var(--kb-admin-bar-visible, 0px));
 }

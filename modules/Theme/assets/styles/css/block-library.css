@@ -10,6 +10,13 @@
     padding: 0; /*var(--wp--custom--container-outer-sm);*/
 }
 
+.is-layout-constrained,
+.block-editor-block-list__layout.is-root-container {
+    > .alignxwide {
+        max-width: var(--wp--custom--extra-wide-size, none);
+    }
+}
+
 :where(article.has-global-padding) {
     > :first-child:not(.alignfull) {
         margin-block-start: var(--wp--custom--container-outer-lg);
