@@ -55,6 +55,7 @@ class Theme extends Module
                 'wp-block-editor',
                 'wp-rich-text',
                 'sitchco/editor-ui-framework',
+                'sitchco/extend-block',
             ]);
             $assets->inlineScriptData('editor-ui', 'themeSettings', wp_get_global_settings());
         });

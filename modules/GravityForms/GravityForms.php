@@ -5,12 +5,15 @@ namespace Sitchco\Parent\Modules\GravityForms;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
+use WP_HTML_Tag_Processor;
 
 class GravityForms extends Module
 {
     public const HOOK_SUFFIX = 'gravity-forms';
 
     public const DEPENDENCIES = [ExtendBlockModule::class];
+
+    private array $pendingButtonClasses = [];
 
     public function init(): void
     {
@@ -37,7 +40,7 @@ class GravityForms extends Module
         add_filter('gform_previous_button', [$this, 'replacePaginationButton'], 10, 2);
         add_filter('register_block_type_args', [$this, 'registerBlockAttributes'], 10, 2);
         add_filter('render_block_data', [$this, 'prepareButtonThemeClass']);
-        add_filter(ExtendBlockModule::hookName('inject-classes'), [$this, 'injectClasses'], 10, 2);
+        add_filter(static::hookName('submit-button-classes'), [$this, 'applyButtonThemeClass']);
     }
 
     /**
@@ -81,8 +84,8 @@ class GravityForms extends Module
      * Replaces GF's submit button markup with WP Button block markup so
      * the theme's .wp-block-button styles (font, shape, arrow, colors) apply.
      *
-     * Preserves GF's functional attributes (id, onclick, data-submission-type,
-     * tabindex) so form submission continues to work.
+     * Preserves GF's functional attributes (id, onclick, data-*, tabindex)
+     * so form submission continues to work.
      *
      * <input type="submit" id="gform_submit_button_1" value="Submit" ... />
      * → <div class="wp-block-button">
@@ -91,22 +94,30 @@ class GravityForms extends Module
      */
     public function replaceSubmitButton(string $button_html, array $form): string
     {
+        $p = new WP_HTML_Tag_Processor($button_html);
+
         // Extract button text from value="..." (input) or inner content (button)
         if (preg_match('/<input\b/i', $button_html)) {
-            preg_match('/value=["\']([^"\']*)["\']/', $button_html, $m);
-            $text = $m[1] ?? 'Submit';
+            $p->next_tag('input');
+            $text = $p->get_attribute('value') ?? 'Submit';
         } else {
-            // Strip SVG tags and get inner text content
             $text = strip_tags(preg_replace('/<svg\b[^>]*>.*?<\/svg>/si', '', $button_html));
             $text = trim($text) ?: 'Submit';
+            $p->next_tag('button');
         }
 
         // Extract functional attributes
         $attrs = [];
-        $attr_names = ['id', 'tabindex', 'data-submission-type', 'onclick'];
-        foreach ($attr_names as $name) {
-            if (preg_match('/' . preg_quote($name, '/') . '=["\']([^"\']*)["\']/', $button_html, $m)) {
-                $attrs[] = sprintf('%s="%s"', $name, esc_attr($m[1]));
+        foreach (['id', 'tabindex', 'onclick'] as $name) {
+            $value = $p->get_attribute($name);
+            if ($value !== null) {
+                $attrs[] = sprintf('%s="%s"', $name, esc_attr($value));
+            }
+        }
+        foreach ($p->get_attribute_names_with_prefix('data-') as $name) {
+            $value = $p->get_attribute($name);
+            if ($value !== null) {
+                $attrs[] = sprintf('%s="%s"', $name, esc_attr($value));
             }
         }
         $attrs_string = $attrs ? ' ' . implode(' ', $attrs) : '';
@@ -115,13 +126,11 @@ class GravityForms extends Module
         $wrapper_classes = ['wp-block-button'];
         $wrapper_classes = apply_filters(static::hookName('submit-button-classes'), $wrapper_classes, $form);
 
-        $text = esc_html($text);
-
         return sprintf(
             '<div class="%s"><button type="submit" class="wp-block-button__link wp-element-button gform-theme-no-framework"%s>%s</button></div>',
             esc_attr(implode(' ', $wrapper_classes)),
             $attrs_string,
-            $text,
+            esc_html($text),
         );
     }
 
@@ -145,28 +154,19 @@ class GravityForms extends Module
         ];
         $args['attributes']['extendBlockClasses'] = [
             'type' => 'object',
-            'default' => [],
+            'default' => (object) [],
         ];
 
         return $args;
     }
 
     /**
-     * Excludes the button namespace from wrapper class injection since
-     * those classes are applied to the submit button instead.
-     */
-    public function injectClasses(array $classes, string $block_name): array
-    {
-        if ('gravityforms/form' === $block_name) {
-            unset($classes['sitchco/button']);
-        }
-
-        return $classes;
-    }
-
-    /**
-     * Hooks the submit-button-classes filter before the GF block renders,
-     * so button attribute classes are baked into replaceSubmitButton's output directly.
+     * Captures theme/icon classes from the block's attributes before render so
+     * applyButtonThemeClass can merge them into the submit button wrapper.
+     *
+     * Registered once on render_block_data; applyButtonThemeClass is registered
+     * once in init() and clears the property after each consumption, preventing
+     * filter accumulation across multiple GF blocks on the same page.
      */
     public function prepareButtonThemeClass(array $block): array
     {
@@ -186,15 +186,20 @@ class GravityForms extends Module
             $classes[] = 'has-icon-' . sanitize_html_class($attrs['icon']);
         }
 
-        if (empty($classes)) {
-            return $block;
-        }
-
-        add_filter(static::hookName('submit-button-classes'), function (array $existing) use ($classes) {
-            return array_merge($existing, $classes);
-        });
+        $this->pendingButtonClasses = $classes;
 
         return $block;
+    }
+
+    /**
+     * Merges pending theme/icon classes into the submit button wrapper class list,
+     * then clears the property to prevent carry-over to subsequent GF blocks.
+     */
+    public function applyButtonThemeClass(array $existing): array
+    {
+        $classes = $this->pendingButtonClasses;
+        $this->pendingButtonClasses = [];
+        return array_merge($existing, $classes);
     }
 
     /**
@@ -211,15 +216,20 @@ class GravityForms extends Module
             return $button_html;
         }
 
-        preg_match('/value=["\']([^"\']*)["\']/', $button_html, $m);
-        $text = $m[1] ?? '';
+        $p = new WP_HTML_Tag_Processor($button_html);
+        $p->next_tag('input');
+
+        $text = $p->get_attribute('value') ?? '';
 
         // Extract all attributes except value and type
-        preg_match_all('/\b([\w-]+)=["\']([^"\']*)["\']/', $button_html, $matches, PREG_SET_ORDER);
+        $skip = ['value', 'type'];
         $attrs = [];
-        foreach ($matches as $match) {
-            if (!in_array($match[1], ['value', 'type'], true)) {
-                $attrs[] = sprintf('%s="%s"', $match[1], esc_attr($match[2]));
+        foreach ($p->get_attribute_names_with_prefix('') as $name) {
+            if (!in_array($name, $skip, true)) {
+                $value = $p->get_attribute($name);
+                if ($value !== null) {
+                    $attrs[] = sprintf('%s="%s"', $name, esc_attr($value));
+                }
             }
         }
         $attrs_string = $attrs ? ' ' . implode(' ', $attrs) : '';

@@ -5,7 +5,7 @@
  * --gf-* value with var(--wp--custom--gf-*, <original>). Child themes override
  * any GF variable via theme.json custom settings, e.g.:
  *
- *   { "custom": { "gfColorPrimary": "var:preset|color|purple" } }
+ *   { "custom": { "gf": { "colorPrimary": "var:preset|color|purple" } } }
  *
  * This CSS handles only what the PHP bridge can't: element-level normalization
  * and editor UI that isn't controlled by the orbitalDefault config flag.
