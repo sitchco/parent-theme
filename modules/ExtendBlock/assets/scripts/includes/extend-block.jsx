@@ -9,11 +9,11 @@ import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames } fro
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 
 /**
- * Dynamic Kadence blocks that render server-side and need PHP filter treatment.
- * Most Kadence blocks are static (fully rendered by the editor), so we explicitly
+ * Dynamic blocks that render server-side and need PHP filter treatment.
+ * Most blocks are static (fully rendered by the editor), so we explicitly
  * opt-in only the ones that need special handling.
  */
-const DYNAMIC_KADENCE_BLOCKS = ['kadence/rowlayout', 'kadence/accordion'];
+const DYNAMIC_BLOCKS = ['kadence/rowlayout', 'kadence/accordion', 'gravityforms/form'];
 
 /**
  * Checks if a block is a dynamic block (rendered server-side).
@@ -22,7 +22,7 @@ const DYNAMIC_KADENCE_BLOCKS = ['kadence/rowlayout', 'kadence/accordion'];
  * @returns {boolean}
  */
 function isDynamicBlock(blockName) {
-    return DYNAMIC_KADENCE_BLOCKS.includes(blockName);
+    return DYNAMIC_BLOCKS.includes(blockName);
 }
 
 /**

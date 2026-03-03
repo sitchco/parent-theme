@@ -1,8 +1,7 @@
-import domReady from '@wordpress/dom-ready';
 import { registerFormatType } from '@wordpress/rich-text';
 import { RichTextToolbarButton } from '@wordpress/block-editor';
 
-domReady(() => {
+export default function () {
     const headingFormats = [
         {
             name: 'sitchco/heading-style',
@@ -34,4 +33,4 @@ domReady(() => {
             },
         });
     });
-});
+}

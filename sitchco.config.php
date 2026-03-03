@@ -6,6 +6,7 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
 use Sitchco\Parent\Modules\ContentPartialBlock\ContentPartialBlockModule;
 use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
+use Sitchco\Parent\Modules\GravityForms\GravityForms;
 use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 use Sitchco\Parent\Modules\Patterns\PatternsModule;
 use Sitchco\Parent\Modules\ContentPartialModal\ContentPartialModalModule;
@@ -28,6 +29,7 @@ return [
         Theme::class,
         KadenceBlocks::class,
         PatternsModule::class,
+        GravityForms::class,
     ],
     'disallowedBlocks' => [
         /** TEXT */
