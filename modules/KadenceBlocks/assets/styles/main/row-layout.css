@@ -140,8 +140,8 @@
 /* 4. Content-width constraint: zero inner horizontal padding. */
 @media (min-width: 768px) {
     :where(.alignfull, .alignwide):where(:has(> .kb-theme-content-width)) > .kt-row-column-wrap {
-        --kb-padding-left: 0;
-        --kb-padding-right: 0;
+        --kb-padding-left: 0px;
+        --kb-padding-right: 0px;
     }
 }
 

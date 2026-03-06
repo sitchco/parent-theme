@@ -49,7 +49,7 @@
  * Base: no padding. Background rows: generous section padding.
  */
 .wp-block-kadence-rowlayout {
-    --kb-row-default-padding: 0;
+    --kb-row-default-padding: 0px;
 }
 .wp-block-kadence-rowlayout.kt-row-has-bg {
     --kb-row-default-padding: var(--wp--custom--container-inner-v-lg);
@@ -63,7 +63,7 @@
 .kb-row-default-padding-measure {
     position: absolute;
     visibility: hidden;
-    height: var(--kb-row-default-padding, 0);
+    height: var(--kb-row-default-padding, 0px);
 }
 
 /*
@@ -119,8 +119,8 @@
 @media (min-width: 768px) {
     :where(.alignfull, .alignwide, .alignxwide):where(:has(> .innerblocks-wrap.kb-theme-content-width))
         > .innerblocks-wrap {
-        --kb-padding-left: 0;
-        --kb-padding-right: 0;
+        --kb-padding-left: 0px;
+        --kb-padding-right: 0px;
     }
     /* Note: Outer wrapper padding handled by main/row-layout.css */
 }

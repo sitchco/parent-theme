@@ -14,7 +14,7 @@
     /* Layout */
     --global-content-width: var(--wp--style--global--content-size);
     --kb-global-content-width: var(--wp--style--global--content-size);
-    --global-content-edge-padding: 0;
+    --global-content-edge-padding: 0px;
 
     /* Row gutters */
     --global-row-gutter-xs: var(--wp--custom--container-outer-sm);
