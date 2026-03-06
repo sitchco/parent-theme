@@ -13,19 +13,13 @@ class CloudinaryKadenceModule extends Module
 {
     public const DEPENDENCIES = [CloudinaryModule::class, KadenceBlocks::class];
 
-    private CloudinaryUrl $cloudinaryUrl;
+    public function __construct(private CloudinaryUrl $cloudinaryUrl) {}
 
     public function init(): void
     {
-        if (
-            !defined('CLOUDINARY_CLOUD_NAME') ||
-            !defined('CLOUDINARY_FOLDER') ||
-            !CLOUDINARY_CLOUD_NAME ||
-            !CLOUDINARY_FOLDER
-        ) {
+        if (!$this->cloudinaryUrl->isConfigured()) {
             return;
         }
-        $this->cloudinaryUrl = new CloudinaryUrl(CLOUDINARY_CLOUD_NAME, CLOUDINARY_FOLDER);
         add_filter('kadence_blocks_rowlayout_render_block_attributes', [$this, 'rewriteRowLayoutAttributes']);
         add_filter('kadence_blocks_column_render_block_attributes', [$this, 'rewriteColumnAttributes']);
     }
