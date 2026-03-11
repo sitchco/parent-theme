@@ -2,6 +2,8 @@
 
 namespace Sitchco\Parent\Modules\Theme;
 
+use Sitchco\Utils\Cache;
+
 class InlineSVGService
 {
     /**
@@ -45,19 +47,8 @@ class InlineSVGService
             return $block_content;
         }
 
-        // Get the file path
-        if ($options['file_path_resolver']) {
-            $file_path = call_user_func($options['file_path_resolver'], $img_uploaded_src, $block);
-        } else {
-            $file_path = $this->resolveFilePath($img_uploaded_src, $block);
-        }
-
-        if (!$file_path || !file_exists($file_path)) {
-            return $block_content;
-        }
-
-        // Get SVG content
-        $svg_content = $this->getSVGContent($file_path);
+        // Get SVG content: try local file first, then fetch from remote URL
+        $svg_content = $this->resolveSVGContent($img_uploaded_src, $block, $options);
 
         if (!$svg_content) {
             return $block_content;
@@ -115,14 +106,34 @@ class InlineSVGService
     }
 
     /**
-     * Resolve the file path for the SVG.
-     * Tries attachment ID first, then falls back to URL-to-path conversion.
-     *
-     * @param string $img_src The source URL of the image
-     * @param array $block The block data
-     * @return string|null The resolved file path or null if not found
+     * Resolve SVG content by trying local file first, then remote URL.
      */
-    private function resolveFilePath(string $img_src, array $block): ?string
+    private function resolveSVGContent(string $img_src, array $block, array $options): string|false
+    {
+        // Try custom resolver first
+        if ($options['file_path_resolver']) {
+            $file_path = call_user_func($options['file_path_resolver'], $img_src, $block);
+        } else {
+            $file_path = $this->resolveLocalFilePath($img_src, $block);
+        }
+
+        if ($file_path && file_exists($file_path)) {
+            return file_get_contents($file_path);
+        }
+
+        // Fallback: fetch from remote URL (e.g. Cloudinary-optimized SVG)
+        if (str_starts_with($img_src, 'https://') || str_starts_with($img_src, 'http://')) {
+            return $this->fetchRemoteSVG($img_src);
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve the local file path for the SVG.
+     * Tries attachment ID first, then falls back to URL-to-path conversion.
+     */
+    private function resolveLocalFilePath(string $img_src, array $block): ?string
     {
         // Try to get file path from attachment ID first (for core/image blocks)
         if (isset($block['attrs']['id'])) {
@@ -138,13 +149,24 @@ class InlineSVGService
     }
 
     /**
-     * Get SVG content from file.
-     *
-     * @param string $file_path The file system path to the SVG file
-     * @return string|false The SVG content or false on failure
+     * Fetch SVG content from a remote URL with transient caching.
      */
-    private function getSVGContent(string $file_path): false|string
+    private function fetchRemoteSVG(string $url): string|false
     {
-        return file_get_contents($file_path);
+        return Cache::rememberTransient(
+            'inline_svg_' . md5($url),
+            function () use ($url) {
+                $response = wp_safe_remote_get($url);
+                if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+                    return null;
+                }
+
+                $body = wp_remote_retrieve_body($response);
+                return str_contains($body, '<svg') ? $body : null;
+            },
+            WEEK_IN_SECONDS,
+            failureTtl: HOUR_IN_SECONDS,
+        ) ?:
+            false;
     }
 }
