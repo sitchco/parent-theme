@@ -56,7 +56,7 @@
     > .wp-block-kadence-image:not(:last-child) {
         margin-bottom: var(--wp--custom--visual-edge-offset);
     }
-    > .wp-block-kadence-image:not(:first-child) {
+    > .wp-block-kadence-image:not(:first-child, style + *) {
         margin-top: var(--wp--custom--visual-edge-offset);
     }
 }
