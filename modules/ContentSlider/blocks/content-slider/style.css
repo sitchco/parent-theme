@@ -19,8 +19,7 @@
 
         > .wp-block-kadence-column {
             &,
-            > .kt-inside-inner-col,
-            > .kt-inside-inner-col > * {
+            > .kt-inside-inner-col {
                 height: 100%;
             }
         }
@@ -56,8 +55,7 @@
 
             > .wp-block-kadence-column {
                 &,
-                > .kt-inside-inner-col,
-                > .kt-inside-inner-col > * {
+                > .kt-inside-inner-col {
                     height: auto;
                 }
             }
