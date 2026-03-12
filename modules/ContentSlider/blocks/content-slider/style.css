@@ -21,6 +21,7 @@
             &,
             > .kt-inside-inner-col {
                 height: 100%;
+                justify-content: flex-start;
             }
         }
     }
