@@ -31,34 +31,6 @@
         margin-block-start: 0;
         margin-block-end: 0;
     }
-
-    /**
-     * Optical spacing correction for elements with strong visual boundaries.
-     *
-     * Elements with hard edges (images, videos, code blocks, etc.) create perceived
-     * separation through their visual boundary alone. When followed by text, the gap
-     * appears larger than the same spacing between two text elements—even though the
-     * actual value is identical.
-     *
-     * This offset adds a small amount of margin to compensate, making the visual
-     * rhythm feel consistent across different element combinations.
-     *
-     * Other elements that may benefit from this treatment:
-     * - .wp-block-video, .wp-block-embed (hard rectangular edges)
-     * - .wp-block-cover (full-width background creates visual break)
-     * - .wp-block-code, .wp-block-preformatted (background creates a "box")
-     * - .wp-block-table (borders/cells create strong edges)
-     * - .wp-block-separator (already a visual divider, gap looks doubled)
-     * - .wp-block-gallery (collection of hard-edged images)
-     * - .wp-block-buttons (solid background creates edge when block-level)
-     * - .wp-block-quote, .wp-block-pullquote (when styled with border/background)
-     */
-    > .wp-block-kadence-image:not(:last-child) {
-        margin-bottom: var(--wp--custom--visual-edge-offset);
-    }
-    > .wp-block-kadence-image:not(:first-child, style + *) {
-        margin-top: var(--wp--custom--visual-edge-offset);
-    }
 }
 
 /* Container establishment for width-responsive padding (only on columns with backgrounds) */
