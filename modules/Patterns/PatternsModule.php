@@ -8,6 +8,8 @@ use Sitchco\Framework\ModuleAssets;
 
 class PatternsModule extends Module
 {
+    public const HOOK_SUFFIX = 'patterns';
+
     const FEATURES = ['registerPatternCategories', 'saveToTheme'];
 
     public function __construct(
@@ -40,7 +42,7 @@ class PatternsModule extends Module
             if (!$screen || !in_array($screen->id, $validScreens, true)) {
                 return;
             }
-            $assets->enqueueScript('save-patterns-to-theme', 'save-patterns.js', [
+            $assets->enqueueScript(static::hookName('save-patterns-to-theme'), 'save-patterns.js', [
                 'wp-dom-ready',
                 'wp-api-fetch',
                 'wp-data',

@@ -11,6 +11,8 @@ use Sitchco\Framework\Module;
 
 class ContentPartialModalModule extends Module
 {
+    public const HOOK_SUFFIX = 'content-partial-modal';
+
     const DEPENDENCIES = [ContentPartialModule::class, UIModal::class];
 
     public function __construct(

@@ -11,6 +11,8 @@ use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 
 class CloudinaryKadenceModule extends Module
 {
+    public const HOOK_SUFFIX = 'cloudinary-kadence';
+
     public const DEPENDENCIES = [CloudinaryModule::class, KadenceBlocks::class];
 
     public function __construct(private CloudinaryUrl $cloudinaryUrl) {}

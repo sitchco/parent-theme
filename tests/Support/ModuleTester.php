@@ -7,6 +7,8 @@ use Sitchco\Framework\Module;
 
 class ModuleTester extends Module
 {
+    public const HOOK_SUFFIX = 'module-tester';
+
     const DEPENDENCIES = [];
 
     public const POST_CLASSES = [];

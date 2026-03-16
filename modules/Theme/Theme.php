@@ -5,12 +5,13 @@ namespace Sitchco\Parent\Modules\Theme;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
+use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Utils\Logger;
 
 class Theme extends Module
 {
-    const HOOK_SUFFIX = 'parent-theme';
+    public const HOOK_SUFFIX = 'parent-theme';
 
     const DEPENDENCIES = [ExtendBlockModule::class, TimberModule::class];
 
@@ -31,9 +32,9 @@ class Theme extends Module
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('core', 'core.css');
+            $assets->enqueueStyle(static::hookName('core'), 'core.css');
             $assets->inlineScriptData(
-                'core',
+                static::hookName('core'),
                 'sitchcoTheme',
                 apply_filters(static::hookName('global-js-vars'), [
                     'ajax_url' => admin_url('admin-ajax.php'),
@@ -42,11 +43,11 @@ class Theme extends Module
             );
         });
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('admin-block-editor', 'admin-editor.css');
-            $assets->enqueueScript('editor-preview', 'editor-preview.js', ['sitchco/ui-framework']);
+            $assets->enqueueStyle(static::hookName('admin-block-editor'), 'admin-editor.css');
+            $assets->enqueueScript(static::hookName('editor-preview'), 'editor-preview.js', [UIFramework::hookName()]);
         });
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript('editor-ui', 'editor-ui.js', [
+            $assets->enqueueScript(static::hookName('editor-ui'), 'editor-ui.js', [
                 'wp-blocks',
                 'wp-element',
                 'wp-hooks',
@@ -54,10 +55,10 @@ class Theme extends Module
                 'wp-compose',
                 'wp-block-editor',
                 'wp-rich-text',
-                'sitchco/editor-ui-framework',
-                'sitchco/extend-block',
+                UIFramework::hookName('editor'),
+                ExtendBlockModule::hookName(),
             ]);
-            $assets->inlineScriptData('editor-ui', 'themeSettings', wp_get_global_settings());
+            $assets->inlineScriptData(static::hookName('editor-ui'), 'themeSettings', wp_get_global_settings());
         });
         $this->enqueueBlockStyles(function (ModuleAssets $assets) {
             $assets->enqueueBlockStyle('core/media-text', 'block-media-text.css');

@@ -4,20 +4,23 @@ namespace Sitchco\Parent\Modules\ExtendBlock;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\UIFramework\UIFramework;
 
 class ExtendBlockModule extends Module
 {
+    public const HOOK_SUFFIX = 'extend-block';
+
     public function init(): void
     {
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript('extend-block', 'extend-block.js', [
+            $assets->enqueueScript(static::hookName(), 'extend-block.js', [
                 'wp-hooks',
                 'wp-compose',
                 'wp-block-editor',
                 'wp-components',
                 'wp-data',
                 'wp-element',
-                'sitchco/editor-ui-framework',
+                UIFramework::hookName('editor'),
             ]);
         }, 1);
 

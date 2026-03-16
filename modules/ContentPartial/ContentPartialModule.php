@@ -7,6 +7,8 @@ use Sitchco\Modules\TimberModule;
 
 class ContentPartialModule extends Module
 {
+    public const HOOK_SUFFIX = 'content-partial';
+
     public const POST_CLASSES = [ContentPartialPost::class];
 
     public const DEPENDENCIES = [TimberModule::class];

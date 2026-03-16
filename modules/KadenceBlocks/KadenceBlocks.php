@@ -21,24 +21,24 @@ class KadenceBlocks extends Module
     public function init(): void
     {
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('kadence-blocks', 'main.css');
+            $assets->enqueueStyle(static::hookName(), 'main.css');
         });
 
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle('kadence-blocks-editor', 'admin-editor.css');
+            $assets->enqueueStyle(static::hookName('editor'), 'admin-editor.css');
         });
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript('kadence-blocks-editor-ui', 'editor-ui.js', [
+            $assets->enqueueScript(static::hookName('editor-ui'), 'editor-ui.js', [
                 'wp-blocks',
                 'wp-components',
                 'wp-element',
                 'wp-hooks',
-                'sitchco/extend-block',
+                ExtendBlockModule::hookName(),
             ]);
-            $assets->inlineScriptData('kadence-blocks-editor-ui', 'themeSettings', wp_get_global_settings());
+            $assets->inlineScriptData(static::hookName('editor-ui'), 'themeSettings', wp_get_global_settings());
             $assets->inlineScriptData(
-                'kadence-blocks-editor-ui',
+                static::hookName('editor-ui'),
                 'contentWidthPresets',
                 $this->getContentWidthPresets(),
             );

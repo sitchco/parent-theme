@@ -11,6 +11,8 @@ use Sitchco\Framework\Module;
  */
 class ContentPartialBlockModule extends Module
 {
+    public const HOOK_SUFFIX = 'content-partial-block';
+
     const DEPENDENCIES = [ContentPartialModule::class];
 
     protected ContentPartialService $contentService;

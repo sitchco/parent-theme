@@ -9,6 +9,8 @@ use Sitchco\Framework\Module;
 
 class SiteFooterModule extends Module
 {
+    public const HOOK_SUFFIX = 'site-footer';
+
     const DEPENDENCIES = [ContentPartialModule::class];
 
     public const FEATURES = ['registerBlockPatterns'];
