@@ -38,12 +38,9 @@ class ContentPartialService
         $this->repository = $repository;
     }
 
-    public function addTemplateArea(string $templateAreaName, bool $hasContext = true, array $fieldKeys = []): void
+    public function addTemplateArea(string $templateAreaName, bool $hasContext = true): void
     {
         $this->templateAreas[$templateAreaName] = $hasContext;
-        foreach ($fieldKeys as $fieldKey) {
-            $this->registerAcfFieldFilter($templateAreaName, $fieldKey);
-        }
     }
 
     public function addBlockPatterns(string $templateAreaName, FilePath $path): void
@@ -81,22 +78,6 @@ class ContentPartialService
     public function getPartial(string $area): ?ContentPartialPost
     {
         return $this->resolvedPartials[$area] ?? null;
-    }
-
-    private function registerAcfFieldFilter(string $templateAreaName, string $fieldKey): void
-    {
-        add_filter("acf/fields/post_object/query/key={$fieldKey}", function (array $args) use ($templateAreaName) {
-            $args['post_type'] = ContentPartialPost::POST_TYPE;
-            $termId = $this->getTermId($templateAreaName);
-            $args['tax_query'] = [
-                [
-                    'taxonomy' => ContentPartialPost::TAXONOMY,
-                    'field' => 'term_id',
-                    'terms' => $termId ?? 0,
-                ],
-            ];
-            return $args;
-        });
     }
 
     public function ensureTaxonomyTermExists(\WP_Screen $currentScreen): void

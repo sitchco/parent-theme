@@ -42,27 +42,6 @@ class ContentPartialServiceTest extends TestCase
         $this->assertEquals($this->standardHeaderId, $result->ID);
     }
 
-    public function testRegisterAcfFieldFilter(): void
-    {
-        $this->service->addTemplateArea('header', true, ['field_test_key']);
-        $args = apply_filters('acf/fields/post_object/query/key=field_test_key', []);
-
-        $this->assertEquals(ContentPartialPost::POST_TYPE, $args['post_type']);
-        $this->assertArrayHasKey('tax_query', $args);
-        $this->assertEquals(ContentPartialPost::TAXONOMY, $args['tax_query'][0]['taxonomy']);
-        $this->assertEquals('term_id', $args['tax_query'][0]['field']);
-        $this->assertEquals($this->service->getTermId('header'), $args['tax_query'][0]['terms']);
-    }
-
-    public function testRegisterAcfFieldFilterNullTermId(): void
-    {
-        $this->service->addTemplateArea('nonexistent', true, ['field_null_test']);
-        $args = apply_filters('acf/fields/post_object/query/key=field_null_test', []);
-
-        $this->assertEquals(ContentPartialPost::POST_TYPE, $args['post_type']);
-        $this->assertEquals(0, $args['tax_query'][0]['terms']);
-    }
-
     public function testEnsureTaxonomyTermExists(): void
     {
         $taxonomy = ContentPartialPost::TAXONOMY;

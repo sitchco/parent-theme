@@ -23,7 +23,7 @@ class SiteHeaderModule extends Module
 
     public function init(): void
     {
-        $this->contentService->addTemplateArea('header', true, ['field_67a3bab7a3938']);
+        $this->contentService->addTemplateArea('header');
         add_filter(Hooks::name('template-context/partials/site-header'), [$this, 'addPageContextToSiteHeader'], 99, 1);
     }
 
