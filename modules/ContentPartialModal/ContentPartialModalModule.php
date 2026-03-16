@@ -21,15 +21,22 @@ class ContentPartialModalModule extends Module
     public function init(): void
     {
         $this->contentService->addTemplateArea('modal');
-        $this->container->get(UIModal::class)->filterModalPostQuery([
-            'post_type' => ContentPartialPost::POST_TYPE,
-            'tax_query' => [
+        $this->container->get(UIModal::class)->filterModalPostQuery(fn() => $this->buildModalQuery());
+    }
+
+    private function buildModalQuery(): array
+    {
+        $query = ['post_type' => ContentPartialPost::POST_TYPE];
+        $termId = $this->contentService->getTermId('modal');
+        if ($termId) {
+            $query['tax_query'] = [
                 [
                     'taxonomy' => ContentPartialPost::TAXONOMY,
-                    'field' => 'slug',
-                    'terms' => 'modal',
+                    'field' => 'term_id',
+                    'terms' => $termId,
                 ],
-            ],
-        ]);
+            ];
+        }
+        return $query;
     }
 }

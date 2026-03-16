@@ -23,7 +23,7 @@ class SiteHeaderModule extends Module
 
     public function init(): void
     {
-        $this->contentService->addTemplateArea('header');
+        $this->contentService->addTemplateArea('header', true, ['field_67a3bab7a3938']);
         add_filter(Hooks::name('template-context/partials/site-header'), [$this, 'addPageContextToSiteHeader'], 99, 1);
     }
 
@@ -62,6 +62,9 @@ class SiteHeaderModule extends Module
 
     public function addPageContextToSiteHeader(array $context): array
     {
+        if (!isset($context['site_header'])) {
+            return $context;
+        }
         $context['site_header']->is_overlaid = !empty(get_field('header_overlay'));
         return $context;
     }

@@ -22,7 +22,7 @@ class SiteFooterModule extends Module
 
     public function init(): void
     {
-        $this->contentService->addTemplateArea('footer');
+        $this->contentService->addTemplateArea('footer', true, ['field_67a6437827191']);
     }
 
     public function registerBlockPatterns(): void

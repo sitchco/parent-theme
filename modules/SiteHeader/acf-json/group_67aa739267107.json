@@ -30,6 +30,11 @@
                 "param": "post_type",
                 "operator": "==",
                 "value": "content-partial"
+            },
+            {
+                "param": "post_taxonomy",
+                "operator": "==",
+                "value": "template-area:header"
             }
         ]
     ],
@@ -42,5 +47,5 @@
     "active": true,
     "description": "CPT: Content Partial",
     "show_in_rest": 0,
-    "modified": 1739224579
+    "modified": 1742140800
 }
