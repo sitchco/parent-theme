@@ -12,14 +12,14 @@ class ContentPartialRepository extends RepositoryBase
 {
     protected string $model_class = ContentPartialPost::class;
 
-    public function findDefaultPartial(string $value): ?Post
+    public function findDefaultPartial(int $termId): ?Post
     {
         return $this->findOne([
             'tax_query' => [
                 [
                     'taxonomy' => ContentPartialPost::TAXONOMY,
-                    'field' => 'slug',
-                    'terms' => $value,
+                    'field' => 'term_id',
+                    'terms' => $termId,
                 ],
             ],
             'meta_query' => [

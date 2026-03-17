@@ -62,6 +62,9 @@ class SiteHeaderModule extends Module
 
     public function addPageContextToSiteHeader(array $context): array
     {
+        if (!isset($context['site_header'])) {
+            return $context;
+        }
         $context['site_header']->is_overlaid = !empty(get_field('header_overlay'));
         return $context;
     }

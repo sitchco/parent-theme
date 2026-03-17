@@ -26,6 +26,11 @@ class ContentPartialService
      */
     private array $resolvedPartials = [];
 
+    /**
+     * @var array<string, ?int>
+     */
+    private array $termIds = [];
+
     protected ContentPartialRepository $repository;
 
     public function __construct(ContentPartialRepository $repository)
@@ -49,15 +54,25 @@ class ContentPartialService
             if (!$hasContext) {
                 continue;
             }
+            $termId = $this->getTermId($templateArea);
             $partial =
                 $this->repository->findPartialOverrideFromPage($templateArea) ??
-                $this->repository->findDefaultPartial($templateArea);
+                ($termId ? $this->repository->findDefaultPartial($termId) : null);
             if (!$partial instanceof ContentPartialPost) {
                 continue;
             }
             TimberUtil::addContext("partials/site-{$templateArea}", ["site_{$templateArea}" => $partial]);
             $this->resolvedPartials[$templateArea] = $partial;
         }
+    }
+
+    public function getTermId(string $slug): ?int
+    {
+        if (!array_key_exists($slug, $this->termIds)) {
+            $term = get_term_by('slug', $slug, ContentPartialPost::TAXONOMY);
+            $this->termIds[$slug] = $term ? $term->term_id : null;
+        }
+        return $this->termIds[$slug];
     }
 
     public function getPartial(string $area): ?ContentPartialPost

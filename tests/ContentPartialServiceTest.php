@@ -35,7 +35,8 @@ class ContentPartialServiceTest extends TestCase
 
     public function testFindDefaultPartial(): void
     {
-        $result = $this->repository->findDefaultPartial('header');
+        $termId = $this->service->getTermId('header');
+        $result = $this->repository->findDefaultPartial($termId);
 
         $this->assertInstanceOf(ContentPartialPost::class, $result);
         $this->assertEquals($this->standardHeaderId, $result->ID);
