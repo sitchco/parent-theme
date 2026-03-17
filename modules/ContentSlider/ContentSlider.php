@@ -20,7 +20,7 @@ use Sitchco\Utils\Logger;
  */
 class ContentSlider extends Module
 {
-    const HOOK_SUFFIX = 'content-slider';
+    public const HOOK_SUFFIX = 'content-slider';
     /**
      * Module initialization
      *

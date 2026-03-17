@@ -16,6 +16,8 @@ use Sitchco\Framework\Module;
  */
 class ButtonConfig extends Module
 {
+    public const HOOK_SUFFIX = 'button-config';
+
     /**
      * Flags to track which variations should be preserved.
      */

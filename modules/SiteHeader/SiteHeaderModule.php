@@ -6,10 +6,13 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Utils\Hooks;
 
 class SiteHeaderModule extends Module
 {
+    public const HOOK_SUFFIX = 'site-header';
+
     const DEPENDENCIES = [ContentPartialModule::class];
 
     public const FEATURES = ['registerBlockPatterns', 'overlayHeader', 'stickyHeader'];
@@ -55,8 +58,8 @@ class SiteHeaderModule extends Module
             if (!$this->contentService->getPartial('header')?->is_sticky) {
                 return;
             }
-            $assets->enqueueStyle('site-header', 'main.css');
-            $assets->enqueueScript('site-header/sticky/js', 'sticky.js', ['sitchco/ui-framework']);
+            $assets->enqueueStyle(static::hookName(), 'main.css');
+            $assets->enqueueScript(static::hookName('sticky'), 'sticky.js', [UIFramework::hookName()]);
         });
     }
 

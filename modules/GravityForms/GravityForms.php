@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\GravityForms;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use WP_HTML_Tag_Processor;
 
@@ -18,17 +19,17 @@ class GravityForms extends Module
     public function init(): void
     {
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle(static::HOOK_SUFFIX, 'main.css');
+            $assets->enqueueStyle(static::hookName(), 'main.css');
         });
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript('editor-ui', 'editor-ui.js', [
+            $assets->enqueueScript(static::hookName('editor-ui'), 'editor-ui.js', [
                 'wp-blocks',
                 'wp-components',
                 'wp-element',
                 'wp-hooks',
-                'sitchco/editor-ui-framework',
-                'sitchco/extend-block',
+                UIFramework::hookName('editor'),
+                ExtendBlockModule::hookName(),
             ]);
         });
 
