@@ -67,7 +67,7 @@ class ContentPartialModalModuleTest extends TestCase
         $this->uiModal->unloadModals();
         $output = ob_get_clean();
 
-        $this->assertEquals(1, substr_count($output, '<dialog'));
+        $this->assertEquals(1, substr_count($output, 'id="test-modal"'));
     }
 
     public function testNoModalsNotInjected(): void

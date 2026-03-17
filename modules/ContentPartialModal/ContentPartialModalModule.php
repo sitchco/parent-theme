@@ -55,31 +55,27 @@ class ContentPartialModalModule extends Module
         ]);
         $uiModal = $this->container->get(UIModal::class);
         foreach ($posts as $post) {
-            $slug = sanitize_title($post->post_name);
-            if ($uiModal->isLoaded($slug)) {
+            if ($uiModal->isLoaded($post->slug)) {
                 continue;
             }
-            $type = (string) get_field('modal_type', $post->ID) ?: 'box';
-            if (!$uiModal->isRegistered($type)) {
-                $type = 'box';
-            }
-            $uiModal->loadModal(ModalData::fromPost($post, $type));
+            $uiModal->loadModal(ModalData::fromPost($post, $post->modal_type ?: ''));
         }
     }
 
     private function buildModalQuery(): array
     {
-        $query = ['post_type' => ContentPartialPost::POST_TYPE];
         $termId = $this->contentService->getTermId('modal');
-        if ($termId) {
-            $query['tax_query'] = [
-                [
-                    'taxonomy' => ContentPartialPost::TAXONOMY,
-                    'field' => 'term_id',
-                    'terms' => $termId,
+        return !$termId
+            ? ['post__in' => [0]]
+            : [
+                'post_type' => ContentPartialPost::POST_TYPE,
+                'tax_query' => [
+                    [
+                        'taxonomy' => ContentPartialPost::TAXONOMY,
+                        'field' => 'term_id',
+                        'terms' => $termId,
+                    ],
                 ],
             ];
-        }
-        return $query;
     }
 }
