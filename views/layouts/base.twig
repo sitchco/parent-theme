@@ -14,7 +14,7 @@
 {% endblock %}
 {% do action('sitchco/after_site_header') %}
 <div class="wrap" role="document">
-    <main id="main">
+    <main id="main" {{ gtm_attr('Main') }}>
         <div class="wrapper">
             {% block content %}
                 Sorry, no content
