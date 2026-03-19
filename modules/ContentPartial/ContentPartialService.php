@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\ContentPartial;
 
 use Sitchco\Support\FilePath;
 use Sitchco\Utils\BlockPattern;
+use Sitchco\Utils\Cache;
 use Sitchco\Utils\TimberUtil;
 
 /**
@@ -25,11 +26,6 @@ class ContentPartialService
      * @var array<string, ContentPartialPost>
      */
     private array $resolvedPartials = [];
-
-    /**
-     * @var array<string, ?int>
-     */
-    private array $termIds = [];
 
     protected ContentPartialRepository $repository;
 
@@ -68,11 +64,10 @@ class ContentPartialService
 
     public function getTermId(string $slug): ?int
     {
-        if (!array_key_exists($slug, $this->termIds)) {
+        return Cache::remember("content_partial_term_{$slug}", function () use ($slug) {
             $term = get_term_by('slug', $slug, ContentPartialPost::TAXONOMY);
-            $this->termIds[$slug] = $term ? $term->term_id : null;
-        }
-        return $this->termIds[$slug];
+            return $term ? $term->term_id : null;
+        });
     }
 
     public function getPartial(string $area): ?ContentPartialPost
