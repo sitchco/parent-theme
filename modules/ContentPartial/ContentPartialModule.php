@@ -27,9 +27,16 @@ class ContentPartialModule extends Module
         if (is_admin()) {
             add_action('current_screen', [$this->contentService, 'ensureTaxonomyTermExists']);
             add_action('current_screen', [$this->contentService, 'registerBlockPatterns']);
-            add_filter('is_post_type_viewable', [$this, 'makeSlugEditable'], 10, 2);
+            add_action('current_screen', [$this, 'maybeEnableSlugEditing']);
         }
         add_action('wp', [$this->contentService, 'setContext']);
+    }
+
+    public function maybeEnableSlugEditing(\WP_Screen $screen): void
+    {
+        if ($screen->post_type === ContentPartialPost::POST_TYPE) {
+            add_filter('is_post_type_viewable', [$this, 'makeSlugEditable'], 10, 2);
+        }
     }
 
     public function makeSlugEditable(bool $is_viewable, \WP_Post_Type $post_type): bool

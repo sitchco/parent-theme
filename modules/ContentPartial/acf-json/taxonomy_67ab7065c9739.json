@@ -42,8 +42,8 @@
         "delete_terms": "manage_categories",
         "assign_terms": "edit_posts"
     },
-    "public": 1,
-    "publicly_queryable": 1,
+    "public": 0,
+    "publicly_queryable": 0,
     "hierarchical": 0,
     "show_ui": 0,
     "show_in_menu": 0,
