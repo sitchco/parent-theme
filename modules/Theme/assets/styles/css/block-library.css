@@ -18,10 +18,10 @@
 }
 
 :where(article.has-global-padding) {
-    > :first-child:not(.alignfull) {
+    > :nth-child(1 of :not(script, style)):not(.alignfull) {
         margin-block-start: var(--wp--custom--container-outer-lg);
     }
-    > :last-child:not(.alignfull) {
+    > :nth-last-child(1 of :not(script, style)):not(.alignfull) {
         margin-block-end: var(--wp--custom--container-outer-lg);
     }
 }
