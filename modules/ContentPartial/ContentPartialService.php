@@ -54,7 +54,7 @@ class ContentPartialService
             $partial =
                 $this->repository->findPartialOverrideFromPage($templateArea) ??
                 ($termId ? $this->repository->findDefaultPartial($termId) : null);
-            if (!$partial instanceof ContentPartialPost) {
+            if (!($partial instanceof ContentPartialPost)) {
                 continue;
             }
             TimberUtil::addContext("partials/site-{$templateArea}", ["site_{$templateArea}" => $partial]);
