@@ -71,7 +71,8 @@
 
 /* Section contexts: generous vertical padding, root-aligned horizontal padding */
 :where(.wp-site-blocks > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col,
-:where(.kt-has-1-columns > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col {
+:where(.kt-has-1-columns > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col,
+:where(.sitchco-modal__content > .wp-block-kadence-column.kt-column-has-bg) > .kt-inside-inner-col {
     --kb-padding-top: var(--wp--custom--container-inner-v-lg);
     --kb-padding-bottom: var(--wp--custom--container-inner-v-lg);
     --kb-padding-left: var(--wp--style--root--padding-left);

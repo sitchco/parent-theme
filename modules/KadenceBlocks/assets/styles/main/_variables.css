@@ -55,3 +55,8 @@
         --wp--style--root--padding-right: var(--wp--custom--container-inner-h-lg);
     }
 }
+
+/* Modal horizontal padding: delegate theme token to the mu-plugin's root padding override. */
+.sitchco-modal {
+    --modal-container-padding-h: var(--wp--custom--container-inner-h-lg);
+}

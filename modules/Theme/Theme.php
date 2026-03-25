@@ -6,6 +6,8 @@ use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
 use Sitchco\Modules\UIFramework\UIFramework;
+use Sitchco\Modules\UIModal\ModalData;
+use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Utils\Logger;
 
@@ -83,6 +85,7 @@ class Theme extends Module
         );
 
         add_filter('render_block_kadence/image', [$this, 'imageBlockInlineSVG'], 20, 2);
+        add_filter(UIModal::hookName('content-attributes'), [$this, 'modalContentAttributes'], 10, 2);
     }
 
     public function disableAdminBar(): void
@@ -152,6 +155,15 @@ class Theme extends Module
         }
 
         return $content;
+    }
+
+    public function modalContentAttributes(array $attrs, ModalData $modalData): array
+    {
+        if ($modalData->type === 'video') {
+            return $attrs;
+        }
+        $attrs['class'] = array_merge((array) ($attrs['class'] ?? []), ['is-layout-constrained', 'has-global-padding']);
+        return $attrs;
     }
 
     public function imageBlockInlineSVG(string $block_content, array $block): string
