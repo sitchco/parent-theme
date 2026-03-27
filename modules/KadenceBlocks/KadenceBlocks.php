@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\KadenceBlocks;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use WP_HTML_Tag_Processor;
 
@@ -22,6 +23,10 @@ class KadenceBlocks extends Module
     {
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle(static::hookName(), 'main.css');
+        });
+
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            $assets->enqueueScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
         });
 
         $this->enqueueEditorPreviewAssets(function (ModuleAssets $assets) {
