@@ -155,7 +155,7 @@ class KadenceBlocks extends Module
             if (
                 str_contains($selector, '.kadence-column') ||
                 str_contains($selector, '.kb-row-layout') ||
-                str_contains($selector, '.wp-block-kadence-tab')
+                preg_match('/\.wp-block-kadence-tab\b/', $selector)
             ) {
                 return true;
             }
