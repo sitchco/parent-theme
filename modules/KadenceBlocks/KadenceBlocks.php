@@ -157,7 +157,11 @@ class KadenceBlocks extends Module
         array $attributes,
     ): bool {
         if ($property === 'padding') {
-            if (str_contains($selector, '.kadence-column') || str_contains($selector, '.kb-row-layout')) {
+            if (
+                str_contains($selector, '.kadence-column') ||
+                str_contains($selector, '.kb-row-layout') ||
+                preg_match('/\.wp-block-kadence-tab\b/', $selector)
+            ) {
                 return true;
             }
         }

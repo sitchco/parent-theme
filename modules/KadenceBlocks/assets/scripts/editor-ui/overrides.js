@@ -49,6 +49,8 @@ addFilter(
 
 addFilter('kadence.constants.blocks.rowlayout.spacingSizesMap', 'sitchco/kadence-override/spacing', spacingOverride);
 
+addFilter('kadence.constants.blocks.tabs.spacingSizesMap', 'sitchco/kadence-override/spacing', spacingOverride);
+
 addFilter(
     'kadence.constants.packages.components.measurement-range-control.optionsMap',
     'sitchco/kadence-override/spacing',
