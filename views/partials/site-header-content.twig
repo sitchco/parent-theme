@@ -3,7 +3,7 @@
     site_header.is_sticky ? 'has-site-header-sticky',
 ] %}
 
-<header class="{{ header_classes|join(' ')|trim }}">
+<header class="{{ header_classes|join(' ')|trim }}" data-gtm="Site Header">
     {# The site-header class is applied in the CMS on the outer-most group #}
     {# TODO: consider adding js logic to apply site-header class to first element after <header> #}
     {{ site_header.content }}
