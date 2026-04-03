@@ -38,7 +38,7 @@ class SiteHeaderModule extends Module
     public function overlayHeader(): void
     {
         add_filter('body_class', function (array $classes): array {
-            if (!empty(get_field('header_overlay'))) {
+            if (is_singular('page') && !empty(get_field('header_overlay'))) {
                 $classes[] = 'has-overlay-header';
             }
             return $classes;
@@ -68,7 +68,7 @@ class SiteHeaderModule extends Module
         if (!isset($context['site_header'])) {
             return $context;
         }
-        $context['site_header']->is_overlaid = !empty(get_field('header_overlay'));
+        $context['site_header']->is_overlaid = is_singular('page') && !empty(get_field('header_overlay'));
         return $context;
     }
 }
