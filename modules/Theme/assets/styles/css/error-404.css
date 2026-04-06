@@ -1,0 +1,8 @@
+.error-404 {
+    padding-block: var(--wp--custom--container-inner-v-lg);
+    text-align: center;
+}
+
+.error-404 h1 {
+    font-size: var(--wp--preset--font-size--80);
+}
