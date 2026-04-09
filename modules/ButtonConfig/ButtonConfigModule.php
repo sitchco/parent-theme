@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Parent;
+namespace Sitchco\Parent\Modules\ButtonConfig;
 
 use Sitchco\Framework\Module;
 
@@ -14,7 +14,7 @@ use Sitchco\Framework\Module;
  *
  * @package Sitchco\Parent
  */
-class ButtonConfig extends Module
+class ButtonConfigModule extends Module
 {
     public const HOOK_SUFFIX = 'button-config';
 
