@@ -44,7 +44,7 @@ class InlineSVGModuleTest extends TestCase
         ];
     }
 
-    public function test_svg_upload_mime_type_allowed(): void
+    public function testSvgUploadMimeTypeAllowed(): void
     {
         $mimes = apply_filters('upload_mimes', []);
 
@@ -52,23 +52,51 @@ class InlineSVGModuleTest extends TestCase
         $this->assertEquals('image/svg+xml', $mimes['svg']);
     }
 
-    public function test_kadence_image_render_filter_inlines_svg(): void
+    public function testBlockTypeMetadataSettingsAddsInlineSvgAttribute(): void
+    {
+        $settings = apply_filters(
+            'block_type_metadata_settings',
+            [
+                'attributes' => [],
+            ],
+            ['name' => 'core/image'],
+        );
+
+        $this->assertArrayHasKey('inlineSvg', $settings['attributes']);
+        $this->assertEquals('boolean', $settings['attributes']['inlineSvg']['type']);
+        $this->assertFalse($settings['attributes']['inlineSvg']['default']);
+    }
+
+    public function testBlockTypeMetadataSettingsIgnoresOtherBlocks(): void
+    {
+        $settings = apply_filters(
+            'block_type_metadata_settings',
+            [
+                'attributes' => [],
+            ],
+            ['name' => 'core/paragraph'],
+        );
+
+        $this->assertArrayNotHasKey('inlineSvg', $settings['attributes']);
+    }
+
+    public function testKadenceImageRenderFilterInlinesSvg(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg" alt="Test"></figure>';
         $block = $this->makeBlock($html, ['width' => 32, 'imgMaxWidth' => 400]);
 
-        $result = $this->module->imageBlockInlineSVG($html, $block);
+        $result = apply_filters('render_block_kadence/image', $html, $block);
 
         $this->assertStringContainsString('<svg', $result);
         $this->assertStringNotContainsString('<img', $result);
     }
 
-    public function test_image_block_passes_width_and_max_width_to_service(): void
+    public function testImageBlockPassesWidthAndMaxWidthToService(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg"></figure>';
         $block = $this->makeBlock($html, ['width' => 120, 'imgMaxWidth' => 500]);
 
-        $result = $this->module->imageBlockInlineSVG($html, $block);
+        $result = apply_filters('render_block_kadence/image', $html, $block);
 
         $p = new \WP_HTML_Tag_Processor($result);
         $p->next_tag('svg');

@@ -3,10 +3,15 @@
 namespace Sitchco\Parent\Modules\InlineSVG;
 
 use Sitchco\Framework\Module;
+use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\UIFramework\UIFramework;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 
 class InlineSVGModule extends Module
 {
     public const HOOK_SUFFIX = 'inline-svg';
+
+    const DEPENDENCIES = [ExtendBlockModule::class];
 
     protected InlineSVGService $inlineSVGService;
 
@@ -18,6 +23,19 @@ class InlineSVGModule extends Module
     public function init(): void
     {
         add_filter('upload_mimes', [$this, 'allowSVGUploads']);
+
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
+            $assets->enqueueScript(static::hookName('editor-ui'), 'editor-ui.js', [
+                'wp-blocks',
+                'wp-element',
+                'wp-hooks',
+                'wp-components',
+                'wp-compose',
+                'wp-block-editor',
+                UIFramework::hookName('editor'),
+                ExtendBlockModule::hookName(),
+            ]);
+        });
 
         add_filter(
             'block_type_metadata_settings',

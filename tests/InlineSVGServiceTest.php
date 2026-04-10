@@ -54,7 +54,7 @@ class InlineSVGServiceTest extends TestCase
         return $p->get_attribute($attribute);
     }
 
-    public function test_returns_unchanged_content_when_no_img_tag(): void
+    public function testReturnsUnchangedContentWhenNoImgTag(): void
     {
         $html = '<div class="wp-block-image"><p>No image here</p></div>';
 
@@ -63,7 +63,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertEquals($html, $result);
     }
 
-    public function test_returns_unchanged_content_for_non_svg_image(): void
+    public function testReturnsUnchangedContentForNonSvgImage(): void
     {
         $html = '<figure><img src="https://example.com/photo.jpg" alt="Photo" width="100" height="100"></figure>';
 
@@ -72,7 +72,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertEquals($html, $result);
     }
 
-    public function test_replaces_img_with_inline_svg(): void
+    public function testReplacesImgWithInlineSvg(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg" alt="Icon" width="48" height="48"></figure>';
 
@@ -82,7 +82,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertStringContainsString('<svg', $result);
     }
 
-    public function test_preserves_alt_as_aria_label(): void
+    public function testPreservesAltAsAriaLabel(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg" alt="Close icon"></figure>';
 
@@ -92,7 +92,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertStringContainsString('role="img"', $result);
     }
 
-    public function test_preserves_width_and_height_from_img(): void
+    public function testPreservesWidthAndHeightFromImg(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg" width="64" height="64"></figure>';
 
@@ -105,7 +105,7 @@ class InlineSVGServiceTest extends TestCase
     /**
      * @dataProvider styleOptionsProvider
      */
-    public function test_applies_style_options(
+    public function testAppliesStyleOptions(
         array $options,
         string $expectedStyle,
         ?string $unexpectedStyle = null,
@@ -130,7 +130,7 @@ class InlineSVGServiceTest extends TestCase
         ];
     }
 
-    public function test_merges_with_existing_svg_style_attribute(): void
+    public function testMergesWithExistingSvgStyleAttribute(): void
     {
         $styledSvgPath = dirname(__DIR__) . '/tests/fixtures/test-icon-styled.svg';
         $html = '<figure><img src="https://example.com/icon.svg"></figure>';
@@ -143,11 +143,11 @@ class InlineSVGServiceTest extends TestCase
         );
         $style = $this->getSvgAttribute($result, 'style');
 
-        $this->assertStringContainsString('fill: red', $style);
+        $this->assertStringContainsString('--test-color:red', $style);
         $this->assertStringContainsString('max-width: 100%', $style);
     }
 
-    public function test_sets_id_with_prefix_when_block_has_id(): void
+    public function testSetsIdWithPrefixWhenBlockHasId(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg"></figure>';
 
@@ -156,7 +156,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertStringContainsString('id="inline-svg-42"', $result);
     }
 
-    public function test_custom_svg_id_prefix(): void
+    public function testCustomSvgIdPrefix(): void
     {
         $html = '<figure><img src="https://example.com/icon.svg"></figure>';
 
@@ -167,7 +167,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertStringContainsString('id="logo-7"', $result);
     }
 
-    public function test_fetches_remote_svg_when_resolved_path_does_not_exist(): void
+    public function testFetchesRemoteSvgWhenResolvedPathDoesNotExist(): void
     {
         $remoteSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16"/></svg>';
         $this->fakeHttp(fn() => ['response' => ['code' => 200], 'body' => $remoteSvg]);
@@ -182,7 +182,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertStringNotContainsString('<img', $result);
     }
 
-    public function test_returns_unchanged_when_remote_svg_fetch_fails(): void
+    public function testReturnsUnchangedWhenRemoteSvgFetchFails(): void
     {
         $this->fakeHttp(fn() => ['response' => ['code' => 500], 'body' => 'Server Error']);
 
@@ -195,7 +195,7 @@ class InlineSVGServiceTest extends TestCase
         $this->assertEquals($html, $result);
     }
 
-    public function test_returns_unchanged_when_remote_response_is_not_svg(): void
+    public function testReturnsUnchangedWhenRemoteResponseIsNotSvg(): void
     {
         $this->fakeHttp(fn() => ['response' => ['code' => 200], 'body' => '<html><body>Not an SVG</body></html>']);
 
