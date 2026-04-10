@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Parent\Modules\Theme;
+namespace Sitchco\Parent\Modules\InlineSVG;
 
 use Sitchco\Utils\Cache;
 

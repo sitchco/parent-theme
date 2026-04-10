@@ -19,17 +19,9 @@ class Theme extends Module
 
     const FEATURES = ['disableAdminBar'];
 
-    protected InlineSVGService $inlineSVGService;
-
-    public function __construct(InlineSVGService $inlineSVGService)
-    {
-        $this->inlineSVGService = $inlineSVGService;
-    }
-
     public function init(): void
     {
         add_action('after_setup_theme', [$this, 'themeSupports']);
-        add_filter('upload_mimes', [$this, 'allowSVGUploads']);
         if (wp_get_environment_type() === 'local') {
             add_filter('the_content', [$this, 'contentFilterWarning']);
         }
@@ -69,34 +61,12 @@ class Theme extends Module
         // TODO: create file at same level as Theme.php
         add_filter('register_block_type_args', [$this, 'addButtonThemeAttribute'], 10, 2);
 
-        add_filter(
-            'block_type_metadata_settings',
-            function ($settings, $metadata) {
-                if ($metadata['name'] === 'core/image') {
-                    $settings['attributes']['inlineSvg'] = [
-                        'type' => 'boolean',
-                        'default' => false,
-                    ];
-                }
-                return $settings;
-            },
-            10,
-            2,
-        );
-
-        add_filter('render_block_kadence/image', [$this, 'imageBlockInlineSVG'], 20, 2);
         add_filter(UIModal::hookName('content-attributes'), [$this, 'modalContentAttributes'], 10, 2);
     }
 
     public function disableAdminBar(): void
     {
         add_filter('show_admin_bar', '__return_false');
-    }
-
-    public function allowSVGUploads($mimes)
-    {
-        $mimes['svg'] = 'image/svg+xml';
-        return $mimes;
     }
 
     /**
@@ -164,15 +134,5 @@ class Theme extends Module
         }
         $attrs['class'] = array_merge((array) ($attrs['class'] ?? []), ['is-layout-constrained', 'has-global-padding']);
         return $attrs;
-    }
-
-    public function imageBlockInlineSVG(string $block_content, array $block): string
-    {
-        $attrs = $block['attrs'] ?? [];
-
-        return $this->inlineSVGService->replaceImageBlock($block_content, $block, [
-            'width' => $attrs['width'] ?? null,
-            'max_width' => $attrs['imgMaxWidth'] ?? null,
-        ]);
     }
 }

@@ -12,6 +12,7 @@ use Sitchco\Parent\Modules\Patterns\PatternsModule;
 use Sitchco\Parent\Modules\ContentPartialModal\ContentPartialModalModule;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
+use Sitchco\Parent\Modules\InlineSVG\InlineSVGModule;
 use Sitchco\Parent\Modules\Theme\Theme;
 
 return [
@@ -26,6 +27,7 @@ return [
         SiteFooterModule::class,
         ContentPartialModalModule::class,
         ContentSlider::class,
+        InlineSVGModule::class,
         Theme::class,
         KadenceBlocks::class,
         PatternsModule::class,
