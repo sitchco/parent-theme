@@ -34,6 +34,11 @@ class ContentPartialService
         $this->repository = $repository;
     }
 
+    public function getTemplateAreas(): array
+    {
+        return $this->templateAreas;
+    }
+
     public function addTemplateArea(string $templateAreaName, bool $hasContext = true): void
     {
         $this->templateAreas[$templateAreaName] = $hasContext;

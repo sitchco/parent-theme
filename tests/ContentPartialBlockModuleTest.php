@@ -18,17 +18,9 @@ class ContentPartialBlockModuleTest extends TestCase
         $this->service = $this->container->get(ContentPartialService::class);
     }
 
-    private function getTemplateAreas(): array
-    {
-        $reflection = new \ReflectionClass($this->service);
-        $prop = $reflection->getProperty('templateAreas');
-        $prop->setAccessible(true);
-        return $prop->getValue($this->service);
-    }
-
     public function testInitAddsBlockTemplateAreaWithoutContext(): void
     {
-        $areas = $this->getTemplateAreas();
+        $areas = $this->service->getTemplateAreas();
         $this->assertArrayHasKey('block', $areas);
         $this->assertFalse($areas['block']);
     }

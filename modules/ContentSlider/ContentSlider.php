@@ -61,7 +61,7 @@ class ContentSlider extends Module
         );
     }
 
-    private function scanVariations(): array
+    public function scanVariations(): array
     {
         return Cache::remember('content_slider_variations', function () {
             $variations = [];

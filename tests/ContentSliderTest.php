@@ -15,21 +15,13 @@ class ContentSliderTest extends TestCase
         $this->module = $this->container->get(ContentSlider::class);
     }
 
-    private function invokeScanVariations(): array
-    {
-        $reflection = new \ReflectionClass($this->module);
-        $method = $reflection->getMethod('scanVariations');
-        $method->setAccessible(true);
-        return $method->invoke($this->module);
-    }
-
     public function testScanVariationsFindsValidFiles(): void
     {
         $variationsDir = get_template_directory() . '/modules/ContentSlider/variations';
         if (!is_dir($variationsDir)) {
             $this->markTestSkipped('Variations directory does not exist');
         }
-        $variations = $this->invokeScanVariations();
+        $variations = $this->module->scanVariations();
         $this->assertIsArray($variations);
         $this->assertNotEmpty($variations, 'Expected at least one variation file on disk');
 
@@ -55,7 +47,7 @@ class ContentSliderTest extends TestCase
         wp_cache_delete('content_slider_variations');
 
         try {
-            $variations = $this->invokeScanVariations();
+            $variations = $this->module->scanVariations();
             $this->assertArrayNotHasKey('test-bad-variation', $variations);
         } finally {
             unlink($invalidFile);
@@ -67,7 +59,7 @@ class ContentSliderTest extends TestCase
     {
         $hookName = ContentSlider::hookName('variations');
         $filtered = apply_filters($hookName, []);
-        $scanned = $this->invokeScanVariations();
+        $scanned = $this->module->scanVariations();
         $this->assertIsArray($filtered);
 
         foreach ($scanned as $slug => $config) {
