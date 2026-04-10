@@ -178,7 +178,7 @@ class SavePatternsToTheme
      *
      * @return string Result constant or error message
      */
-    private function savePatternToTheme(int $postId): string
+    public function savePatternToTheme(int $postId): string
     {
         $post = get_post($postId);
 
@@ -246,9 +246,17 @@ class SavePatternsToTheme
     }
 
     /**
+     * Reset the used slugs tracker. Useful for testing.
+     */
+    public function resetUsedSlugs(): void
+    {
+        $this->usedSlugs = [];
+    }
+
+    /**
      * Generate a slug from the pattern title.
      */
-    private function generateSlug(string $title): string
+    public function generateSlug(string $title): string
     {
         $slug = sanitize_title($title);
         // Remove any leading numbers and dashes that sanitize_title might leave
@@ -270,7 +278,7 @@ class SavePatternsToTheme
     /**
      * Format the pattern content as a PHP file with proper headers.
      */
-    private function formatPatternFile(\WP_Post $post, string $slug): string
+    public function formatPatternFile(\WP_Post $post, string $slug): string
     {
         $themeName = basename(get_stylesheet_directory());
         $title = str_replace('*/', '', $post->post_title);
@@ -331,7 +339,7 @@ class SavePatternsToTheme
      * Sanitize pattern content by replacing text with Lorem Ipsum,
      * images with placeholder, and videos with placeholder.
      */
-    private function sanitizePatternContent(string $content): string
+    public function sanitizePatternContent(string $content): string
     {
         // Step 1: Replace bgImg URLs in block JSON comments
         $content = preg_replace('/"bgImg":"[^"]*"/', '"bgImg":"' . self::PLACEHOLDER_IMAGE . '"', $content);
@@ -401,7 +409,7 @@ class SavePatternsToTheme
     /**
      * Generate deterministic Lorem Ipsum text of the given word count.
      */
-    private function generateLoremIpsum(int $wordCount): string
+    public function generateLoremIpsum(int $wordCount): string
     {
         if ($wordCount <= 0) {
             return '';
@@ -423,7 +431,7 @@ class SavePatternsToTheme
     /**
      * Count words in HTML content, decoding entities and stripping inline tags.
      */
-    private function countWords(string $text): int
+    public function countWords(string $text): int
     {
         // Decode HTML entities first (e.g. &amp; → &)
         $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -443,7 +451,7 @@ class SavePatternsToTheme
     /**
      * Find an existing pattern file that was saved from a given post ID.
      */
-    private function findExistingFileForPost(int $postId): ?string
+    public function findExistingFileForPost(int $postId): ?string
     {
         $files = glob($this->patternsDir . '/*.php');
         if (!$files) {
