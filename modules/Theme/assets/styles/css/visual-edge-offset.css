@@ -41,6 +41,13 @@
     }
 }
 
+/* Beat Kadence editor rule: .editor-styles-wrapper .wp-block-kadence-image:not(:last-child) { margin-bottom: 1em } */
+.editor-styles-wrapper {
+    :is(.kt-inside-inner-col, .kadence-inner-column-inner) > .wp-block-kadence-image:not(:last-child) {
+        margin-bottom: var(--wp--custom--visual-edge-offset);
+    }
+}
+
 /* --- WordPress flow/constrained layouts (margin-block-start based spacing) --- */
 
 :where(.is-layout-flow, .is-layout-constrained) {
