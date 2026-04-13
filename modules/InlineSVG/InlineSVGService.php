@@ -110,23 +110,42 @@ class InlineSVGService
      */
     private function resolveSVGContent(string $img_src, array $block, array $options): string|false
     {
-        // Try custom resolver first
+        // Custom resolver always takes priority
         if ($options['file_path_resolver']) {
             $file_path = call_user_func($options['file_path_resolver'], $img_src, $block);
-        } else {
-            $file_path = $this->resolveLocalFilePath($img_src, $block);
+            if ($file_path && file_exists($file_path)) {
+                return file_get_contents($file_path);
+            }
         }
 
+        $isRemote = str_starts_with($img_src, 'https://') || str_starts_with($img_src, 'http://');
+
+        // For external URLs (e.g. Cloudinary CDN), prefer the optimized remote version
+        if ($isRemote && !$this->isLocalUploadUrl($img_src)) {
+            $remote = $this->fetchRemoteSVG($img_src);
+            if ($remote) {
+                return $remote;
+            }
+        }
+
+        // Resolve from local filesystem
+        if (!isset($file_path)) {
+            $file_path = $this->resolveLocalFilePath($img_src, $block);
+        }
         if ($file_path && file_exists($file_path)) {
             return file_get_contents($file_path);
         }
 
-        // Fallback: fetch from remote URL (e.g. Cloudinary-optimized SVG)
-        if (str_starts_with($img_src, 'https://') || str_starts_with($img_src, 'http://')) {
+        if ($isRemote) {
             return $this->fetchRemoteSVG($img_src);
         }
 
         return false;
+    }
+
+    private function isLocalUploadUrl(string $url): bool
+    {
+        return str_starts_with($url, wp_get_upload_dir()['baseurl']);
     }
 
     /**

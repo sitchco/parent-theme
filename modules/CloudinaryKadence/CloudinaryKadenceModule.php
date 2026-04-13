@@ -8,6 +8,7 @@ use Sitchco\Framework\Module;
 use Sitchco\Modules\Cloudinary\CloudinaryModule;
 use Sitchco\Modules\Cloudinary\CloudinaryUrl;
 use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
+use WP_HTML_Tag_Processor;
 
 class CloudinaryKadenceModule extends Module
 {
@@ -24,6 +25,7 @@ class CloudinaryKadenceModule extends Module
         }
         add_filter('kadence_blocks_rowlayout_render_block_attributes', [$this, 'rewriteRowLayoutAttributes']);
         add_filter('kadence_blocks_column_render_block_attributes', [$this, 'rewriteColumnAttributes']);
+        add_filter('render_block_kadence/image', [$this, 'rewriteImageBlockSrc'], 10);
     }
 
     public function rewriteRowLayoutAttributes(array $attributes): array
@@ -62,6 +64,24 @@ class CloudinaryKadenceModule extends Module
         $this->rewriteNestedVideo($attributes, 'mobileBackgroundVideo');
 
         return $attributes;
+    }
+
+    public function rewriteImageBlockSrc(string $block_content): string
+    {
+        $p = new WP_HTML_Tag_Processor($block_content);
+        if (!$p->next_tag('img')) {
+            return $block_content;
+        }
+        $src = $p->get_attribute('src');
+        if (!$src) {
+            return $block_content;
+        }
+        $newSrc = $this->cloudinaryUrl->buildUrl($src);
+        if ($newSrc === $src) {
+            return $block_content;
+        }
+        $p->set_attribute('src', $newSrc);
+        return $p->get_updated_html();
     }
 
     public function rewriteColumnAttributes(array $attributes): array
