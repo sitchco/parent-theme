@@ -2,8 +2,10 @@
 
 namespace Sitchco\Parent\Tests;
 
+use Sitchco\Parent\Modules\Patterns\PatternContentSanitizer;
 use Sitchco\Parent\Modules\Patterns\SavePatternsToTheme;
 use Sitchco\Tests\TestCase;
+use WP_REST_Request;
 
 class SavePatternsToThemeTest extends TestCase
 {
@@ -14,8 +16,7 @@ class SavePatternsToThemeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = $this->container->get(SavePatternsToTheme::class);
-        $this->service->resetUsedSlugs();
+        $this->service = new SavePatternsToTheme(new PatternContentSanitizer());
         $this->patternsDir = get_stylesheet_directory() . '/patterns';
     }
 
@@ -29,179 +30,68 @@ class SavePatternsToThemeTest extends TestCase
         parent::tearDown();
     }
 
-    // --- generateSlug ---
+    // --- slug generation (tested through savePatternToTheme) ---
 
     /**
      * @dataProvider generateSlugProvider
      */
-    public function testGenerateSlug(string $title, string $expected): void
+    public function testGenerateSlug(string $title, string $expectedFilename): void
     {
-        $this->assertSame($expected, $this->service->generateSlug($title));
+        $post = $this->factory()->post->create_and_get([
+            'post_type' => 'wp_block',
+            'post_title' => $title,
+            'post_content' => '<p>Content</p>',
+        ]);
+
+        $result = $this->service->savePatternToTheme($post->ID);
+        $this->assertSame('created', $result);
+
+        $filepath = $this->patternsDir . '/' . $expectedFilename;
+        $this->createdFiles[] = $filepath;
+        $this->assertFileExists($filepath);
     }
 
     public static function generateSlugProvider(): array
     {
         return [
-            'basic title' => ['My Pattern', 'my-pattern'],
-            'leading numbers stripped' => ['123 Numbered Title', 'numbered-title'],
-            'empty title falls back' => ['', 'pattern'],
-            'only numbers falls back' => ['123', 'pattern'],
-            'dashes only falls back' => ['---', 'pattern'],
+            'basic title' => ['My Pattern', 'my-pattern.php'],
+            'leading numbers stripped' => ['123 Numbered Title', 'numbered-title.php'],
+            'empty title falls back' => ['', 'pattern.php'],
+            'only numbers falls back' => ['123', 'pattern.php'],
         ];
     }
 
     public function testGenerateSlugDeduplicatesWithinBatch(): void
     {
-        $first = $this->service->generateSlug('Same Title');
-        $second = $this->service->generateSlug('Same Title');
-        $third = $this->service->generateSlug('Same Title');
+        $post1 = $this->factory()->post->create_and_get([
+            'post_type' => 'wp_block',
+            'post_title' => 'Duplicate Title',
+            'post_content' => '<p>First</p>',
+        ]);
+        $post2 = $this->factory()->post->create_and_get([
+            'post_type' => 'wp_block',
+            'post_title' => 'Duplicate Title',
+            'post_content' => '<p>Second</p>',
+        ]);
 
-        $this->assertSame('same-title', $first);
-        $this->assertSame('same-title-2', $second);
-        $this->assertSame('same-title-3', $third);
+        $request = new WP_REST_Request('POST', '/theme/v1/save-patterns');
+        $request->set_param('pattern_ids', [$post1->ID, $post2->ID]);
+
+        $response = $this->service->handleRestRequest($request);
+        $data = $response->get_data();
+
+        $this->assertTrue($data['success']);
+        $this->assertCount(2, $data['created']);
+
+        $file1 = $this->patternsDir . '/duplicate-title.php';
+        $file2 = $this->patternsDir . '/duplicate-title-2.php';
+        $this->createdFiles[] = $file1;
+        $this->createdFiles[] = $file2;
+        $this->assertFileExists($file1);
+        $this->assertFileExists($file2);
     }
 
-    public function testResetUsedSlugsClearsBatchState(): void
-    {
-        $this->service->generateSlug('Test');
-        $this->service->resetUsedSlugs();
-        $result = $this->service->generateSlug('Test');
-        $this->assertSame('test', $result);
-    }
-
-    // --- sanitizePatternContent ---
-
-    /**
-     * @dataProvider sanitizePatternContentProvider
-     */
-    public function testSanitizePatternContent(
-        string $input,
-        string $containsExpected,
-        ?string $notContainsExpected = null,
-    ): void {
-        $result = $this->service->sanitizePatternContent($input);
-        $this->assertStringContainsString($containsExpected, $result);
-        if ($notContainsExpected !== null) {
-            $this->assertStringNotContainsString($notContainsExpected, $result);
-        }
-    }
-
-    public static function sanitizePatternContentProvider(): array
-    {
-        $placeholder = 'https://cdn.sitch.co/rtc/placeholder-image.png';
-        $videoPlaceholder = 'https://cdn.sitch.co/rtc/placeholder-video.mp4';
-        return [
-            'bgImg URL replaced' => [
-                '"bgImg":"https://example.com/image.jpg"',
-                '"bgImg":"' . $placeholder . '"',
-                'example.com',
-            ],
-            'bgImgID replaced with 0' => ['"bgImgID":42', '"bgImgID":0'],
-            'video local URL replaced' => [
-                '"local":"https://example.com/video.mp4"',
-                '"local":"' . $videoPlaceholder . '"',
-                'example.com',
-            ],
-            'youtube URL cleared' => ['"youTube":"https://youtube.com/watch?v=abc"', '"youTube":""', 'youtube.com'],
-            'vimeo URL cleared' => ['"vimeo":"https://vimeo.com/123"', '"vimeo":""', 'vimeo.com'],
-            'img src replaced' => [
-                '<img src="https://example.com/photo.jpg" alt="Photo">',
-                'src="' . $placeholder . '"',
-                'example.com/photo.jpg',
-            ],
-            'alt text cleared' => [
-                '<img src="placeholder.jpg" alt="A beautiful photo">',
-                'alt=""',
-                'A beautiful photo',
-            ],
-            'http href replaced with #' => ['<a href="https://example.com/page">Link</a>', 'href="#"', 'example.com'],
-            'heading id removed' => [
-                '<h2 id="my-heading" class="wp-block-heading">Title</h2>',
-                '<h2 class="wp-block-heading">',
-                'id="my-heading"',
-            ],
-            'anchor target removed' => [
-                '<a href="#" target="_blank" rel="noopener">Link</a>',
-                '<a href="#"',
-                'target="_blank"',
-            ],
-        ];
-    }
-
-    public function testSanitizePatternContentReplacesTextWithLoremIpsum(): void
-    {
-        $input = '<p>This is some real content text</p>';
-        $result = $this->service->sanitizePatternContent($input);
-        $this->assertStringContainsString('<p>', $result);
-        $this->assertStringContainsString('</p>', $result);
-        $this->assertStringNotContainsString('This is some real content text', $result);
-        preg_match('/<p>(.+?)<\/p>/', $result, $matches);
-        $this->assertNotEmpty($matches[1]);
-        $this->assertTrue(ctype_upper($matches[1][0]));
-    }
-
-    public function testSanitizePatternContentPreservesNonHttpHrefs(): void
-    {
-        $input = '<a href="#anchor">Link</a>';
-        $result = $this->service->sanitizePatternContent($input);
-        $this->assertStringContainsString('href="#anchor"', $result);
-    }
-
-    public function testSanitizePatternContentReplacesButtonText(): void
-    {
-        $input = '<a class="wp-block-button__link" href="#">Click Here</a>';
-        $result = $this->service->sanitizePatternContent($input);
-        $this->assertStringNotContainsString('Click Here', $result);
-    }
-
-    // --- generateLoremIpsum ---
-
-    public function testGenerateLoremIpsumReturnsCorrectWordCount(): void
-    {
-        $result = $this->service->generateLoremIpsum(5);
-        $this->assertSame(5, str_word_count($result));
-    }
-
-    public function testGenerateLoremIpsumStartsWithLoremIpsum(): void
-    {
-        $result = $this->service->generateLoremIpsum(5);
-        $this->assertSame('Lorem ipsum dolor sit amet', $result);
-    }
-
-    public function testGenerateLoremIpsumReturnsEmptyForZero(): void
-    {
-        $this->assertSame('', $this->service->generateLoremIpsum(0));
-    }
-
-    public function testGenerateLoremIpsumWrapsAroundPool(): void
-    {
-        $result = $this->service->generateLoremIpsum(70);
-        $this->assertSame(70, str_word_count($result));
-    }
-
-    // --- countWords ---
-
-    /**
-     * @dataProvider countWordsProvider
-     */
-    public function testCountWords(string $input, int $expected): void
-    {
-        $this->assertSame($expected, $this->service->countWords($input));
-    }
-
-    public static function countWordsProvider(): array
-    {
-        return [
-            'plain text' => ['hello world', 2],
-            'with HTML tags' => ['<strong>hello</strong> world', 2],
-            'empty string' => ['', 0],
-            'HTML entities decoded' => ['hello&nbsp;world test', 3],
-            'only tags' => ['<br/>', 0],
-            'nested tags' => ['<p><em>one</em> <strong>two</strong></p>', 2],
-        ];
-    }
-
-    // --- formatPatternFile ---
+    // --- formatPatternFile (tested through savePatternToTheme) ---
 
     public function testFormatPatternFileGeneratesCorrectHeaders(): void
     {
@@ -211,12 +101,18 @@ class SavePatternsToThemeTest extends TestCase
             'post_content' => '<p>Hello World</p>',
         ]);
 
-        $result = $this->service->formatPatternFile($post, 'test-pattern');
-        $this->assertStringContainsString('Title: Test Pattern', $result);
-        $this->assertStringContainsString('Slug:', $result);
-        $this->assertStringContainsString('/test-pattern', $result);
-        $this->assertStringContainsString("Source Post ID: {$post->ID}", $result);
-        $this->assertStringNotContainsString('Hello World', $result);
+        $this->service->savePatternToTheme($post->ID);
+
+        $filepath = $this->patternsDir . '/test-pattern.php';
+        $this->createdFiles[] = $filepath;
+        $this->assertFileExists($filepath);
+
+        $content = file_get_contents($filepath);
+        $this->assertStringContainsString('Title: Test Pattern', $content);
+        $this->assertStringContainsString('Slug:', $content);
+        $this->assertStringContainsString('/test-pattern', $content);
+        $this->assertStringContainsString("Source Post ID: {$post->ID}", $content);
+        $this->assertStringNotContainsString('Hello World', $content);
     }
 
     public function testFormatPatternFileStripsPhpTags(): void
@@ -227,8 +123,14 @@ class SavePatternsToThemeTest extends TestCase
             'post_content' => '<?php echo "test"; ?><p>Content</p>',
         ]);
 
-        $result = $this->service->formatPatternFile($post, 'php-pattern');
-        $phpTagCount = substr_count($result, '<?php');
+        $this->service->savePatternToTheme($post->ID);
+
+        $filepath = $this->patternsDir . '/php-pattern.php';
+        $this->createdFiles[] = $filepath;
+        $this->assertFileExists($filepath);
+
+        $content = file_get_contents($filepath);
+        $phpTagCount = substr_count($content, '<?php');
         $this->assertSame(1, $phpTagCount);
     }
 
@@ -259,9 +161,15 @@ class SavePatternsToThemeTest extends TestCase
         ]);
 
         $this->service->savePatternToTheme($post->ID);
-        $this->service->resetUsedSlugs();
-        $result = $this->service->savePatternToTheme($post->ID);
-        $this->assertSame('unchanged', $result);
+
+        // Use handleRestRequest for the second save — it resets usedSlugs,
+        // simulating a separate request as happens in production.
+        $request = new WP_REST_Request('POST', '/theme/v1/save-patterns');
+        $request->set_param('pattern_ids', [$post->ID]);
+        $response = $this->service->handleRestRequest($request);
+        $data = $response->get_data();
+
+        $this->assertCount(1, $data['unchanged']);
 
         $this->createdFiles[] = $this->patternsDir . '/unchanged-test.php';
     }
@@ -275,12 +183,16 @@ class SavePatternsToThemeTest extends TestCase
         ]);
 
         $this->service->savePatternToTheme($postId);
-        $this->service->resetUsedSlugs();
 
         wp_update_post(['ID' => $postId, 'post_content' => '<p>Updated content here now</p>']);
 
-        $result = $this->service->savePatternToTheme($postId);
-        $this->assertSame('updated', $result);
+        // Use handleRestRequest for the second save — it resets usedSlugs.
+        $request = new WP_REST_Request('POST', '/theme/v1/save-patterns');
+        $request->set_param('pattern_ids', [$postId]);
+        $response = $this->service->handleRestRequest($request);
+        $data = $response->get_data();
+
+        $this->assertCount(1, $data['updated']);
 
         $this->createdFiles[] = $this->patternsDir . '/update-test.php';
     }
