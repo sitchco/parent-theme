@@ -1,5 +1,4 @@
 import extendHeading from './editor-ui/heading.jsx';
-import extendImage from './editor-ui/image.jsx';
 import extendButton from './editor-ui/button.jsx';
 
 // Phase 1: configure theme filters
@@ -42,6 +41,5 @@ sitchco.editorInit(() => {
 // Phase 2: register components
 sitchco.editorReady(() => {
     extendButton(sitchco.extendBlock);
-    extendImage();
     extendHeading();
 });
