@@ -144,9 +144,12 @@ class ContentPartialServiceTest extends TestCase
         Cache::forget('content_partial_term_header');
 
         $firstResult = $this->service->getTermId('header');
-        $secondResult = $this->service->getTermId('header');
-
         $this->assertNotNull($firstResult);
+
+        wp_cache_get('content_partial_term_header', 'sitchco', false, $found);
+        $this->assertTrue($found, 'Expected getTermId result to be stored in object cache');
+
+        $secondResult = $this->service->getTermId('header');
         $this->assertSame($firstResult, $secondResult);
     }
 

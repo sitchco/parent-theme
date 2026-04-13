@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Tests;
 
 use Sitchco\Parent\Modules\ContentSlider\ContentSlider;
 use Sitchco\Tests\TestCase;
+use Sitchco\Utils\Cache;
 
 class ContentSliderTest extends TestCase
 {
@@ -42,14 +43,14 @@ class ContentSliderTest extends TestCase
         file_put_contents($invalidFile, json_encode(['title' => 'Bad Variation']));
 
         // Clear the cache so scanVariations re-reads the filesystem
-        wp_cache_delete('content_slider_variations');
+        Cache::forget('content_slider_variations');
 
         try {
             $variations = apply_filters(ContentSlider::hookName('variations'), []);
             $this->assertArrayNotHasKey('test-bad-variation', $variations);
         } finally {
             unlink($invalidFile);
-            wp_cache_delete('content_slider_variations');
+            Cache::forget('content_slider_variations');
         }
     }
 

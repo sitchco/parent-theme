@@ -45,30 +45,27 @@ class ThemeModuleTest extends TestCase
 
     // --- contentFilterWarning ---
 
-    public function testContentFilterWarningReturnsContentUnchanged(): void
+    public function testContentFilterWarningReturnsContentWhenHeadFired(): void
     {
-        // Simulate normal conditions: wp_head has fired
         do_action('wp_head');
         $content = '<p>Hello world</p>';
         $result = $this->module->contentFilterWarning($content);
         $this->assertSame($content, $result);
     }
 
-    public function testContentFilterWarningReturnsContentInAdmin(): void
+    public function testContentFilterWarningLogsAndInjectsActionWhenCalledTooEarly(): void
     {
-        // is_admin() returns true during test suite since we're in WP test context
-        // but did_action('wp_head') is typically > 0 after setUp, so we test
-        // the method always returns the content string regardless of warning state
-        $content = '<p>Admin content</p>';
-        $result = $this->module->contentFilterWarning($content);
-        $this->assertSame($content, $result);
-    }
+        // Ensure none of the bypass conditions are met
+        remove_all_actions('wp_body_open');
+        $this->assertFalse(has_action('wp_body_open'), 'Precondition: no wp_body_open actions');
+        $GLOBALS['wp_actions']['wp_head'] = 0;
+        set_current_screen('front');
 
-    public function testContentFilterWarningAlwaysReturnsOriginalContent(): void
-    {
-        $content = '<p>Some content with <strong>HTML</strong></p>';
+        $content = '<p>Early content</p>';
         $result = $this->module->contentFilterWarning($content);
-        $this->assertSame($content, $result);
+
+        $this->assertSame($content, $result, 'Content should still be returned unchanged');
+        $this->assertNotFalse(has_action('wp_body_open'), 'Expected wp_body_open action to be registered');
     }
 
     // --- modalContentAttributes ---

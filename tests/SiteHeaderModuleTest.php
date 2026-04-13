@@ -46,4 +46,18 @@ class SiteHeaderModuleTest extends TestCase
         $result = $this->module->addPageContextToSiteHeader($context);
         $this->assertFalse($result['site_header']->is_overlaid);
     }
+
+    public function testAddPageContextSetsOverlaidTrueWhenSingularWithOverlay(): void
+    {
+        $pageId = $this->factory()->post->create(['post_type' => 'page']);
+        $this->go_to(get_permalink($pageId));
+        $this->assertTrue(is_singular(), 'Expected singular context');
+
+        update_field('header_overlay', true, $pageId);
+
+        $header = new \stdClass();
+        $context = ['site_header' => $header];
+        $result = $this->module->addPageContextToSiteHeader($context);
+        $this->assertTrue($result['site_header']->is_overlaid);
+    }
 }

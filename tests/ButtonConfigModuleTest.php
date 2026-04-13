@@ -12,7 +12,7 @@ class ButtonConfigModuleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->module = new ButtonConfigModule();
+        $this->module = $this->container->make(ButtonConfigModule::class);
     }
 
     public function testInitRegistersFilter(): void
