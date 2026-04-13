@@ -7,12 +7,10 @@ use Sitchco\Tests\TestCase;
 
 class ContentSliderTest extends TestCase
 {
-    protected ContentSlider $module;
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->module = $this->container->get(ContentSlider::class);
+        $this->container->get(ContentSlider::class);
     }
 
     public function testScanVariationsFindsValidFiles(): void
@@ -21,7 +19,7 @@ class ContentSliderTest extends TestCase
         if (!is_dir($variationsDir)) {
             $this->markTestSkipped('Variations directory does not exist');
         }
-        $variations = $this->module->scanVariations();
+        $variations = apply_filters(ContentSlider::hookName('variations'), []);
         $this->assertIsArray($variations);
         $this->assertNotEmpty($variations, 'Expected at least one variation file on disk');
 
@@ -47,7 +45,7 @@ class ContentSliderTest extends TestCase
         wp_cache_delete('content_slider_variations');
 
         try {
-            $variations = $this->module->scanVariations();
+            $variations = apply_filters(ContentSlider::hookName('variations'), []);
             $this->assertArrayNotHasKey('test-bad-variation', $variations);
         } finally {
             unlink($invalidFile);
@@ -57,13 +55,18 @@ class ContentSliderTest extends TestCase
 
     public function testVariationsFilterMergesScannedVariations(): void
     {
-        $hookName = ContentSlider::hookName('variations');
-        $filtered = apply_filters($hookName, []);
-        $scanned = $this->module->scanVariations();
+        $variationsDir = get_template_directory() . '/modules/ContentSlider/variations';
+        if (!is_dir($variationsDir)) {
+            $this->markTestSkipped('Variations directory does not exist');
+        }
+        $filtered = apply_filters(ContentSlider::hookName('variations'), []);
         $this->assertIsArray($filtered);
+        $this->assertNotEmpty($filtered, 'Expected variations to be merged into filter output');
 
-        foreach ($scanned as $slug => $config) {
-            $this->assertArrayHasKey($slug, $filtered, "Scanned variation '{$slug}' missing from filter output");
+        foreach ($filtered as $slug => $config) {
+            $this->assertIsString($slug);
+            $this->assertArrayHasKey('title', $config);
+            $this->assertArrayHasKey('splide', $config);
         }
     }
 }
