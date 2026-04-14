@@ -35,4 +35,28 @@ class ContentPartialModuleTest extends TestCase
             'preserves existing true for other types' => [true, 'post', true],
         ];
     }
+
+    public function testPageOptionsFilterFiresForMatchingGroup(): void
+    {
+        $filterFired = false;
+        add_filter(ContentPartialModule::hookName('page-options-locations'), function ($group) use (&$filterFired) {
+            $filterFired = true;
+            return $group;
+        });
+        $group = ['key' => ContentPartialModule::PAGE_OPTIONS_GROUP_KEY, 'location' => []];
+        $this->module->applyPageOptionsFilter($group);
+        $this->assertTrue($filterFired);
+    }
+
+    public function testPageOptionsFilterDoesNotFireForOtherGroups(): void
+    {
+        $filterFired = false;
+        add_filter(ContentPartialModule::hookName('page-options-locations'), function ($group) use (&$filterFired) {
+            $filterFired = true;
+            return $group;
+        });
+        $group = ['key' => 'group_other', 'location' => []];
+        $this->module->applyPageOptionsFilter($group);
+        $this->assertFalse($filterFired);
+    }
 }

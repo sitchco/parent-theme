@@ -9,6 +9,8 @@ class ContentPartialModule extends Module
 {
     public const HOOK_SUFFIX = 'content-partial';
 
+    public const PAGE_OPTIONS_GROUP_KEY = 'group_67a3bab78acee';
+
     public const POST_CLASSES = [ContentPartialPost::class];
 
     public const DEPENDENCIES = [TimberModule::class];
@@ -30,6 +32,15 @@ class ContentPartialModule extends Module
             add_action('current_screen', [$this, 'maybeEnableSlugEditing']);
         }
         add_action('wp', [$this->contentService, 'setContext']);
+        add_filter('acf/load_field_group', [$this, 'applyPageOptionsFilter']);
+    }
+
+    public function applyPageOptionsFilter(array $group): array
+    {
+        if ($group['key'] === self::PAGE_OPTIONS_GROUP_KEY) {
+            $group = apply_filters(static::hookName('page-options-locations'), $group);
+        }
+        return $group;
     }
 
     public function maybeEnableSlugEditing(\WP_Screen $screen): void
