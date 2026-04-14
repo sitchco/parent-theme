@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Parent;
+namespace Sitchco\Parent\Modules\ButtonConfig;
 
 use Sitchco\Framework\Module;
 
@@ -12,9 +12,9 @@ use Sitchco\Framework\Module;
  * By default, both outline and fill variations are REMOVED.
  * Enable specific variations in theme config to preserve them.
  *
- * @package Sitchco\Parent
+ * @package Sitchco\Parent\Modules\ButtonConfig
  */
-class ButtonConfig extends Module
+class ButtonConfigModule extends Module
 {
     public const HOOK_SUFFIX = 'button-config';
 
@@ -33,7 +33,7 @@ class ButtonConfig extends Module
     /**
      * Feature method: Preserve the outline button variation.
      *
-     * Enable in config: ButtonConfig::class => ['outline' => true]
+     * Enable in config: ButtonConfigModule::class => ['outline' => true]
      */
     public function outline(): void
     {
@@ -43,7 +43,7 @@ class ButtonConfig extends Module
     /**
      * Feature method: Preserve the fill button variation.
      *
-     * Enable in config: ButtonConfig::class => ['fill' => true]
+     * Enable in config: ButtonConfigModule::class => ['fill' => true]
      */
     public function fill(): void
     {

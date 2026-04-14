@@ -7,10 +7,8 @@ use Sitchco\Parent\Modules\ContentPartial\ContentPartialRepository;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialService;
 use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Tests\TestCase;
+use Sitchco\Utils\Cache;
 
-/**
- * class ContentPartialServiceTestnamespace SitchcoParentModulesSiteHeader;
- */
 class ContentPartialServiceTest extends TestCase
 {
     protected ContentPartialService $service;
@@ -23,14 +21,39 @@ class ContentPartialServiceTest extends TestCase
         $this->service = $this->container->get(ContentPartialService::class);
         $this->repository = $this->container->get(ContentPartialRepository::class);
 
-        // Create a default content partial with a taxonomy term
-        $this->standardHeaderId = $this->factory()->post->create([
+        $this->standardHeaderId = $this->createContentPartial('header', [
             'post_title' => 'Standard Header',
-            'post_type' => ContentPartialPost::POST_TYPE,
             'meta_input' => ['is_default' => '1'],
         ]);
+    }
 
-        wp_set_object_terms($this->standardHeaderId, 'header', ContentPartialPost::TAXONOMY);
+    private function createContentPartial(string $term, array $overrides = []): int
+    {
+        $postId = $this->factory()->post->create(
+            array_merge(
+                [
+                    'post_type' => ContentPartialPost::POST_TYPE,
+                ],
+                $overrides,
+            ),
+        );
+        wp_set_object_terms($postId, $term, ContentPartialPost::TAXONOMY);
+        return $postId;
+    }
+
+    private function createPageWithPartialOverride(string $area, int $partialId): int
+    {
+        $pageId = $this->factory()->post->create([
+            'post_type' => 'page',
+            'post_title' => 'Test Page',
+        ]);
+        update_field("{$area}_partial", $partialId, $pageId);
+        return $pageId;
+    }
+
+    private function makeFreshService(): ContentPartialService
+    {
+        return new ContentPartialService($this->repository);
     }
 
     public function testFindDefaultPartial(): void
@@ -47,28 +70,108 @@ class ContentPartialServiceTest extends TestCase
         $taxonomy = ContentPartialPost::TAXONOMY;
         $termSlug = 'sidebar';
 
-        // Ensure taxonomy exists
         $this->assertTrue(taxonomy_exists($taxonomy));
-
-        // Ensure the term does not exist before running the function
         $this->assertNull(term_exists($termSlug, $taxonomy));
 
         $Module = $this->container->get(ModuleTester::class);
-        // Register the new module, which should create the term
         $Module->init();
 
-        // Simulate running ensureTaxonomyTermExists in a real admin context
         global $current_screen;
         $current_screen = convert_to_screen(ContentPartialPost::POST_TYPE);
         $this->service->ensureTaxonomyTermExists($current_screen);
 
-        // Verify the term now exists
         $term = term_exists($termSlug, $taxonomy);
         $this->assertIsArray($term);
         $this->assertArrayHasKey('term_id', $term);
 
-        // Ensure the term's name is properly capitalized
         $termData = get_term($term['term_id']);
         $this->assertEquals('Sidebar', $termData->name);
+    }
+
+    public function testSetContextResolvesDefaultPartial(): void
+    {
+        $service = $this->makeFreshService();
+        $service->addTemplateArea('header');
+        $service->setContext();
+
+        $result = $service->getPartial('header');
+        $this->assertInstanceOf(ContentPartialPost::class, $result);
+        $this->assertEquals($this->standardHeaderId, $result->ID);
+    }
+
+    public function testSetContextOverrideTakesPrecedence(): void
+    {
+        $overrideId = $this->factory()->post->create([
+            'post_title' => 'Override Header',
+            'post_type' => ContentPartialPost::POST_TYPE,
+        ]);
+
+        $pageId = $this->createPageWithPartialOverride('header', $overrideId);
+
+        $service = $this->makeFreshService();
+        $service->addTemplateArea('header');
+
+        $GLOBALS['wp_query']->queried_object_id = $pageId;
+        $GLOBALS['wp_query']->queried_object = get_post($pageId);
+
+        $service->setContext();
+
+        $result = $service->getPartial('header');
+        $this->assertInstanceOf(ContentPartialPost::class, $result);
+        $this->assertEquals($overrideId, $result->ID);
+    }
+
+    public function testSetContextSkipsAreasWithoutContext(): void
+    {
+        $service = $this->makeFreshService();
+        $service->addTemplateArea('header', false);
+        $service->setContext();
+
+        $this->assertNull($service->getPartial('header'));
+    }
+
+    public function testSetContextSkipsAreaWithNoMatchingPartial(): void
+    {
+        $service = $this->makeFreshService();
+        $service->addTemplateArea('footer');
+        $service->setContext();
+
+        $this->assertNull($service->getPartial('footer'));
+    }
+
+    public function testGetTermIdCachesResult(): void
+    {
+        Cache::forget('content_partial_term_header');
+
+        $firstResult = $this->service->getTermId('header');
+        $this->assertNotNull($firstResult);
+
+        wp_cache_get('content_partial_term_header', 'sitchco', false, $found);
+        $this->assertTrue($found, 'Expected getTermId result to be stored in object cache');
+
+        $secondResult = $this->service->getTermId('header');
+        $this->assertSame($firstResult, $secondResult);
+    }
+
+    public function testFindPartialOverrideFromPage(): void
+    {
+        $partialId = $this->factory()->post->create([
+            'post_title' => 'Override Header',
+            'post_type' => ContentPartialPost::POST_TYPE,
+        ]);
+
+        $pageId = $this->createPageWithPartialOverride('header', $partialId);
+
+        $result = $this->repository->findPartialOverrideFromPage('header', $pageId);
+        $this->assertInstanceOf(ContentPartialPost::class, $result);
+        $this->assertEquals($partialId, $result->ID);
+    }
+
+    public function testFindPartialOverrideReturnsNullWhenNoPage(): void
+    {
+        $GLOBALS['wp_query']->queried_object_id = 0;
+
+        $result = $this->repository->findPartialOverrideFromPage('header');
+        $this->assertNull($result);
     }
 }
