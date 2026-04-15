@@ -56,13 +56,14 @@ h4 {
 }
 
 /* Override browser default link styles via theme.json custom properties */
-a {
+:where(a) {
     color: var(--wp--custom--link--color, currentColor);
     text-decoration: var(--wp--custom--link--decoration, underline);
     text-decoration-skip-ink: auto;
+    transition: color 0.2s ease;
 }
 
-a:hover {
+:where(a:hover) {
     color: var(--wp--custom--link--color-hover, currentColor);
     text-decoration: var(--wp--custom--link--decoration-hover, none);
 }

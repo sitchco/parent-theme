@@ -1,0 +1,5 @@
+/* WordPress nav block forces color:inherit at (0,3,0) specificity.
+   Match it to provide hover treatment using container-scoped link vars. */
+.wp-block-navigation .wp-block-navigation-item__content.wp-block-navigation-item__content:hover {
+    color: var(--wp--custom--link--color-hover);
+}
