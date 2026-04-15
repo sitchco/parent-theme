@@ -142,7 +142,13 @@
             "containerInnerVSm": "var:custom|block-gap",
             "containerInnerVLg": "var:custom|container-outer-lg",
             "visualEdgeOffset": "calc(var(--wp--custom--block-gap) * .4)",
-            "carouselGap": "var:custom|container-outer-sm"
+            "carouselGap": "var:custom|container-outer-sm",
+            "link": {
+                "color": "currentColor",
+                "colorHover": "currentColor",
+                "decoration": "underline",
+                "decorationHover": "none"
+            }
         }
     },
     "styles": {

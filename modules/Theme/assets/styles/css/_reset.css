@@ -55,10 +55,16 @@ h4 {
     text-wrap: balance;
 }
 
-/* A elements that don't have a class get default styles */
-a:not([class]) {
+/* Override browser default link styles via theme.json custom properties */
+a {
+    color: var(--wp--custom--link--color, currentColor);
+    text-decoration: var(--wp--custom--link--decoration, underline);
     text-decoration-skip-ink: auto;
-    color: currentColor;
+}
+
+a:hover {
+    color: var(--wp--custom--link--color-hover, currentColor);
+    text-decoration: var(--wp--custom--link--decoration-hover, none);
 }
 
 /* Make images easier to work with */
