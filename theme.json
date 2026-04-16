@@ -147,7 +147,8 @@
                 "color": "currentColor",
                 "colorHover": "currentColor",
                 "decoration": "underline",
-                "decorationHover": "none"
+                "decorationHover": "none",
+                "opacityHover": "1"
             }
         }
     },

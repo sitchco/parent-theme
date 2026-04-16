@@ -57,7 +57,13 @@ h4 {
 
 :where(a) {
     text-decoration-skip-ink: auto;
-    transition: color 0.2s ease;
+    transition:
+        color 0.2s ease,
+        opacity 0.2s ease;
+
+    &:hover {
+        opacity: var(--wp--custom--link--opacity-hover);
+    }
 }
 
 /* Make images easier to work with */
