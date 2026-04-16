@@ -182,6 +182,24 @@
                     "background": "var:preset|color|black"
                 }
             }
+        },
+        "elements": {
+            "link": {
+                "color": {
+                    "text": "var:custom|link|color"
+                },
+                "typography": {
+                    "textDecoration": "var:custom|link|decoration"
+                },
+                ":hover": {
+                    "color": {
+                        "text": "var:custom|link|color-hover"
+                    },
+                    "typography": {
+                        "textDecoration": "var:custom|link|decoration-hover"
+                    }
+                }
+            }
         }
     }
 }

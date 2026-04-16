@@ -55,17 +55,9 @@ h4 {
     text-wrap: balance;
 }
 
-/* Override browser default link styles via theme.json custom properties */
 :where(a) {
-    color: var(--wp--custom--link--color, currentColor);
-    text-decoration: var(--wp--custom--link--decoration, underline);
     text-decoration-skip-ink: auto;
     transition: color 0.2s ease;
-}
-
-:where(a:hover) {
-    color: var(--wp--custom--link--color-hover, currentColor);
-    text-decoration: var(--wp--custom--link--decoration-hover, none);
 }
 
 /* Make images easier to work with */
