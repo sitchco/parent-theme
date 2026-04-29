@@ -1,0 +1,13 @@
+/*
+ * Kadence's plugin baseline (kadence-blocks/dist/style-blocks-accordion.css)
+ * hard-codes `line-height: 24px` on .kt-blocks-accordion-header. The plugin
+ * stylesheet loads after the theme stylesheet, so on equal specificity it
+ * wins — collapsing wrapped titles at any font-size larger than ~22px.
+ *
+ * Reset to `normal` at (0,2,0): beats Kadence's plugin baseline at (0,1,0),
+ * still loses to per-block typography overrides at (0,5,0). Child themes can
+ * raise this to a tighter value (e.g. heading `1.1`) without further fuss.
+ */
+.wp-block-kadence-accordion .kt-blocks-accordion-header {
+    line-height: normal;
+}
