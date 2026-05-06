@@ -47,7 +47,9 @@ class ThemeModuleTest extends TestCase
 
     public function testContentFilterWarningReturnsContentWhenHeadFired(): void
     {
+        ob_start();
         do_action('wp_head');
+        ob_end_clean();
         $content = '<p>Hello world</p>';
         $result = $this->module->contentFilterWarning($content);
         $this->assertSame($content, $result);
