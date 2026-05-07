@@ -25,3 +25,7 @@
         margin-block-end: var(--wp--custom--container-outer-lg);
     }
 }
+
+.wp-block-post-title {
+    margin-block-end: revert;
+}
