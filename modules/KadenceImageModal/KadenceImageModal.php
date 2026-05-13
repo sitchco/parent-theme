@@ -13,11 +13,13 @@ class KadenceImageModal extends Module
 
     public const DEPENDENCIES = [UIModal::class, ExtendBlockModule::class];
 
-    public function __construct(private readonly UIModal $uiModal) {}
+    public function __construct(private readonly UIModal $uiModal, private readonly KadenceImageRenderer $renderer) {}
 
     public function init(): void
     {
         $this->uiModal->registerType('image');
+
+        add_filter('render_block_kadence/image', [$this->renderer, 'render'], 15, 2);
 
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle(static::hookName(), 'main.css');
