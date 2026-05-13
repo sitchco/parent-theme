@@ -24,5 +24,14 @@ class KadenceImageModal extends Module
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
             $assets->enqueueStyle(static::hookName(), 'main.css');
         });
+
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
+            $assets->enqueueScript(static::hookName('editor-ui'), 'editor-ui.js', [
+                'wp-blocks',
+                'wp-element',
+                'wp-hooks',
+                ExtendBlockModule::hookName(),
+            ]);
+        }, 1);
     }
 }
