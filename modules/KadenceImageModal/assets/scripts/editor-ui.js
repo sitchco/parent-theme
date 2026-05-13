@@ -17,6 +17,4 @@ sitchco.editorReady(() => {
             }),
         ],
     });
-
-    console.log('[KadenceImageModal] editor-ui registered openInModal toggle on kadence/image');
 });
