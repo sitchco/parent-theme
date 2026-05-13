@@ -1,0 +1,34 @@
+/*
+ * Doubled `.sitchco-modal` class for specificity (0,2,0) so this rule wins
+ * over UIModal's `.sitchco-modal` (0,1,0) base regardless of stylesheet enqueue order
+ * (UIModal's main.css is conditionally enqueued at wp_footer and may load after this file).
+ */
+.sitchco-modal.sitchco-modal--image {
+    --modal-backdrop-color: rgb(0 0 0 / 0.85);
+    --modal-container-bg: transparent;
+    --modal-container-padding: 0;
+    --modal-container-width: fit-content;
+    --modal-container-max-width: none;
+    --modal-close-color: #fff;
+    --modal-close-bg: rgb(0 0 0 / 0.5);
+    --modal-close-bg-hover: #000;
+    --modal-box-gap: 2rem;
+
+    .sitchco-modal__content {
+        width: auto;
+        max-width: 100%;
+
+        img {
+            display: block;
+            width: auto;
+            height: auto;
+            max-width: calc(100dvw - (2 * var(--modal-box-gap)));
+            max-height: calc(100dvh - (2 * var(--modal-box-gap)));
+            object-fit: contain;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        --modal-box-gap: 1rem;
+    }
+}

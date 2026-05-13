@@ -80,6 +80,14 @@ class ThemeModuleTest extends TestCase
         $this->assertSame($attrs, $result);
     }
 
+    public function testModalContentAttributesSkipsImageType(): void
+    {
+        $modalData = new ModalData('test-image', 'Image Modal', '<img src="full.jpg" alt="">', 'image');
+        $attrs = ['class' => ['existing-class']];
+        $result = $this->module->modalContentAttributes($attrs, $modalData);
+        $this->assertSame($attrs, $result);
+    }
+
     public function testModalContentAttributesAddsLayoutClasses(): void
     {
         $modalData = new ModalData('test-modal', 'Test Modal', '<p>content</p>', 'full');
@@ -121,7 +129,6 @@ class ThemeModuleTest extends TestCase
         return [
             'full' => ['full'],
             'content' => ['content'],
-            'image' => ['image'],
             'custom' => ['custom-type'],
         ];
     }
