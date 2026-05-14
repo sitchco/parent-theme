@@ -6,12 +6,13 @@ use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
+use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
 
 class KadenceImageModal extends Module
 {
     public const HOOK_SUFFIX = 'kadence-image-modal';
 
-    public const DEPENDENCIES = [UIModal::class, ExtendBlockModule::class];
+    public const DEPENDENCIES = [UIModal::class, KadenceBlocks::class];
 
     public function __construct(private readonly UIModal $uiModal, private readonly KadenceImageRenderer $renderer) {}
 
@@ -32,6 +33,6 @@ class KadenceImageModal extends Module
                 'wp-hooks',
                 ExtendBlockModule::hookName(),
             ]);
-        }, 1);
+        });
     }
 }

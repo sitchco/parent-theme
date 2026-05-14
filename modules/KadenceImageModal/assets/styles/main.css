@@ -1,14 +1,19 @@
 /*
- * Doubled `.sitchco-modal` class for specificity (0,2,0) so this rule wins
- * over UIModal's `.sitchco-modal` (0,1,0) base regardless of stylesheet enqueue order
- * (UIModal's main.css is conditionally enqueued at wp_footer and may load after this file).
+ * Doubled `.sitchco-modal` class lifts these overrides to specificity (0,2,0)
+ * so the image-modal variant wins over child-theme rules that set the same
+ * `--modal-*` custom properties on `.sitchco-modal` (0,1,0) and load after
+ * this stylesheet in the cascade. The conflict is intentional on the theme
+ * side (site-wide modal defaults) and intentional here (image modal must be
+ * a transparent, edge-to-edge image frame), so we resolve it with specificity
+ * rather than asking either side to scope its selector.
  */
 .sitchco-modal.sitchco-modal--image {
     --modal-backdrop-color: rgb(0 0 0 / 0.85);
     --modal-container-bg: transparent;
-    --modal-container-padding: 0;
+    --modal-container-padding: 0px;
     --modal-container-width: fit-content;
     --modal-container-max-width: none;
+    --modal-container-border-radius: 0;
     --modal-close-color: #fff;
     --modal-close-bg: rgb(0 0 0 / 0.5);
     --modal-close-bg-hover: #000;

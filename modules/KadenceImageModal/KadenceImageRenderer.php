@@ -31,14 +31,51 @@ readonly class KadenceImageRenderer
             return $content;
         }
 
+        $trigger_query = $this->findTriggerQuery($content);
+        if ($trigger_query === null) {
+            return $content;
+        }
+
         $modal_id = "img-{$attachment_id}";
-        $alt = (string) ($block['attrs']['alt'] ?? '');
+        $alt = $this->readRenderedAlt($content);
         $name = $this->resolveAccessibleName($alt, $attachment_id, $full[0]);
 
         $modal_data = new ModalData($modal_id, $name, $this->buildImg($full, $alt), 'image');
-        $this->uiModal->loadModal($modal_data);
+        // Use the registered heading so an empty-alt trigger's synthesized aria-label
+        // matches the (first-write-wins) dialog when the same attachment is reused.
+        $registered = $this->uiModal->loadModal($modal_data) ?? $modal_data;
 
-        return $this->decorate($content, $block, $modal_id, $alt, $name);
+        return $this->decorate($content, $block, $trigger_query, $modal_id, $alt, $registered->heading());
+    }
+
+    private function triggerQueries(): array
+    {
+        return [
+            ['tag_name' => 'A', 'class_name' => 'kb-advanced-image-link'],
+            ['class_name' => 'kb-is-ratio-image'],
+            ['class_name' => 'kb-image-has-overlay'],
+            ['tag_name' => 'IMG', 'class_name' => 'kb-img'],
+        ];
+    }
+
+    private function findTriggerQuery(string $content): ?array
+    {
+        foreach ($this->triggerQueries() as $query) {
+            $p = new WP_HTML_Tag_Processor($content);
+            if ($p->next_tag($query)) {
+                return $query;
+            }
+        }
+        return null;
+    }
+
+    private function readRenderedAlt(string $content): string
+    {
+        $p = new WP_HTML_Tag_Processor($content);
+        if (!$p->next_tag(['tag_name' => 'IMG', 'class_name' => 'kb-img'])) {
+            return '';
+        }
+        return trim((string) ($p->get_attribute('alt') ?? ''));
     }
 
     private function resolveAccessibleName(string $alt, int $attachment_id, string $full_url): string
@@ -46,7 +83,7 @@ readonly class KadenceImageRenderer
         if ($alt !== '') {
             return $alt;
         }
-        $title = get_the_title($attachment_id);
+        $title = sanitize_text_field(html_entity_decode(get_the_title($attachment_id), ENT_QUOTES, 'UTF-8'));
         if ($title !== '') {
             return $title;
         }
@@ -60,26 +97,25 @@ readonly class KadenceImageRenderer
     private function buildImg(array $full, string $alt): string
     {
         [$url, $width, $height] = $full;
-        return Str::wrapElement(
-            '',
-            'img',
-            array_filter(
-                [
-                    'src' => esc_url($url),
-                    'alt' => esc_attr($alt),
-                    'width' => $width > 0 ? (int) $width : null,
-                    'height' => $height > 0 ? (int) $height : null,
-                    'loading' => 'lazy',
-                    'decoding' => 'async',
-                    'class' => 'sitchco-image-modal__img',
-                ],
-                fn($v) => $v !== null,
-            ),
-        );
+        return Str::wrapElement('', 'img', [
+            'src' => esc_url($url),
+            'alt' => $alt,
+            'width' => $width > 0 ? (int) $width : null,
+            'height' => $height > 0 ? (int) $height : null,
+            'loading' => 'lazy',
+            'decoding' => 'async',
+            'class' => 'sitchco-image-modal__img',
+        ]);
     }
 
-    private function decorate(string $content, array $block, string $modal_id, string $alt, string $name): string
-    {
+    private function decorate(
+        string $content,
+        array $block,
+        array $trigger_query,
+        string $modal_id,
+        string $alt,
+        string $name,
+    ): string {
         $align = (string) ($block['attrs']['align'] ?? '');
         $root_tag = in_array($align, ['left', 'right', 'center'], true) ? 'DIV' : 'FIGURE';
 
@@ -89,19 +125,7 @@ readonly class KadenceImageRenderer
             $content = $p->get_updated_html();
         }
 
-        $triggerQueries = [
-            ['tag_name' => 'A', 'class_name' => 'kb-advanced-image-link'],
-            ['class_name' => 'kb-is-ratio-image'],
-            ['class_name' => 'kb-image-has-overlay'],
-            ['tag_name' => 'IMG', 'class_name' => 'kb-img'],
-        ];
-        foreach ($triggerQueries as $query) {
-            $decorated = $this->decorateTrigger($content, $query, $modal_id, $alt, $name);
-            if ($decorated !== null) {
-                return $decorated;
-            }
-        }
-        return $content;
+        return $this->decorateTrigger($content, $trigger_query, $modal_id, $alt, $name) ?? $content;
     }
 
     private function decorateTrigger(
@@ -116,7 +140,7 @@ readonly class KadenceImageRenderer
             return null;
         }
         $p->set_attribute('data-target', '#' . $modal_id);
-        if ($alt === '' && !$p->get_attribute('aria-label')) {
+        if ($alt === '' && $p->get_attribute('aria-label') === null) {
             $p->set_attribute('aria-label', $name);
         }
         return $p->get_updated_html();
