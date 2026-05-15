@@ -13,6 +13,7 @@ use Sitchco\Parent\Modules\ContentPartialModal\ContentPartialModalModule;
 use Sitchco\Parent\Modules\SiteFooter\SiteFooterModule;
 use Sitchco\Parent\Modules\SiteHeader\SiteHeaderModule;
 use Sitchco\Parent\Modules\InlineSVG\InlineSVGModule;
+use Sitchco\Parent\Modules\KadenceImageModal\KadenceImageModal;
 use Sitchco\Parent\Modules\Theme\Theme;
 
 return [
@@ -30,6 +31,7 @@ return [
         InlineSVGModule::class,
         Theme::class,
         KadenceBlocks::class,
+        KadenceImageModal::class,
         PatternsModule::class,
         GravityForms::class,
     ],

@@ -129,7 +129,7 @@ class Theme extends Module
 
     public function modalContentAttributes(array $attrs, ModalData $modalData): array
     {
-        if ($modalData->type === 'video') {
+        if (in_array($modalData->type, ['video', 'image'], true)) {
             return $attrs;
         }
         $attrs['class'] = array_merge((array) ($attrs['class'] ?? []), ['is-layout-constrained', 'has-global-padding']);
