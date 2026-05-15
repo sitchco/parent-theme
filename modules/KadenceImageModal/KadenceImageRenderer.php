@@ -2,6 +2,7 @@
 
 namespace Sitchco\Parent\Modules\KadenceImageModal;
 
+use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Utils\Str;
@@ -9,7 +10,7 @@ use WP_HTML_Tag_Processor;
 
 readonly class KadenceImageRenderer
 {
-    public function __construct(private UIModal $uiModal) {}
+    public function __construct(private UIModal $uiModal, private SvgSprite $svgSprite) {}
 
     public function render(string $content, array $block): string
     {
@@ -61,7 +62,22 @@ readonly class KadenceImageRenderer
             $p->set_attribute('aria-label', $registered->heading());
         }
 
-        return $p->get_updated_html();
+        $html = $p->get_updated_html();
+
+        $icon_html = $this->svgSprite->renderIcon('image', null, ['sitchco-image-modal__icon-overlay']);
+        $icon_html = apply_filters(KadenceImageModal::hookName('icon_svg'), $icon_html, $registered, $block);
+
+        if ($icon_html === '') {
+            return $html;
+        }
+
+        $close = '</' . strtolower($root_tag) . '>';
+        $pos = strrpos($html, $close);
+        if ($pos === false) {
+            return $html;
+        }
+
+        return substr_replace($html, $icon_html, $pos, 0);
     }
 
     private function triggerQueries(): array

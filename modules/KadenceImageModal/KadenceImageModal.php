@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Modules\KadenceImageModal;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Parent\Modules\KadenceBlocks\KadenceBlocks;
@@ -12,7 +13,7 @@ class KadenceImageModal extends Module
 {
     public const HOOK_SUFFIX = 'kadence-image-modal';
 
-    public const DEPENDENCIES = [UIModal::class, KadenceBlocks::class];
+    public const DEPENDENCIES = [UIModal::class, KadenceBlocks::class, SvgSprite::class];
 
     public function __construct(private readonly UIModal $uiModal, private readonly KadenceImageRenderer $renderer) {}
 
