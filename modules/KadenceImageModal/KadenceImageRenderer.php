@@ -31,21 +31,37 @@ readonly class KadenceImageRenderer
             return $content;
         }
 
-        $trigger_query = $this->findTriggerQuery($content);
-        if ($trigger_query === null) {
+        $align = (string) ($block['attrs']['align'] ?? '');
+        $root_tag = in_array($align, ['left', 'right', 'center'], true) ? 'DIV' : 'FIGURE';
+
+        $p = new WP_HTML_Tag_Processor($content);
+        ['root_bm' => $root_bm, 'alt' => $alt, 'trigger_bms' => $trigger_bms] = $this->walkAndBookmark($p, $root_tag);
+
+        if (!$trigger_bms) {
             return $content;
         }
 
         $modal_id = "img-{$attachment_id}";
-        $alt = $this->readRenderedAlt($content);
         $name = $this->resolveAccessibleName($alt, $attachment_id, $full[0]);
-
         $modal_data = new ModalData($modal_id, $name, $this->buildImg($full, $alt), 'image');
         // Use the registered heading so an empty-alt trigger's synthesized aria-label
         // matches the (first-write-wins) dialog when the same attachment is reused.
         $registered = $this->uiModal->loadModal($modal_data) ?? $modal_data;
 
-        return $this->decorate($content, $block, $trigger_query, $modal_id, $alt, $registered->heading());
+        if ($root_bm) {
+            $p->seek('root');
+            $p->add_class('has-image-modal');
+        }
+
+        ksort($trigger_bms);
+        $winning = array_key_first($trigger_bms);
+        $p->seek("trig-{$winning}");
+        $p->set_attribute('data-target', '#' . $modal_id);
+        if ($alt === '' && $p->get_attribute('aria-label') === null) {
+            $p->set_attribute('aria-label', $registered->heading());
+        }
+
+        return $p->get_updated_html();
     }
 
     private function triggerQueries(): array
@@ -58,24 +74,43 @@ readonly class KadenceImageRenderer
         ];
     }
 
-    private function findTriggerQuery(string $content): ?array
+    private function walkAndBookmark(WP_HTML_Tag_Processor $p, string $root_tag): array
     {
-        foreach ($this->triggerQueries() as $query) {
-            $p = new WP_HTML_Tag_Processor($content);
-            if ($p->next_tag($query)) {
-                return $query;
+        $root_bm = false;
+        $alt = '';
+        $alt_seen = false;
+        $trigger_bms = [];
+        $queries = $this->triggerQueries();
+
+        while ($p->next_tag()) {
+            $tag = $p->get_tag();
+
+            if (!$root_bm && $tag === $root_tag) {
+                $p->set_bookmark('root');
+                $root_bm = true;
+            }
+
+            if (!$alt_seen && $tag === 'IMG' && $p->has_class('kb-img')) {
+                $alt = trim((string) ($p->get_attribute('alt') ?? ''));
+                $alt_seen = true;
+            }
+
+            foreach ($queries as $i => $q) {
+                if (isset($trigger_bms[$i])) {
+                    continue;
+                }
+                if (isset($q['tag_name']) && $tag !== $q['tag_name']) {
+                    continue;
+                }
+                if (isset($q['class_name']) && !$p->has_class($q['class_name'])) {
+                    continue;
+                }
+                $p->set_bookmark("trig-{$i}");
+                $trigger_bms[$i] = true;
             }
         }
-        return null;
-    }
 
-    private function readRenderedAlt(string $content): string
-    {
-        $p = new WP_HTML_Tag_Processor($content);
-        if (!$p->next_tag(['tag_name' => 'IMG', 'class_name' => 'kb-img'])) {
-            return '';
-        }
-        return trim((string) ($p->get_attribute('alt') ?? ''));
+        return ['root_bm' => $root_bm, 'alt' => $alt, 'trigger_bms' => $trigger_bms];
     }
 
     private function resolveAccessibleName(string $alt, int $attachment_id, string $full_url): string
@@ -106,43 +141,5 @@ readonly class KadenceImageRenderer
             'decoding' => 'async',
             'class' => 'sitchco-image-modal__img',
         ]);
-    }
-
-    private function decorate(
-        string $content,
-        array $block,
-        array $trigger_query,
-        string $modal_id,
-        string $alt,
-        string $name,
-    ): string {
-        $align = (string) ($block['attrs']['align'] ?? '');
-        $root_tag = in_array($align, ['left', 'right', 'center'], true) ? 'DIV' : 'FIGURE';
-
-        $p = new WP_HTML_Tag_Processor($content);
-        if ($p->next_tag(['tag_name' => $root_tag])) {
-            $p->add_class('has-image-modal');
-            $content = $p->get_updated_html();
-        }
-
-        return $this->decorateTrigger($content, $trigger_query, $modal_id, $alt, $name) ?? $content;
-    }
-
-    private function decorateTrigger(
-        string $content,
-        array $query,
-        string $modal_id,
-        string $alt,
-        string $name,
-    ): ?string {
-        $p = new WP_HTML_Tag_Processor($content);
-        if (!$p->next_tag($query)) {
-            return null;
-        }
-        $p->set_attribute('data-target', '#' . $modal_id);
-        if ($alt === '' && $p->get_attribute('aria-label') === null) {
-            $p->set_attribute('aria-label', $name);
-        }
-        return $p->get_updated_html();
     }
 }
