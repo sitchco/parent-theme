@@ -61,6 +61,7 @@ readonly class KadenceImageRenderer
         if ($alt === '' && $p->get_attribute('aria-label') === null) {
             $p->set_attribute('aria-label', $registered->heading());
         }
+        $trigger_tag = strtolower((string) $p->get_tag());
 
         $html = $p->get_updated_html();
 
@@ -69,6 +70,17 @@ readonly class KadenceImageRenderer
 
         if ($icon_html === '') {
             return $html;
+        }
+
+        // Wrapper triggers (anchor, ratio-image div, overlay div) host the icon so a sibling
+        // figcaption can't extend its positioning bounds past the image. Each wrapper contains
+        // only an <img>, so the first matching closer after data-target is the trigger's closer.
+        if ($trigger_tag !== '' && $trigger_tag !== 'img') {
+            $marker = strpos($html, 'data-target="#' . $modal_id . '"');
+            $pos = $marker !== false ? stripos($html, "</{$trigger_tag}>", $marker) : false;
+            if ($pos !== false) {
+                return substr_replace($html, $icon_html, $pos, 0);
+            }
         }
 
         $close = '</' . strtolower($root_tag) . '>';

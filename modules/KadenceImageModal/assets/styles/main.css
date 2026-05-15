@@ -42,6 +42,41 @@
     position: relative;
     isolation: isolate;
 
+    /* Wrapper triggers host the icon overlay so a sibling figcaption can't extend its
+       positioning bounds past the image. The bare-<img> trigger has no wrapper, so the
+       figure (above) remains the containing block in that fallback case. */
+    .kb-advanced-image-link,
+    .kb-is-ratio-image,
+    .kb-image-has-overlay {
+        position: relative;
+    }
+
+    /* Bare-<img> trigger fallback with caption: the icon lands as a direct figure child
+       alongside the figcaption. Switch the figure to grid so the icon stacks with the
+       image (row 1) instead of being absolute-positioned against the whole figure box
+       (which includes the caption row). */
+    &:has(> figcaption) {
+        display: grid;
+        grid-template-columns: 1fr;
+
+        > figcaption {
+            grid-row: 2;
+        }
+
+        > :not(figcaption) {
+            grid-row: 1;
+            grid-column: 1;
+        }
+
+        > .sitchco-image-modal__icon-overlay {
+            position: static;
+            inset: auto;
+            translate: none;
+            align-self: center;
+            justify-self: center;
+        }
+    }
+
     .sitchco-image-modal__icon-overlay {
         --sitchco-image-modal-icon-bg: var(
             --sitchco-image-modal-icon-dark-bg,
