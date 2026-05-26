@@ -69,10 +69,12 @@ class ContentPartialService
 
     public function getTermId(string $slug): ?int
     {
-        return Cache::remember("content_partial_term_{$slug}", function () use ($slug) {
+        $termId = Cache::remember("content_partial_term_{$slug}", function () use ($slug) {
             $term = get_term_by('slug', $slug, ContentPartialPost::TAXONOMY);
-            return $term ? $term->term_id : null;
+            return $term ? (int) $term->term_id : null;
         });
+        // Guard against stale/non-numeric values from a persistent object cache.
+        return is_numeric($termId) ? (int) $termId : null;
     }
 
     public function getPartial(string $area): ?ContentPartialPost
