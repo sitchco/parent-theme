@@ -18,10 +18,18 @@
     >
         <div class="splide__track">
             <ul class="splide__list">
+                {# Skip slides that render no meaningful content (e.g. an inner block whose
+                   source post was deleted). The slide wrapper (Kadence column) always renders
+                   its empty container divs, so test the rendered payload for text or media
+                   rather than for an empty string. #}
                 {% for slide in inner_blocks %}
-                    <li class="splide__slide">
-                        {{ render_block(slide) }}
-                    </li>
+                    {% set slide_html = render_block(slide) %}
+                    {% if slide_html|striptags|trim is not empty
+                          or slide_html matches '/<(img|svg|video|iframe|picture|canvas|audio)\\b/i' %}
+                        <li class="splide__slide">
+                            {{ slide_html }}
+                        </li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>
