@@ -132,6 +132,7 @@
                 "containerInnerVSm": "Vertical padding for compact containers like cards in multi-column layouts.",
                 "containerInnerVLg": "Vertical padding for section-level containers (rows with backgrounds, full-width sections).",
                 "visualEdgeOffset": "Optical margin adjustment for elements with hard visual boundaries (images) to maintain consistent perceived spacing.",
+                "headingLead": "Extra separation above a heading that follows body text (paragraph, list, quote), so it reads as a section break. Added on top of block-gap.",
                 "carouselGap": "Spacing between carousel/slider slides."
             },
             "blockGap": "var:preset|spacing|20",
@@ -142,6 +143,7 @@
             "containerInnerVSm": "var:custom|block-gap",
             "containerInnerVLg": "var:custom|container-outer-lg",
             "visualEdgeOffset": "calc(var(--wp--custom--block-gap) * .4)",
+            "headingLead": "var:custom|block-gap",
             "carouselGap": "var:custom|container-outer-sm",
             "link": {
                 "color": "currentColor",
