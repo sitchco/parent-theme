@@ -21,7 +21,6 @@
             &,
             > .kt-inside-inner-col {
                 height: 100%;
-                justify-content: flex-start;
             }
         }
     }
@@ -62,4 +61,25 @@
             }
         }
     }
+}
+
+/*
+ * Default content alignment for stretched slide cards: top.
+ *
+ * In the equal-height layout above, each card's `.kt-inside-inner-col` is
+ * forced to `height: 100%`, so a card with short content would otherwise be
+ * vertically centered by Kadence's base default, leaving a gap at the top
+ * (the original reason `justify-content: flex-start` was added here).
+ *
+ * This must stay a *default*, not an override: the ancestor chain is wrapped
+ * in :where() (0 specificity) and `div.kt-inside-inner-col` lands the rule at
+ * (0,1,1) — high enough to beat Kadence's base `.kt-inside-inner-col` (0,1,0)
+ * so unset cards hug the top, but low enough to lose to a card's explicit
+ * vertical alignment `.kadence-columnXXX > .kt-inside-inner-col` (0,2,0), so
+ * per-card Top/Middle/Bottom is honored on the front end to match the editor
+ * (SP-576). Kept flat — nesting under `.sc-content-slider` would re-introduce
+ * specificity and defeat the :where().
+ */
+:where(.sc-content-slider .splide__slide > .wp-block-kadence-column) > div.kt-inside-inner-col {
+    justify-content: flex-start;
 }
