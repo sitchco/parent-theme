@@ -1,31 +1,38 @@
 /**
  * Heading lead -- extra separation when a heading opens a new section.
  *
- * The default block-gap reads as too tight above a heading that follows body
- * text. This adds one increment of "lead" (--wp--custom--heading-lead) so the
- * heading reads as a section break. With the default token (spacing 20) on top
- * of a spacing-30 block-gap, the heading lands at spacing 40 -- one step up.
+ * Above a heading that follows section content, the default block-gap reads as
+ * too tight. This adds an increment of "lead" (--wp--custom--heading-lead, set
+ * in theme.json and overridable per child) so the heading reads as a section
+ * break.
  *
- * Only TEXT predecessors trigger it (p, ul, ol, blockquote):
- *   - Heading -> heading is excluded, so title/subtitle stacks stay tight.
- *   - First-child headings never match, so column tops / card headers are clean.
- *   - MEDIA -> heading is excluded on purpose: media spacing (image, buttons,
- *     etc.) is owned by visual-edge-offset.css. Triggering on media too would
- *     double up on deliberate image+title card pairings (e.g. /venues).
+ * Predecessor filter -- fires after ANY preceding sibling EXCEPT:
+ *   - headings: keeps title/subtitle stacks (h2 -> h3) tight.
+ *   - images/figures: a heading bound to its image is a card/figure pairing,
+ *     not a section break (e.g. venue title cards). Their spacing is owned by
+ *     visual-edge-offset.css.
+ *   - style: Kadence injects <style>; ignore it as a predecessor.
+ *   (First-child headings never match, so column tops / card headers are clean.)
  *
- * Mirrors visual-edge-offset.css: two strategies by container --
+ * Composes cleanly with visual-edge-offset.css: that offset is an OPTICAL
+ * correction, not extra separation -- text has line-height that fakes a little
+ * of the space a hard edge (image, buttons) lacks, so the offset normalizes the
+ * PERCEIVED gap. Adding the lead on top of a normalized gap keeps section breaks
+ * perceptually consistent whether the preceding block is text or a button group.
+ *
+ * Two strategies by container (mirrors visual-edge-offset.css):
  *   1. WP flow/constrained: spacing is margin-block-start, so re-add block-gap
- *      then add the lead (a bare value would shrink the gap). Prefixed with
- *      `:root` to land at 0,1,2 -- one notch above the block-gap rule
- *      (`:root :where(.is-layout-constrained) > *`, 0,1,0) yet below Kadence
- *      editor controls (0,2,0), so per-block CMS spacing still overrides.
+ *      then add the lead (a bare value would shrink the gap). The `:root` prefix
+ *      lands it one notch above the block-gap rule yet below Kadence editor
+ *      controls (0,2,0), so per-block CMS spacing still overrides.
  *   2. Kadence columns: child margins are zeroed and spacing is flex `gap`, so
  *      the lead is applied directly as margin-top (additive to the gap).
  */
 
 /* --- WordPress flow/constrained layouts --- */
 :root :where(.is-layout-flow, .is-layout-constrained) {
-    > :is(p, ul, ol, blockquote) + :is(h2, h3, h4, h5, h6) {
+    > :not(:where(h1, h2, h3, h4, h5, h6, figure, .wp-block-image, .wp-block-kadence-image, style))
+        + :is(h2, h3, h4, h5, h6) {
         margin-block-start: calc(var(--wp--custom--block-gap) + var(--wp--custom--heading-lead));
     }
 }
@@ -33,7 +40,8 @@
 /* --- Kadence columns (gap-based spacing, margins zeroed) --- */
 .kt-inside-inner-col,
 .kadence-inner-column-inner {
-    > :is(p, ul, ol, blockquote) + :is(h2, h3, h4, h5, h6) {
+    > :not(:where(h1, h2, h3, h4, h5, h6, figure, .wp-block-image, .wp-block-kadence-image, style))
+        + :is(h2, h3, h4, h5, h6) {
         margin-top: var(--wp--custom--heading-lead);
     }
 }
