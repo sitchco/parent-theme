@@ -70,4 +70,53 @@ class ContentSliderTest extends TestCase
             $this->assertArrayHasKey('splide', $config);
         }
     }
+
+    public function testSlideModeBuildsSlideTypeWithoutRewind(): void
+    {
+        $config = ContentSlider::buildSliderConfig(['slider_mode' => 'slide']);
+        $this->assertSame('slide', $config['type']);
+        $this->assertFalse($config['rewind']);
+    }
+
+    public function testRewindModeBuildsSlideTypeWithRewind(): void
+    {
+        $config = ContentSlider::buildSliderConfig(['slider_mode' => 'rewind']);
+        $this->assertSame('slide', $config['type'], 'Rewind is a slide variant, not its own Splide type');
+        $this->assertTrue($config['rewind']);
+    }
+
+    public function testLoopModeBuildsLoopTypeWithoutRewind(): void
+    {
+        $config = ContentSlider::buildSliderConfig(['slider_mode' => 'loop']);
+        $this->assertSame('loop', $config['type']);
+        $this->assertFalse($config['rewind']);
+    }
+
+    public function testAbsentModeFollowsDefaultModeFilter(): void
+    {
+        // A block with no saved `slider_mode` resolves its type from the
+        // `default_mode` filter, so a child theme can pick the platform-wide default
+        // (Roundabout returns 'loop' here, keeping legacy/unsaved sliders looping).
+        // Use a late priority so these assertions hold regardless of any default
+        // already registered by the active theme — the last filter to run wins.
+        $hook = ContentSlider::hookName('default_mode');
+
+        $toLoop = fn() => 'loop';
+        add_filter($hook, $toLoop, 99);
+        try {
+            $this->assertSame('loop', ContentSlider::buildSliderConfig([])['type']);
+        } finally {
+            remove_filter($hook, $toLoop, 99);
+        }
+
+        $toSlide = fn() => 'slide';
+        add_filter($hook, $toSlide, 99);
+        try {
+            $config = ContentSlider::buildSliderConfig([]);
+            $this->assertSame('slide', $config['type']);
+            $this->assertFalse($config['rewind']);
+        } finally {
+            remove_filter($hook, $toSlide, 99);
+        }
+    }
 }
