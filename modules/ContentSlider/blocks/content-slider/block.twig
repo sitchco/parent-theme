@@ -21,10 +21,13 @@
                 {# Skip slides that render no meaningful content (e.g. an inner block whose
                    source post was deleted). The slide wrapper (Kadence column) always renders
                    its empty container divs, so test the rendered payload for text or media
-                   rather than for an empty string. #}
+                   rather than for an empty string. A column that declares its own background
+                   (kt-column-has-bg) also counts as content — a full-bleed background-image
+                   card renders no text and no media element. #}
                 {% for slide in inner_blocks %}
                     {% set slide_html = render_block(slide) %}
                     {% if slide_html|striptags|trim is not empty
+                          or 'kt-column-has-bg' in slide_html
                           or slide_html matches '/<(img|svg|video|iframe|picture|canvas|audio)\\b/i' %}
                         <li class="splide__slide">
                             {{ slide_html }}

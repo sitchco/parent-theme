@@ -71,6 +71,52 @@ class ContentSliderTest extends TestCase
         }
     }
 
+    public function testEmptySlideGuardSkipsContentlessSlides(): void
+    {
+        // All four variants share ONE slider render: ACF's block store makes
+        // get_fields() return false on subsequent renders of the same block in
+        // a single process, so a per-case data provider cannot work here.
+        $slides = [
+            'text' => '<p>Hello</p>',
+            'media' => '<img src="test.png" alt=""/>',
+            // A full-bleed background-image card renders no text and no media
+            // element; the platform marks background-bearing columns with
+            // kt-column-has-bg (see KadenceBlocks module), which the guard
+            // accepts as content.
+            'background' =>
+                '<div class="wp-block-kadence-column kt-column-has-bg"><div class="kt-inside-inner-col"></div></div>',
+            'empty' =>
+                '<div class="wp-block-kadence-column is-empty-slide"><div class="kt-inside-inner-col"></div></div>',
+        ];
+
+        $innerBlocks = implode('', array_map(fn($html) => "<!-- wp:html -->$html<!-- /wp:html -->", $slides));
+
+        // ACF data mirrors the markup the editor saves (see the production-slider
+        // pattern) — without saved field values get_fields() returns false and the
+        // block cannot build its config. The values are arbitrary; only presence
+        // matters.
+        $markup =
+            '<!-- wp:sitchco/content-slider {"name":"sitchco/content-slider","data":{"field_68f7cf60ba248":"0","field_68f7cf60badba":"1","field_68f7cf60bb1b4":"0","field_699224b6e08f1":"stretch","field_68f7cf60bc165":"3","field_68f7cf60bc526":"2","field_68f7cf60bc917":"1"},"mode":"preview"} -->' .
+            $innerBlocks .
+            '<!-- /wp:sitchco/content-slider -->';
+
+        $html = do_blocks($markup);
+
+        $this->assertSame(
+            3,
+            substr_count($html, 'class="splide__slide"'),
+            'Text, media, and background slides should render',
+        );
+        $this->assertStringContainsString($slides['text'], $html);
+        $this->assertStringContainsString($slides['media'], $html);
+        $this->assertStringContainsString($slides['background'], $html);
+        $this->assertStringNotContainsString(
+            'is-empty-slide',
+            $html,
+            'A slide with no text, media, or background should be skipped',
+        );
+    }
+
     public function testSlideModeBuildsSlideTypeWithoutRewind(): void
     {
         $config = ContentSlider::buildSliderConfig(['slider_mode' => 'slide']);
