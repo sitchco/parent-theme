@@ -154,6 +154,32 @@
             "save_options": 0
         },
         {
+            "key": "field_69a3f21c7b410",
+            "label": "Slide Sizing",
+            "name": "sizing_mode",
+            "aria-label": "",
+            "type": "select",
+            "instructions": "How each slide's width is decided. Slides per View divides the visible area by the counts below, so a card is a different size — and a different shape — at every screen width. Fixed Slide Width keeps every slide the same size and shows as many as fit, resizing smoothly instead of jumping when the screen crosses a breakpoint.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "per_page": "Slides per View",
+                "fixed_width": "Fixed Slide Width"
+            },
+            "default_value": "per_page",
+            "return_format": "value",
+            "multiple": 0,
+            "allow_null": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
             "key": "field_68f7cf60bc165",
             "label": "Slides per View (Desktop)",
             "name": "per_view_desktop",
@@ -161,7 +187,15 @@
             "type": "number",
             "instructions": "Number of slides visible on desktop screens (1024px+)",
             "required": 0,
-            "conditional_logic": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "per_page"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "",
                 "class": "",
@@ -184,7 +218,15 @@
             "type": "number",
             "instructions": "Number of slides visible on tablet screens (768px - 1023px)",
             "required": 0,
-            "conditional_logic": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "per_page"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "",
                 "class": "",
@@ -207,7 +249,15 @@
             "type": "number",
             "instructions": "Number of slides visible on mobile screens (<768px)",
             "required": 0,
-            "conditional_logic": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "per_page"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "",
                 "class": "",
@@ -221,6 +271,99 @@
             "step": 1,
             "prepend": "",
             "append": ""
+        },
+        {
+            "key": "field_69a3f21c7b8d2",
+            "label": "Minimum Slide Width",
+            "name": "slide_width_min",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Slides never get narrower than this. The one exception is a screen too small to hold it, where the slide falls back to 85% of the visible area instead — so a wide minimum can never push the slide off the edge of a phone.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "fixed_width"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 280,
+            "min": 80,
+            "max": 1200,
+            "placeholder": "",
+            "step": 10,
+            "prepend": "",
+            "append": "px",
+            "allow_in_bindings": 1
+        },
+        {
+            "key": "field_69a3f21c7bd45",
+            "label": "Preferred Slide Width",
+            "name": "slide_width_ideal",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "The width slides aim for, as a share of the visible slider area — 25% shows about four at a time, 33% about three. This is the value that makes the slider resize smoothly, so prefer adjusting it over the two limits.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "fixed_width"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 25,
+            "min": 5,
+            "max": 100,
+            "placeholder": "",
+            "step": 1,
+            "prepend": "",
+            "append": "%",
+            "allow_in_bindings": 1
+        },
+        {
+            "key": "field_69a3f21c7c1a9",
+            "label": "Maximum Slide Width",
+            "name": "slide_width_max",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Slides never get wider than this, no matter how much room there is. Values below the minimum are raised to it.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "fixed_width"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 420,
+            "min": 80,
+            "max": 1600,
+            "placeholder": "",
+            "step": 10,
+            "prepend": "",
+            "append": "px",
+            "allow_in_bindings": 1
         }
     ],
     "location": [
@@ -228,7 +371,7 @@
             {
                 "param": "block",
                 "operator": "==",
-                "value": "sitchco\/content-slider"
+                "value": "sitchco/content-slider"
             }
         ]
     ],
@@ -242,5 +385,5 @@
     "description": "",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1781815987
+    "modified": 1787077578
 }
