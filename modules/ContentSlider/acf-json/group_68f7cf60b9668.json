@@ -180,12 +180,43 @@
             "placeholder": ""
         },
         {
+            "key": "field_69a3f21c7c5b3",
+            "label": "Slides per View (Wide Desktop)",
+            "name": "per_view_wide",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "Number of slides visible on wide desktop screens (1441px and up). Left blank on older sliders, this follows the Desktop count.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69a3f21c7b410",
+                        "operator": "==",
+                        "value": "per_page"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 4,
+            "min": 1,
+            "max": 6,
+            "allow_in_bindings": 1,
+            "placeholder": "",
+            "step": 1,
+            "prepend": "",
+            "append": ""
+        },
+        {
             "key": "field_68f7cf60bc165",
             "label": "Slides per View (Desktop)",
             "name": "per_view_desktop",
             "aria-label": "",
             "type": "number",
-            "instructions": "Number of slides visible on desktop screens (769px and up)",
+            "instructions": "Number of slides visible on desktop screens (1025px – 1440px)",
             "required": 0,
             "conditional_logic": [
                 [
@@ -216,7 +247,7 @@
             "name": "per_view_tablet",
             "aria-label": "",
             "type": "number",
-            "instructions": "Number of slides visible on tablet screens (481px – 768px)",
+            "instructions": "Number of slides visible on tablet screens (601px – 1024px)",
             "required": 0,
             "conditional_logic": [
                 [
@@ -247,7 +278,7 @@
             "name": "per_view_mobile",
             "aria-label": "",
             "type": "number",
-            "instructions": "Number of slides visible on mobile screens (480px and below)",
+            "instructions": "Number of slides visible on mobile screens (600px and below)",
             "required": 0,
             "conditional_logic": [
                 [
@@ -385,5 +416,5 @@
     "description": "",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1755553000
+    "modified": 1755556000
 }

@@ -150,29 +150,85 @@ class ContentSliderTest extends TestCase
         ]);
 
         $this->assertSame(4, $config['perPage']);
-        $this->assertSame(2, $config['breakpoints']['768']['perPage']);
-        $this->assertSame(1, $config['breakpoints']['480']['perPage']);
+        $this->assertSame(4, $config['breakpoints']['1440']['perPage']);
+        $this->assertSame(2, $config['breakpoints']['1024']['perPage']);
+        $this->assertSame(1, $config['breakpoints']['600']['perPage']);
         $this->assertArrayNotHasKey('fixedWidth', $config);
     }
 
     public function testBreakpointKeysAreTheTopOfEachTier(): void
     {
         $config = ContentSlider::buildSliderConfig([
+            'per_view_wide' => 5,
             'per_view_desktop' => 4,
             'per_view_tablet' => 3,
             'per_view_mobile' => 2,
         ]);
 
         // Splide reads these as max-widths and the narrower match wins, so each key is
-        // the top of the tier below the base: desktop from 769px up, tablet 481–768,
-        // mobile at most 480 — the bands the field labels promise.
-        //
-        // No 1024 key: an entry equal to the base can never change the outcome, and one
-        // was carried here for a while purely as noise.
-        $this->assertSame([768, 480], array_keys($config['breakpoints']));
+        // the top of the tier below the base: wide from 1441px up, desktop 1025–1440,
+        // tablet 601–1024, mobile at most 600 — the bands the field labels promise.
+        $this->assertSame([1440, 1024, 600], array_keys($config['breakpoints']));
+        $this->assertSame(5, $config['perPage']);
+        $this->assertSame(4, $config['breakpoints'][1440]['perPage']);
+        $this->assertSame(3, $config['breakpoints'][1024]['perPage']);
+        $this->assertSame(2, $config['breakpoints'][600]['perPage']);
+    }
+
+    public function testWideTierFallsBackToTheDesktopCount(): void
+    {
+        // per_view_wide postdates the other three and ACF never backfills a definition
+        // into stored meta, so every slider saved before it reports the key as absent.
+        // Absent has to render 1441px and up exactly as it did under three tiers.
+        $config = ContentSlider::buildSliderConfig([
+            'per_view_desktop' => 4,
+            'per_view_tablet' => 2,
+            'per_view_mobile' => 1,
+        ]);
+
         $this->assertSame(4, $config['perPage']);
-        $this->assertSame(3, $config['breakpoints'][768]['perPage']);
-        $this->assertSame(2, $config['breakpoints'][480]['perPage']);
+        $this->assertSame(4, $config['breakpoints'][1440]['perPage']);
+    }
+
+    public function testWideTierIsIndependentOnceSaved(): void
+    {
+        $config = ContentSlider::buildSliderConfig([
+            'per_view_wide' => 5,
+            'per_view_desktop' => 3,
+            'per_view_tablet' => 2,
+            'per_view_mobile' => 1,
+        ]);
+
+        $this->assertSame(5, $config['perPage']);
+        $this->assertSame(3, $config['breakpoints'][1440]['perPage']);
+    }
+
+    public function testWideningABandNeverRaisesACount(): void
+    {
+        // The whole backward-compatibility argument in one assertion. Each legacy value
+        // keeps its slug but drives a wider band than it used to, so a viewport can only
+        // land on the same count or the one below it — bigger slides, never smaller —
+        // provided the saved counts never rise as the screen narrows. Every slider in
+        // the wild satisfies that; this pins the reasoning to the shapes that exist.
+        foreach ([[4, 2, 1], [4, 3, 1], [3, 2, 1]] as [$desktop, $tablet, $mobile]) {
+            $config = ContentSlider::buildSliderConfig([
+                'per_view_desktop' => $desktop,
+                'per_view_tablet' => $tablet,
+                'per_view_mobile' => $mobile,
+            ]);
+
+            $label = "{$desktop}/{$tablet}/{$mobile}";
+
+            // Was the desktop count above 768; is now the tablet count above 1024.
+            $this->assertLessThanOrEqual($desktop, $config['breakpoints'][1024]['perPage'], $label);
+            // Was the tablet count above 480; is now the mobile count above 600.
+            $this->assertLessThanOrEqual($tablet, $config['breakpoints'][600]['perPage'], $label);
+            // Unchanged tiers.
+            $this->assertSame($desktop, $config['perPage'], $label);
+            $this->assertSame($desktop, $config['breakpoints'][1440]['perPage'], $label);
+            $this->assertSame($tablet, $config['breakpoints'][1024]['perPage'], $label);
+            $this->assertSame($mobile, $config['breakpoints'][600]['perPage'], $label);
+        }
     }
 
     public function testVariationCannotOverrideSizing(): void
@@ -188,8 +244,8 @@ class ContentSliderTest extends TestCase
                     'perPage' => 6,
                     'fixedWidth' => '360px',
                     'breakpoints' => [
-                        '768' => ['perPage' => 5, 'gap' => '1rem'],
-                        '480' => ['perPage' => 4],
+                        '1024' => ['perPage' => 5, 'gap' => '1rem'],
+                        '600' => ['perPage' => 4],
                     ],
                 ],
             ],
@@ -207,10 +263,10 @@ class ContentSliderTest extends TestCase
         }
 
         $this->assertSame('2rem', $config['gap'], 'Non-sizing options still merge');
-        $this->assertSame('1rem', $config['breakpoints'][768]['gap'], 'So do non-sizing breakpoint options');
+        $this->assertSame('1rem', $config['breakpoints'][1024]['gap'], 'So do non-sizing breakpoint options');
         $this->assertSame(3, $config['perPage'], 'Block fields keep sizing');
-        $this->assertSame(2, $config['breakpoints'][768]['perPage']);
-        $this->assertSame(1, $config['breakpoints'][480]['perPage']);
+        $this->assertSame(2, $config['breakpoints'][1024]['perPage']);
+        $this->assertSame(1, $config['breakpoints'][600]['perPage']);
         $this->assertArrayNotHasKey('fixedWidth', $config);
     }
 
@@ -242,7 +298,7 @@ class ContentSliderTest extends TestCase
         // cleared select stores.
         foreach (['', 'aspect_ratio', null] as $stored) {
             $config = ContentSlider::buildSliderConfig(['sizing_mode' => $stored]);
-            $this->assertSame(3, $config['perPage'], 'Unrecognized sizing mode should fall back to counts');
+            $this->assertSame(4, $config['perPage'], 'Unrecognized sizing mode should fall back to counts');
             $this->assertArrayNotHasKey('fixedWidth', $config);
         }
     }

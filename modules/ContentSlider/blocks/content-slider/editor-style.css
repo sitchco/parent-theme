@@ -8,15 +8,22 @@
 .wp-block-sitchco-content-slider {
     .acf-innerblocks-container {
         display: grid;
-        grid-template-columns: repeat(var(--slides-per-view-desktop, 3), 1fr);
+        grid-template-columns: repeat(var(--slides-per-view-wide, 4), 1fr);
         gap: 0.5rem;
 
-        /* Same tiers Splide is given: tablet 768–1023, mobile at most 767. */
-        @media (max-width: 768px) {
+        /* Same tiers Splide is given: desktop 1025–1440, tablet 601–1024, mobile at
+           most 600. The editor canvas is narrower than the window, so these fire
+           earlier here than on the frontend — the preview shows the tier the canvas
+           is in, not the one the browser is in. */
+        @media (max-width: 1440px) {
+            grid-template-columns: repeat(var(--slides-per-view-desktop, 3), 1fr);
+        }
+
+        @media (max-width: 1024px) {
             grid-template-columns: repeat(var(--slides-per-view-tablet, 2), 1fr);
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
             grid-template-columns: repeat(var(--slides-per-view-mobile, 1), 1fr);
         }
     }

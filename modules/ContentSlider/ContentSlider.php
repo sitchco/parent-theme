@@ -177,20 +177,27 @@ class ContentSlider extends Module
             return ['fixedWidth' => static::buildSlideWidthAnchor($fields)];
         }
 
-        // Splide reads breakpoints as max-widths and the narrower match wins, so the
-        // base value is the widest tier and each key is the *top* of the tier below it:
-        // desktop 769px and up, tablet 481–768, mobile at most 480. The field labels say
-        // exactly that; keep the two in step if either moves.
+        // Splide reads breakpoints as max-widths and the narrower match wins, so the base
+        // value is the widest tier and each key is the *top* of the tier below it: wide
+        // 1441px and up, desktop 1025–1440, tablet 601–1024, mobile at most 600. The field
+        // labels say exactly that; keep the two in step if either moves.
         //
-        // These are deliberately not 1023/767. A count divides the track, so the card's
-        // width is whatever the viewport leaves over — a band's width ratio is the card's
-        // size range. Mobile at 1 across the 320–767 band runs a 293px card out to 637px
-        // (a 360:511 poster 1016px tall), which is why the mobile tier stops at 480.
+        // The edges come from measuring the track rather than from device names. A count
+        // divides the track, so a slide's width is whatever the viewport leaves over and a
+        // band's width ratio *is* the slide's size range. Holding the 360:511 cards these
+        // sliders carry to a usable 280–420px puts one-across at 345–515, two at 685–1015,
+        // three at 1030–1530 and four from 1370 up — which is where 600/1024/1440 sit.
+        //
+        // per_view_wide postdates the other three, so blanks fall back to the desktop
+        // count: a slider saved under the old three-tier config renders 1441px and up
+        // exactly as it did before, and every band that does move moves to a lower count,
+        // never a higher one, because no saved slider counts up as the screen narrows.
         return [
-            'perPage' => (int) ($fields['per_view_desktop'] ?? 3),
+            'perPage' => (int) ($fields['per_view_wide'] ?? ($fields['per_view_desktop'] ?? 4)),
             'breakpoints' => [
-                '768' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
-                '480' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
+                '1440' => ['perPage' => (int) ($fields['per_view_desktop'] ?? 3)],
+                '1024' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
+                '600' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
             ],
         ];
     }

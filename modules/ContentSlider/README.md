@@ -35,9 +35,10 @@ These fields are available on every Content Slider block instance in the editor:
 | Arrows | `arrows` | On |
 | Dots | `pagination` | On |
 | Slide Sizing | see below | Slides per View |
-| Slides Per View (Desktop) | `perPage` | 3 |
-| Slides Per View (Tablet) | `breakpoints.768.perPage` | 2 |
-| Slides Per View (Mobile) | `breakpoints.480.perPage` | 1 |
+| Slides Per View (Wide Desktop) | `perPage` | 4 |
+| Slides Per View (Desktop) | `breakpoints.1440.perPage` | 3 |
+| Slides Per View (Tablet) | `breakpoints.1024.perPage` | 2 |
+| Slides Per View (Mobile) | `breakpoints.600.perPage` | 1 |
 | Minimum Slide Width | `fixedWidth` (floor) | 280px |
 | Preferred Slide Width | `fixedWidth` (fluid term) | 25% |
 | Maximum Slide Width | `fixedWidth` (ceiling) | 420px |
@@ -57,15 +58,24 @@ the desktop tier and each key is the *top* of the tier below it:
 
 | Field | Applies at | Config |
 |-------|-----------|--------|
-| Desktop | 769px and up | `perPage` |
-| Tablet | 481–768px | `breakpoints.768.perPage` |
-| Mobile | 480px and under | `breakpoints.480.perPage` |
+| Wide Desktop | 1441px and up | `perPage` |
+| Desktop | 1025–1440px | `breakpoints.1440.perPage` |
+| Tablet | 601–1024px | `breakpoints.1024.perPage` |
+| Mobile | 600px and under | `breakpoints.600.perPage` |
 
-These keys are deliberately not 1023/767. A count divides the track, so a slide's width is
-whatever the viewport leaves over, and a band's width ratio *is* the slide's size range.
-One-across over a 320–767 band runs a card from 293px to 637px — for the 360:511 posters
-these sliders usually carry, 1016px tall — so the mobile tier stops at 480. There is no
-`1024` key: an entry equal to the base can never change the outcome.
+The edges come from measuring the track, not from device names. A count divides the track,
+so a slide's width is whatever the viewport leaves over, and a band's width ratio *is* the
+slide's size range. Holding the 360:511 posters these sliders carry to a usable 280–420px
+puts one-across at 345–515, two at 685–1015, three at 1030–1530 and four from 1370 up —
+which is where 600/1024/1440 sit. Any key equal to the base is omitted; it could never
+change the outcome.
+
+`per_view_wide` postdates the other three fields, and ACF never backfills a definition into
+stored meta, so sliders saved under the old three-tier config report it as absent. Absent
+falls back to the desktop count, which keeps 1441px and up rendering exactly as before.
+Every other tier kept its slug and took a wider band, so a viewport can only land on the
+same count or the one below it — never a higher one, given counts that don't rise as the
+screen narrows.
 
 **Fixed Slide Width** emits a single fluid `fixedWidth` anchor and no counts at all:
 
@@ -161,7 +171,7 @@ Each mode publishes only its own, so a stale count can never be rendered as a co
 count nothing on the frontend controls. Values come from the **final merged config**,
 after any variation overrides.
 
-`editor-style.css` switches at `max-width: 768px` and `max-width: 480px`, the same tiers
+`editor-style.css` switches at `max-width: 1440px`, `1024px` and `600px`, the same tiers
 Splide is given, so the count preview and the frontend agree. Keep them in step if either
 moves. Fixed-width mode has no counts and previews from the anchor itself.
 
