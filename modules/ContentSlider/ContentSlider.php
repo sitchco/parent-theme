@@ -47,6 +47,14 @@ class ContentSlider extends Module
     protected const ANCHOR_FLOOR_SHARE = 85;
 
     protected const ANCHOR_DEFAULTS = ['min' => 280, 'ideal' => 25, 'max' => 420];
+
+    /**
+     * Splide options a variation may not set.
+     *
+     * Block fields own sizing; variations own everything else — gap, padding,
+     * focus/trim, navigation presentation.
+     */
+    public const VARIATION_RESERVED_OPTIONS = ['perPage', 'fixedWidth', 'fixedHeight', 'heightRatio', 'autoWidth'];
     /**
      * Module initialization
      *
@@ -134,7 +142,8 @@ class ContentSlider extends Module
             $variationSlug = $variationNames[0];
             $variations = apply_filters(static::hookName('variations'), []);
             if (!empty($variations[$variationSlug]['splide'])) {
-                $sliderConfig = array_replace_recursive($sliderConfig, $variations[$variationSlug]['splide']);
+                $overrides = static::withoutSizingOptions($variations[$variationSlug]['splide'], $variationSlug);
+                $sliderConfig = array_replace_recursive($sliderConfig, $overrides);
             }
         }
 
@@ -168,12 +177,21 @@ class ContentSlider extends Module
             return ['fixedWidth' => static::buildSlideWidthAnchor($fields)];
         }
 
+        // Splide reads breakpoints as max-widths and the narrower match wins, so the
+        // base value is the desktop tier and each key is the *top* of the tier below it:
+        // tablet 768–1023, mobile at most 767. That matches the field labels, the editor
+        // preview's media queries, and Kadence's own tiers.
+        //
+        // It did not always. The config used to carry `1024 => desktop` alongside a base
+        // of desktop — an entry that could never change the outcome — which pushed the
+        // real tablet band down to 481–768 and mobile to 480 and under. A 500px phone
+        // rendered the tablet count (three 128px-wide cards) and an 800px laptop the
+        // desktop count.
         return [
             'perPage' => (int) ($fields['per_view_desktop'] ?? 3),
             'breakpoints' => [
-                '1024' => ['perPage' => (int) ($fields['per_view_desktop'] ?? 3)],
-                '768' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
-                '480' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
+                '1023' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
+                '767' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
             ],
         ];
     }
@@ -208,6 +226,57 @@ class ContentSlider extends Module
         $idealValue = rtrim(rtrim(number_format($ideal, 2, '.', ''), '0'), '.');
 
         return sprintf('clamp(min(%dpx, %d%%), %s%%, %dpx)', $min, static::ANCHOR_FLOOR_SHARE, $idealValue, $max);
+    }
+
+    /**
+     * Drop sizing options from a variation's Splide overrides.
+     *
+     * The merge is `array_replace_recursive`, which adds without removing: a variation
+     * setting `fixedWidth` over a count-mode block would leave `perPage` and every
+     * breakpoint count in place, producing a config in both modes at once — Splide
+     * would take slide width from one and its pagination dot count from the other.
+     * Dropping the keys is cheaper than reconciling them, and no `variations/`
+     * directory has ever existed in either repository to depend on the old behaviour.
+     *
+     * @param array  $splide A variation's Splide config overrides.
+     * @param string $slug   The variation slug, for the warning.
+     */
+    protected static function withoutSizingOptions(array $splide, string $slug): array
+    {
+        $reserved = array_flip(static::VARIATION_RESERVED_OPTIONS);
+        $dropped = array_keys(array_intersect_key($splide, $reserved));
+        $splide = array_diff_key($splide, $reserved);
+
+        foreach ($splide['breakpoints'] ?? [] as $width => $options) {
+            if (!is_array($options)) {
+                continue;
+            }
+            $dropped = array_merge($dropped, array_keys(array_intersect_key($options, $reserved)));
+            $options = array_diff_key($options, $reserved);
+
+            // A breakpoint whose only key was a count has nothing left to merge.
+            if ($options) {
+                $splide['breakpoints'][$width] = $options;
+            } else {
+                unset($splide['breakpoints'][$width]);
+            }
+        }
+
+        if (isset($splide['breakpoints']) && !$splide['breakpoints']) {
+            unset($splide['breakpoints']);
+        }
+
+        if ($dropped) {
+            Logger::warning(
+                sprintf(
+                    'ContentSlider: variation "%s" set sizing options (%s), which block fields own. Ignored.',
+                    $slug,
+                    implode(', ', array_unique($dropped)),
+                ),
+            );
+        }
+
+        return $splide;
     }
 
     private function scanVariations(): array

@@ -150,10 +150,91 @@ class ContentSliderTest extends TestCase
         ]);
 
         $this->assertSame(4, $config['perPage']);
-        $this->assertSame(4, $config['breakpoints']['1024']['perPage']);
-        $this->assertSame(2, $config['breakpoints']['768']['perPage']);
-        $this->assertSame(1, $config['breakpoints']['480']['perPage']);
+        $this->assertSame(2, $config['breakpoints']['1023']['perPage']);
+        $this->assertSame(1, $config['breakpoints']['767']['perPage']);
         $this->assertArrayNotHasKey('fixedWidth', $config);
+    }
+
+    public function testBreakpointKeysAreTheTopOfEachTier(): void
+    {
+        $config = ContentSlider::buildSliderConfig([
+            'per_view_desktop' => 4,
+            'per_view_tablet' => 3,
+            'per_view_mobile' => 2,
+        ]);
+
+        // Splide reads these as max-widths and the narrower match wins, so each key is
+        // the top of the tier below the base: desktop from 1024 up, tablet 768–1023,
+        // mobile at most 767 — the bands the field labels promise.
+        //
+        // The old config carried `1024 => desktop` beside a base of desktop, an entry
+        // that could never change the outcome, which shifted every real band one tier
+        // narrower: a 500px phone rendered the tablet count.
+        $this->assertSame([1023, 767], array_keys($config['breakpoints']));
+        $this->assertSame(4, $config['perPage']);
+        $this->assertSame(3, $config['breakpoints'][1023]['perPage']);
+        $this->assertSame(2, $config['breakpoints'][767]['perPage']);
+    }
+
+    public function testVariationCannotOverrideSizing(): void
+    {
+        // `array_replace_recursive` adds without removing, so an unfiltered variation
+        // would leave the block's counts in place beside its own `fixedWidth` and hand
+        // Splide a config in both modes at once.
+        $variations = fn() => [
+            'test-sizing' => [
+                'title' => 'Test Sizing',
+                'splide' => [
+                    'gap' => '2rem',
+                    'perPage' => 6,
+                    'fixedWidth' => '360px',
+                    'breakpoints' => [
+                        '1023' => ['perPage' => 5, 'gap' => '1rem'],
+                        '767' => ['perPage' => 4],
+                    ],
+                ],
+            ],
+        ];
+
+        $hook = ContentSlider::hookName('variations');
+        add_filter($hook, $variations, 99);
+        try {
+            $config = ContentSlider::buildSliderConfig(
+                ['per_view_desktop' => 3, 'per_view_tablet' => 2, 'per_view_mobile' => 1],
+                ['className' => 'is-style-test-sizing'],
+            );
+        } finally {
+            remove_filter($hook, $variations, 99);
+        }
+
+        $this->assertSame('2rem', $config['gap'], 'Non-sizing options still merge');
+        $this->assertSame('1rem', $config['breakpoints'][1023]['gap'], 'So do non-sizing breakpoint options');
+        $this->assertSame(3, $config['perPage'], 'Block fields keep sizing');
+        $this->assertSame(2, $config['breakpoints'][1023]['perPage']);
+        $this->assertSame(1, $config['breakpoints'][767]['perPage']);
+        $this->assertArrayNotHasKey('fixedWidth', $config);
+    }
+
+    public function testVariationCannotReintroduceCountsOnAFixedWidthBlock(): void
+    {
+        $variations = fn() => [
+            'test-counts' => ['title' => 'Test Counts', 'splide' => ['perPage' => 4, 'arrows' => false]],
+        ];
+
+        $hook = ContentSlider::hookName('variations');
+        add_filter($hook, $variations, 99);
+        try {
+            $config = ContentSlider::buildSliderConfig(
+                ['sizing_mode' => 'fixed_width'],
+                ['className' => 'is-style-test-counts'],
+            );
+        } finally {
+            remove_filter($hook, $variations, 99);
+        }
+
+        $this->assertSame('clamp(min(280px, 85%), 25%, 420px)', $config['fixedWidth']);
+        $this->assertArrayNotHasKey('perPage', $config, 'A reintroduced count would drive the dot count');
+        $this->assertFalse($config['arrows'], 'Non-sizing options are untouched');
     }
 
     public function testUnrecognizedSizingModeFallsBackToPerPage(): void

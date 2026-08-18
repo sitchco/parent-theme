@@ -36,8 +36,8 @@ These fields are available on every Content Slider block instance in the editor:
 | Dots | `pagination` | On |
 | Slide Sizing | see below | Slides per View |
 | Slides Per View (Desktop) | `perPage` | 3 |
-| Slides Per View (Tablet) | `breakpoints.768.perPage` | 2 |
-| Slides Per View (Mobile) | `breakpoints.480.perPage` | 1 |
+| Slides Per View (Tablet) | `breakpoints.1023.perPage` | 2 |
+| Slides Per View (Mobile) | `breakpoints.767.perPage` | 1 |
 | Minimum Slide Width | `fixedWidth` (floor) | 280px |
 | Preferred Slide Width | `fixedWidth` (fluid term) | 25% |
 | Maximum Slide Width | `fixedWidth` (ceiling) | 420px |
@@ -49,9 +49,22 @@ The two modes are mutually exclusive, and the config says which one is in force 
 which keys it carries.
 
 **Slides per View** divides the visible track by a count. Slide width is therefore a
-function of the viewport, and it changes discontinuously: at 769px the desktop count
-takes over from the tablet count and every slide re-shapes across one pixel of
-viewport.
+function of the viewport, and it changes discontinuously: crossing a breakpoint changes
+the divisor, so every slide re-shapes across one pixel of viewport.
+
+Splide reads breakpoints as max-widths and the narrower match wins, so the base value is
+the desktop tier and each key is the *top* of the tier below it:
+
+| Field | Applies at | Config |
+|-------|-----------|--------|
+| Desktop | 1024px and up | `perPage` |
+| Tablet | 768–1023px | `breakpoints.1023.perPage` |
+| Mobile | 767px and under | `breakpoints.767.perPage` |
+
+Until this was corrected the config carried `1024 => desktop` beside a base of desktop —
+an entry that could never change the outcome — which shifted every real band one tier
+narrower than its label: desktop reached down to 769px and tablet down to 481px. A 500px
+phone rendered the tablet count, three cards at 128px each.
 
 **Fixed Slide Width** emits a single fluid `fixedWidth` anchor and no counts at all:
 
@@ -122,13 +135,16 @@ Variations are applied **after** the base config is built from ACF fields, using
 - A variation setting `gap` doesn't touch `autoplay` — the editor still controls it
 - Fields not covered by the variation retain their per-instance values
 
-**Variations must not set sizing keys**: `perPage`, breakpoint `perPage`, `fixedWidth`,
-`fixedHeight`, `heightRatio`, or `autoWidth`. Block fields own sizing; variations own
-everything else (gap, padding, focus/trim, navigation presentation). The merge is
-`array_replace_recursive`, which **adds without removing** — a variation setting
-`fixedWidth` would leave the editor's `perPage` and all three breakpoint counts in
-place, producing a config that claims both modes at once. The example above is written
-to that rule.
+**Variations cannot set sizing options.** `perPage`, `fixedWidth`, `fixedHeight`,
+`heightRatio`, and `autoWidth` are stripped before the merge — at the top level and
+inside `breakpoints` — and the drop is logged. Block fields own sizing; variations own
+everything else (gap, padding, focus/trim, navigation presentation).
+
+This is enforced rather than merely documented because the merge is
+`array_replace_recursive`, which **adds without removing**: a variation setting
+`fixedWidth` would leave the editor's `perPage` and every breakpoint count in place,
+producing a config that claims both modes at once — Splide would take slide width from
+one and its pagination dot count from the other.
 
 ### CSS Custom Properties
 
@@ -144,11 +160,9 @@ Each mode publishes only its own, so a stale count can never be rendered as a co
 count nothing on the frontend controls. Values come from the **final merged config**,
 after any variation overrides.
 
-Known gap, predating fixed-width sizing: the count preview is one tier out of step with
-the frontend. Splide's breakpoints map `1024 → desktop`, `768 → tablet`, `480 → mobile`
-(`ContentSlider.php`), while `editor-style.css` switches at `max-width: 1024px` and
-`max-width: 768px`, so between 769px and 1024px Splide uses the desktop count and the
-editor shows the tablet one. Fixed-width mode has no counts and no such gap.
+`editor-style.css` switches at `max-width: 1023px` and `max-width: 767px`, the same tiers
+Splide is given, so the count preview and the frontend agree. Keep them in step if either
+moves. Fixed-width mode has no counts and previews from the anchor itself.
 
 ## Extension Points
 

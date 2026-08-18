@@ -37,8 +37,8 @@ $sizingProperties = $isFixedWidth
     ? ['--slide-width-anchor: ' . $sliderConfig['fixedWidth']]
     : [
         '--slides-per-view-desktop: ' . ($sliderConfig['perPage'] ?? 3),
-        '--slides-per-view-tablet: ' . ($sliderConfig['breakpoints']['768']['perPage'] ?? 2),
-        '--slides-per-view-mobile: ' . ($sliderConfig['breakpoints']['480']['perPage'] ?? 1),
+        '--slides-per-view-tablet: ' . ($sliderConfig['breakpoints']['1023']['perPage'] ?? 2),
+        '--slides-per-view-mobile: ' . ($sliderConfig['breakpoints']['767']['perPage'] ?? 1),
     ];
 
 $context['wrapper_attributes'] = [
