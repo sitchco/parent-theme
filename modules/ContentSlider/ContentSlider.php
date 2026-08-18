@@ -178,20 +178,19 @@ class ContentSlider extends Module
         }
 
         // Splide reads breakpoints as max-widths and the narrower match wins, so the
-        // base value is the desktop tier and each key is the *top* of the tier below it:
-        // tablet 768–1023, mobile at most 767. That matches the field labels, the editor
-        // preview's media queries, and Kadence's own tiers.
+        // base value is the widest tier and each key is the *top* of the tier below it:
+        // desktop 769px and up, tablet 481–768, mobile at most 480. The field labels say
+        // exactly that; keep the two in step if either moves.
         //
-        // It did not always. The config used to carry `1024 => desktop` alongside a base
-        // of desktop — an entry that could never change the outcome — which pushed the
-        // real tablet band down to 481–768 and mobile to 480 and under. A 500px phone
-        // rendered the tablet count (three 128px-wide cards) and an 800px laptop the
-        // desktop count.
+        // These are deliberately not 1023/767. A count divides the track, so the card's
+        // width is whatever the viewport leaves over — a band's width ratio is the card's
+        // size range. Mobile at 1 across the 320–767 band runs a 293px card out to 637px
+        // (a 360:511 poster 1016px tall), which is why the mobile tier stops at 480.
         return [
             'perPage' => (int) ($fields['per_view_desktop'] ?? 3),
             'breakpoints' => [
-                '1023' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
-                '767' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
+                '768' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
+                '480' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
             ],
         ];
     }

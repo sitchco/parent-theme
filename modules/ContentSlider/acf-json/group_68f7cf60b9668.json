@@ -185,7 +185,7 @@
             "name": "per_view_desktop",
             "aria-label": "",
             "type": "number",
-            "instructions": "Number of slides visible on desktop screens (1024px+)",
+            "instructions": "Number of slides visible on desktop screens (769px and up)",
             "required": 0,
             "conditional_logic": [
                 [
@@ -216,7 +216,7 @@
             "name": "per_view_tablet",
             "aria-label": "",
             "type": "number",
-            "instructions": "Number of slides visible on tablet screens (768px - 1023px)",
+            "instructions": "Number of slides visible on tablet screens (481px – 768px)",
             "required": 0,
             "conditional_logic": [
                 [
@@ -247,7 +247,7 @@
             "name": "per_view_mobile",
             "aria-label": "",
             "type": "number",
-            "instructions": "Number of slides visible on mobile screens (<768px)",
+            "instructions": "Number of slides visible on mobile screens (480px and below)",
             "required": 0,
             "conditional_logic": [
                 [
@@ -385,5 +385,5 @@
     "description": "",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1787088566
+    "modified": 1755553000
 }

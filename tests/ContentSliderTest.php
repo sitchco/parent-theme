@@ -150,8 +150,8 @@ class ContentSliderTest extends TestCase
         ]);
 
         $this->assertSame(4, $config['perPage']);
-        $this->assertSame(2, $config['breakpoints']['1023']['perPage']);
-        $this->assertSame(1, $config['breakpoints']['767']['perPage']);
+        $this->assertSame(2, $config['breakpoints']['768']['perPage']);
+        $this->assertSame(1, $config['breakpoints']['480']['perPage']);
         $this->assertArrayNotHasKey('fixedWidth', $config);
     }
 
@@ -164,16 +164,15 @@ class ContentSliderTest extends TestCase
         ]);
 
         // Splide reads these as max-widths and the narrower match wins, so each key is
-        // the top of the tier below the base: desktop from 1024 up, tablet 768–1023,
-        // mobile at most 767 — the bands the field labels promise.
+        // the top of the tier below the base: desktop from 769px up, tablet 481–768,
+        // mobile at most 480 — the bands the field labels promise.
         //
-        // The old config carried `1024 => desktop` beside a base of desktop, an entry
-        // that could never change the outcome, which shifted every real band one tier
-        // narrower: a 500px phone rendered the tablet count.
-        $this->assertSame([1023, 767], array_keys($config['breakpoints']));
+        // No 1024 key: an entry equal to the base can never change the outcome, and one
+        // was carried here for a while purely as noise.
+        $this->assertSame([768, 480], array_keys($config['breakpoints']));
         $this->assertSame(4, $config['perPage']);
-        $this->assertSame(3, $config['breakpoints'][1023]['perPage']);
-        $this->assertSame(2, $config['breakpoints'][767]['perPage']);
+        $this->assertSame(3, $config['breakpoints'][768]['perPage']);
+        $this->assertSame(2, $config['breakpoints'][480]['perPage']);
     }
 
     public function testVariationCannotOverrideSizing(): void
@@ -189,8 +188,8 @@ class ContentSliderTest extends TestCase
                     'perPage' => 6,
                     'fixedWidth' => '360px',
                     'breakpoints' => [
-                        '1023' => ['perPage' => 5, 'gap' => '1rem'],
-                        '767' => ['perPage' => 4],
+                        '768' => ['perPage' => 5, 'gap' => '1rem'],
+                        '480' => ['perPage' => 4],
                     ],
                 ],
             ],
@@ -208,10 +207,10 @@ class ContentSliderTest extends TestCase
         }
 
         $this->assertSame('2rem', $config['gap'], 'Non-sizing options still merge');
-        $this->assertSame('1rem', $config['breakpoints'][1023]['gap'], 'So do non-sizing breakpoint options');
+        $this->assertSame('1rem', $config['breakpoints'][768]['gap'], 'So do non-sizing breakpoint options');
         $this->assertSame(3, $config['perPage'], 'Block fields keep sizing');
-        $this->assertSame(2, $config['breakpoints'][1023]['perPage']);
-        $this->assertSame(1, $config['breakpoints'][767]['perPage']);
+        $this->assertSame(2, $config['breakpoints'][768]['perPage']);
+        $this->assertSame(1, $config['breakpoints'][480]['perPage']);
         $this->assertArrayNotHasKey('fixedWidth', $config);
     }
 

@@ -36,8 +36,8 @@ These fields are available on every Content Slider block instance in the editor:
 | Dots | `pagination` | On |
 | Slide Sizing | see below | Slides per View |
 | Slides Per View (Desktop) | `perPage` | 3 |
-| Slides Per View (Tablet) | `breakpoints.1023.perPage` | 2 |
-| Slides Per View (Mobile) | `breakpoints.767.perPage` | 1 |
+| Slides Per View (Tablet) | `breakpoints.768.perPage` | 2 |
+| Slides Per View (Mobile) | `breakpoints.480.perPage` | 1 |
 | Minimum Slide Width | `fixedWidth` (floor) | 280px |
 | Preferred Slide Width | `fixedWidth` (fluid term) | 25% |
 | Maximum Slide Width | `fixedWidth` (ceiling) | 420px |
@@ -57,14 +57,15 @@ the desktop tier and each key is the *top* of the tier below it:
 
 | Field | Applies at | Config |
 |-------|-----------|--------|
-| Desktop | 1024px and up | `perPage` |
-| Tablet | 768–1023px | `breakpoints.1023.perPage` |
-| Mobile | 767px and under | `breakpoints.767.perPage` |
+| Desktop | 769px and up | `perPage` |
+| Tablet | 481–768px | `breakpoints.768.perPage` |
+| Mobile | 480px and under | `breakpoints.480.perPage` |
 
-Until this was corrected the config carried `1024 => desktop` beside a base of desktop —
-an entry that could never change the outcome — which shifted every real band one tier
-narrower than its label: desktop reached down to 769px and tablet down to 481px. A 500px
-phone rendered the tablet count, three cards at 128px each.
+These keys are deliberately not 1023/767. A count divides the track, so a slide's width is
+whatever the viewport leaves over, and a band's width ratio *is* the slide's size range.
+One-across over a 320–767 band runs a card from 293px to 637px — for the 360:511 posters
+these sliders usually carry, 1016px tall — so the mobile tier stops at 480. There is no
+`1024` key: an entry equal to the base can never change the outcome.
 
 **Fixed Slide Width** emits a single fluid `fixedWidth` anchor and no counts at all:
 
@@ -160,7 +161,7 @@ Each mode publishes only its own, so a stale count can never be rendered as a co
 count nothing on the frontend controls. Values come from the **final merged config**,
 after any variation overrides.
 
-`editor-style.css` switches at `max-width: 1023px` and `max-width: 767px`, the same tiers
+`editor-style.css` switches at `max-width: 768px` and `max-width: 480px`, the same tiers
 Splide is given, so the count preview and the frontend agree. Keep them in step if either
 moves. Fixed-width mode has no counts and previews from the anchor itself.
 
