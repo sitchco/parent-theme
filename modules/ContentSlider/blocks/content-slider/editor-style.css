@@ -20,6 +20,14 @@
         }
     }
 
+    /* Fixed-width sizing has no count to preview, so the columns are sized from the
+       same anchor Splide receives on the frontend: as many as fit, each exactly the
+       anchor's width. Specificity (0,2,0) also puts this above the count rules and
+       their media queries, whatever the source order. */
+    .is-sizing-fixed-width > .acf-innerblocks-container {
+        grid-template-columns: repeat(auto-fill, min(var(--slide-width-anchor, 280px), 100%));
+    }
+
     /* Stretch inner column to fill grid cell (background visibility) */
     .kadence-inner-column-inner {
         height: 100%;

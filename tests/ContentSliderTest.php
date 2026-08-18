@@ -138,6 +138,103 @@ class ContentSliderTest extends TestCase
         $this->assertFalse($config['rewind']);
     }
 
+    public function testAbsentSizingModeKeepsPerPageConfig(): void
+    {
+        // The guarantee for every block saved before the sizing field existed: ACF
+        // reports the key as absent (it never backfills definitions into stored meta),
+        // and absent has to mean the counts, unchanged.
+        $config = ContentSlider::buildSliderConfig([
+            'per_view_desktop' => 4,
+            'per_view_tablet' => 2,
+            'per_view_mobile' => 1,
+        ]);
+
+        $this->assertSame(4, $config['perPage']);
+        $this->assertSame(4, $config['breakpoints']['1024']['perPage']);
+        $this->assertSame(2, $config['breakpoints']['768']['perPage']);
+        $this->assertSame(1, $config['breakpoints']['480']['perPage']);
+        $this->assertArrayNotHasKey('fixedWidth', $config);
+    }
+
+    public function testUnrecognizedSizingModeFallsBackToPerPage(): void
+    {
+        // `??` catches absent and null but not a saved empty string, which is what a
+        // cleared select stores.
+        foreach (['', 'aspect_ratio', null] as $stored) {
+            $config = ContentSlider::buildSliderConfig(['sizing_mode' => $stored]);
+            $this->assertSame(3, $config['perPage'], 'Unrecognized sizing mode should fall back to counts');
+            $this->assertArrayNotHasKey('fixedWidth', $config);
+        }
+    }
+
+    public function testFixedWidthModeEmitsAnchorAndDropsCounts(): void
+    {
+        // `perPage` is not inert once `fixedWidth` wins the width assignment: Splide
+        // still derives the pagination dot count, the autoplay gate, and Controller
+        // index arithmetic from it. Fixed-width mode has to omit the key, not merely
+        // stop reading it.
+        $config = ContentSlider::buildSliderConfig([
+            'sizing_mode' => 'fixed_width',
+            'per_view_desktop' => 4,
+            'per_view_tablet' => 2,
+            'per_view_mobile' => 1,
+            'slide_width_min' => 300,
+            'slide_width_ideal' => 25,
+            'slide_width_max' => 420,
+        ]);
+
+        $this->assertSame('clamp(min(300px, 85%), 25%, 420px)', $config['fixedWidth']);
+        $this->assertArrayNotHasKey('perPage', $config);
+        $this->assertArrayNotHasKey('breakpoints', $config);
+    }
+
+    public function testFixedWidthAnchorFallsBackToDefaultsWhenFieldsAreAbsent(): void
+    {
+        $config = ContentSlider::buildSliderConfig(['sizing_mode' => 'fixed_width']);
+        $this->assertSame('clamp(min(280px, 85%), 25%, 420px)', $config['fixedWidth']);
+    }
+
+    public function testFixedWidthAnchorRaisesAMaximumBelowItsMinimum(): void
+    {
+        $config = ContentSlider::buildSliderConfig([
+            'sizing_mode' => 'fixed_width',
+            'slide_width_min' => 400,
+            'slide_width_max' => 200,
+        ]);
+
+        // An inverted pair is an authoring slip, not a reason to emit invalid CSS:
+        // clamp() with max < min silently resolves to the max and would pin every
+        // slide to 200px.
+        $this->assertSame('clamp(min(400px, 85%), 25%, 400px)', $config['fixedWidth']);
+    }
+
+    public function testFixedWidthAnchorFormatsAndBoundsThePreferredWidth(): void
+    {
+        $anchor = fn($ideal) => ContentSlider::buildSliderConfig([
+            'sizing_mode' => 'fixed_width',
+            'slide_width_ideal' => $ideal,
+        ])['fixedWidth'];
+
+        $this->assertStringContainsString(', 33.33%,', $anchor(33.333), 'Fractional percentages survive');
+        $this->assertStringContainsString(', 30%,', $anchor(30.0), 'Whole percentages carry no trailing zeros');
+        $this->assertStringContainsString(', 100%,', $anchor(150), 'Preferred width cannot exceed the track');
+        $this->assertStringContainsString(', 1%,', $anchor(0), 'Preferred width cannot be zero');
+    }
+
+    public function testFixedWidthFloorCannotOverflowASmallViewport(): void
+    {
+        // The February regression this mode has to make unauthorable: the Production
+        // Slider shipped a flat 360px slide and overflowed a 375px phone. However wide
+        // the authored minimum, the floor gives way to a share of the track first.
+        $config = ContentSlider::buildSliderConfig([
+            'sizing_mode' => 'fixed_width',
+            'slide_width_min' => 1200,
+            'slide_width_max' => 1600,
+        ]);
+
+        $this->assertSame('clamp(min(1200px, 85%), 25%, 1600px)', $config['fixedWidth']);
+    }
+
     public function testAbsentModeFollowsDefaultModeFilter(): void
     {
         // A block with no saved `slider_mode` resolves its type from the

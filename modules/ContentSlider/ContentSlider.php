@@ -21,6 +21,32 @@ use Sitchco\Utils\Logger;
 class ContentSlider extends Module
 {
     public const HOOK_SUFFIX = 'content-slider';
+
+    /**
+     * Slide sizing modes.
+     *
+     * `per_page` divides the visible track by a slide *count*, so a slide's width
+     * is a function of the viewport and its shape changes at every breakpoint.
+     * `fixed_width` gives every slide the same authored width and shows however
+     * many of them fit.
+     *
+     * The first entry is the fallback for absent or unrecognized values, which is
+     * what keeps blocks saved before this field existed rendering as they did.
+     */
+    public const SIZING_MODES = ['per_page', 'fixed_width'];
+
+    /**
+     * Ceiling on the fixed-width floor, as a share of the visible track.
+     *
+     * A minimum width wide enough to overflow a phone is the one authoring mistake
+     * this mode can make: the Production Slider shipped a flat 360px slide in
+     * February and overflowed a 375px viewport. Capping the floor at a share of the
+     * track makes that unauthorable rather than merely documented — the slide gives
+     * up its minimum before it gives up fitting on screen.
+     */
+    protected const ANCHOR_FLOOR_SHARE = 85;
+
+    protected const ANCHOR_DEFAULTS = ['min' => 280, 'ideal' => 25, 'max' => 420];
     /**
      * Module initialization
      *
@@ -73,6 +99,11 @@ class ContentSlider extends Module
      * mode falls back to the `default_mode` filter: the platform default is the
      * neutral 'slide'; a child theme (e.g. Roundabout) can return 'loop'.
      *
+     * Sizing comes from `sizing_mode` and is deliberately *not* filterable: a child
+     * theme flipping the default would silently re-size every block that predates
+     * the field, using width values those blocks never saved. Choosing a different
+     * default for newly inserted blocks is the ACF field default's job.
+     *
      * @param array $fields    ACF field values (keyed by field name).
      * @param array $blockData The block context array (uses `className` for variations).
      */
@@ -89,17 +120,13 @@ class ContentSlider extends Module
             'arrows' => !empty($fields['arrows']),
             'pagination' => !empty($fields['dots']),
             'gap' => 'var(--wp--custom--carousel-gap)',
-            'perPage' => (int) ($fields['per_view_desktop'] ?? 3),
             'perMove' => 1,
             'keyboard' => true,
             'accessibility' => true,
             'ariaLabel' => 'Content slider',
-            'breakpoints' => [
-                '1024' => ['perPage' => (int) ($fields['per_view_desktop'] ?? 3)],
-                '768' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
-                '480' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
-            ],
         ];
+
+        $sliderConfig += static::buildSizingConfig($fields);
 
         // Merge variation overrides from block style selection
         $variationNames = wp_get_block_style_variation_name_from_class($blockData['className'] ?? '');
@@ -112,6 +139,75 @@ class ContentSlider extends Module
         }
 
         return $sliderConfig;
+    }
+
+    /**
+     * Build the sizing half of the Splide config.
+     *
+     * The two modes are mutually exclusive by construction, not by precedence:
+     * fixed-width emits no `perPage` and no breakpoint counts at all. That matters
+     * because `perPage` is not inert once `fixedWidth` wins the width assignment —
+     * Splide still reads it for the pagination dot count (`ceil(slides / perPage)`,
+     * taken from the literal config and never measured), the `isEnough()` autoplay
+     * gate, Controller index arithmetic, and the lazy-load radius. Omitting the key
+     * lets script.js's own `perPage: 1` default stand, which is the value those
+     * calculations want when every slide moves individually.
+     *
+     * @param array $fields ACF field values (keyed by field name).
+     */
+    protected static function buildSizingConfig(array $fields): array
+    {
+        // `??` catches absent and null but not a saved empty string, so validate
+        // against the whitelist rather than trusting the stored value.
+        $mode = $fields['sizing_mode'] ?? '';
+        if (!in_array($mode, static::SIZING_MODES, true)) {
+            $mode = static::SIZING_MODES[0];
+        }
+
+        if ($mode === 'fixed_width') {
+            return ['fixedWidth' => static::buildSlideWidthAnchor($fields)];
+        }
+
+        return [
+            'perPage' => (int) ($fields['per_view_desktop'] ?? 3),
+            'breakpoints' => [
+                '1024' => ['perPage' => (int) ($fields['per_view_desktop'] ?? 3)],
+                '768' => ['perPage' => (int) ($fields['per_view_tablet'] ?? 2)],
+                '480' => ['perPage' => (int) ($fields['per_view_mobile'] ?? 1)],
+            ],
+        ];
+    }
+
+    /**
+     * Compose the fixed-width anchor as a single fluid CSS length.
+     *
+     * Splide assigns `fixedWidth` verbatim to `element.style.width`, so any CSS
+     * expression is legal here and the ratio/shape work stays in CSS. A `clamp()`
+     * is what removes the defect this mode exists to fix: with a count, slide width
+     * jumps discontinuously when the breakpoint changes the divisor — one pixel of
+     * viewport at 769px re-shapes every slide. A clamp has no integer to jump
+     * between, so the width glides and the shape holds.
+     *
+     * The middle term is a percentage of the track rather than a `vw` unit
+     * deliberately: percentages resolve against the list's content box, so they
+     * respect the container's max-width, the page gutters, and the peek padding —
+     * none of which `vw` can see. Splide's own CSS pins `.splide__slide` to
+     * `flex-shrink: 0`, so a percentage width holds instead of collapsing.
+     *
+     * @param array $fields ACF field values (keyed by field name).
+     */
+    protected static function buildSlideWidthAnchor(array $fields): string
+    {
+        $defaults = static::ANCHOR_DEFAULTS;
+
+        $min = max(1, (int) ($fields['slide_width_min'] ?? $defaults['min']));
+        $max = max($min, (int) ($fields['slide_width_max'] ?? $defaults['max']));
+        $ideal = min(100, max(1, (float) ($fields['slide_width_ideal'] ?? $defaults['ideal'])));
+
+        // Trim the trailing zeros a float always brings: `25%`, not `25.00%`.
+        $idealValue = rtrim(rtrim(number_format($ideal, 2, '.', ''), '0'), '.');
+
+        return sprintf('clamp(min(%dpx, %d%%), %s%%, %dpx)', $min, static::ANCHOR_FLOOR_SHARE, $idealValue, $max);
     }
 
     private function scanVariations(): array
