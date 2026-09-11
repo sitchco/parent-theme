@@ -116,6 +116,9 @@ function createAttributeFilter(targetBlocks, allFields, includeClassesAttribute 
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} panels - Panel configurations
+ * @param {string} [panels[].kadenceTab] - On Kadence blocks, which of Kadence's own tabs
+ *   ('general' | 'style' | 'advanced') this panel renders on. Defaults to 'general'.
+ *   Ignored for non-Kadence blocks and when `kadenceTabAware` is false.
  * @param {Object[]} allFields - All field definitions (for class sync)
  * @param {string} namespace - Unique namespace for this extension
  * @param {Object} options - Additional options
@@ -182,44 +185,54 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
 
             // Run custom setup hook if provided
             const setupResult = useSetup ? useSetup(props) : {};
-            // Check Kadence tab visibility (only show on general tab)
-            if (isKadence && !kadenceTab.isGeneralTab) {
-                return <BlockEdit {...props} />;
-            }
             // Check custom render condition
             if (shouldRender && !shouldRender(props, setupResult)) {
                 return <BlockEdit {...props} />;
             }
+
+            // Kadence's General/Style/Advanced bar is not Gutenberg's tab system — all three
+            // tabs render into the same default inspector group, toggled by React state in the
+            // `kadenceblocks/data` store. So tab targeting is ours to do: a panel declares the
+            // tab it belongs to and is simply not rendered on the others. Defaults to 'general',
+            // which is where every panel lived before `kadenceTab` existed.
+            const activeKadenceTab = kadenceTab.activeTab || 'general';
             return (
                 <>
                     <BlockEdit {...props} />
-                    {panels.map((panel, panelIndex) => (
-                        <InspectorControls key={panelIndex} group={panel.group || 'settings'}>
-                            <PanelBody title={panel.title} initialOpen={panel.initialOpen ?? true}>
-                                {panel.fields?.flat().map((field) => {
-                                    if (!field.render) {
-                                        return null;
-                                    }
-                                    if (field.condition && !field.condition(attributes)) {
-                                        return null;
-                                    }
+                    {panels.map((panel, panelIndex) => {
+                        if (isKadence && (panel.kadenceTab ?? 'general') !== activeKadenceTab) {
+                            return null;
+                        }
+                        // Keyed by the original index, so returning null above doesn't shift
+                        // the keys of the panels that do render.
+                        return (
+                            <InspectorControls key={panelIndex} group={panel.group || 'settings'}>
+                                <PanelBody title={panel.title} initialOpen={panel.initialOpen ?? true}>
+                                    {panel.fields?.flat().map((field) => {
+                                        if (!field.render) {
+                                            return null;
+                                        }
+                                        if (field.condition && !field.condition(attributes)) {
+                                            return null;
+                                        }
 
-                                    const value = attributes[field.name];
-                                    const onChange = (newValue) => setAttributes({ [field.name]: newValue });
-                                    return (
-                                        <field.render
-                                            key={field.name}
-                                            field={field}
-                                            value={value}
-                                            onChange={onChange}
-                                            attributes={attributes}
-                                            setAttributes={setAttributes}
-                                        />
-                                    );
-                                })}
-                            </PanelBody>
-                        </InspectorControls>
-                    ))}
+                                        const value = attributes[field.name];
+                                        const onChange = (newValue) => setAttributes({ [field.name]: newValue });
+                                        return (
+                                            <field.render
+                                                key={field.name}
+                                                field={field}
+                                                value={value}
+                                                onChange={onChange}
+                                                attributes={attributes}
+                                                setAttributes={setAttributes}
+                                            />
+                                        );
+                                    })}
+                                </PanelBody>
+                            </InspectorControls>
+                        );
+                    })}
                 </>
             );
         };
@@ -295,13 +308,16 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
 /**
  * Extends one or more Gutenberg blocks with custom attributes, inspector controls, and classes.
  *
- * For Kadence blocks (kadence/*), inspector controls automatically only appear on the "General" tab.
- * Set `kadenceTabAware: false` to disable this behavior.
+ * For Kadence blocks (kadence/*), inspector controls appear on the "General" tab by default.
+ * Give a panel `kadenceTab: 'style'` or `'advanced'` to put it on one of the other two.
+ * Set `kadenceTabAware: false` to opt out of tab targeting entirely and always render.
  *
  * @param {Object} config - Extension configuration
  * @param {string|string[]} config.blocks - Block name(s) to extend
  * @param {string} config.namespace - Unique namespace for hook registration
  * @param {Object} [config.panel] - Single panel configuration (shorthand)
+ * @param {string} [config.panel.kadenceTab] - Kadence tab to render on: 'general' (default),
+ *   'style', or 'advanced'
  * @param {Object[]} [config.panels] - Multiple panel configurations
  * @param {Object[]} [config.fields] - Fields for single panel (used with config.panel)
  * @param {Function} [config.shouldRender] - Custom condition for rendering controls
@@ -326,6 +342,17 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
  *     blocks: ['kadence/rowlayout'],
  *     namespace: 'mytheme/rowlayout',
  *     panel: { title: 'Custom Settings', group: 'settings' },
+ *     fields: [...],
+ * });
+ *
+ * @example
+ * // Kadence block, panel placed on Kadence's "Style" tab.
+ * // Keep group: 'settings' — group: 'styles' fills WP's own Styles slot, which makes core
+ * // push a second native "Settings | Styles" tab bar above Kadence's.
+ * extendBlock({
+ *     blocks: ['kadence/rowlayout', 'kadence/column'],
+ *     namespace: 'mytheme/animations',
+ *     panel: { title: 'Animations', group: 'settings', kadenceTab: 'style' },
  *     fields: [...],
  * });
  *

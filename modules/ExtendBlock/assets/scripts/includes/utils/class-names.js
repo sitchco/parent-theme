@@ -18,6 +18,9 @@ export function classNames(...classes) {
 /**
  * Generates class names from fields based on their attribute values.
  *
+ * Fields hidden by their `condition` contribute nothing, so a stale value left behind by a
+ * control the author can no longer see does not keep emitting its class.
+ *
  * @param {Array} fields - Array of field definitions
  * @param {Object} attributes - Block attributes
  * @returns {string[]} Array of class names
@@ -27,6 +30,9 @@ export function generateFieldClasses(fields, attributes) {
 
     for (const field of fields) {
         if (!field.className) {
+            continue;
+        }
+        if (field.condition && !field.condition(attributes)) {
             continue;
         }
 
@@ -61,6 +67,9 @@ export function generateEditorFieldClasses(fields, attributes, device) {
 
     for (const field of fields) {
         if (!field.className) {
+            continue;
+        }
+        if (field.condition && !field.condition(attributes)) {
             continue;
         }
         if (field.responsive) {
