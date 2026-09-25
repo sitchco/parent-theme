@@ -37,6 +37,32 @@ return [
         PatternsModule::class,
         GravityForms::class,
     ],
+    /**
+     * Which blocks may use which animations.
+     *
+     * Block name => a list of animation keys, or a map of them when a block needs overrides:
+     *
+     *     'core/group' => ['parallax', 'fade-up'],
+     *
+     *     'kadence/rowlayout' => [
+     *         'letter' => [
+     *             'allowed'  => ['color' => ['purple', 'green']],  // restrict the palette here
+     *             'defaults' => ['opacity' => '30'],               // and start at 30%
+     *         ],
+     *         'parallax' => true,
+     *     ],
+     *
+     * `allowed` and `defaults` are the only reserved sub-keys. An animation named here must also be
+     * activated in `modules` above, or it is dropped with a logged warning. Merging is additive, so
+     * removal is `=> false` — `'parallax' => false` to drop one animation from a block, or
+     * `'core/group' => false` to drop the block entirely.
+     *
+     * Do not mix the bare-list and keyed forms in one block: a numeric-keyed array is discarded by
+     * config normalization before anything reads it. And in a child theme, prefer the keyed form —
+     * the bare-list form replaces an ancestor's entry outright rather than adding to it, silently
+     * taking its overrides with it. Both traps are spelled out on AnimationFrameworkModule.
+     */
+    'animations' => [],
     'disallowedBlocks' => [
         /** TEXT */
         'core/code',
