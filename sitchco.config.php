@@ -1,6 +1,7 @@
 <?php
 
 use Sitchco\Modules\Wordpress\Cleanup;
+use Sitchco\Parent\Modules\Animation\AnimationFrameworkModule;
 use Sitchco\Parent\Modules\ButtonConfig\ButtonConfigModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
@@ -21,6 +22,7 @@ return [
         Cleanup::class => [
             'disableGutenbergStyles' => false,
         ],
+        AnimationFrameworkModule::class,
         ButtonConfigModule::class,
         ContentPartialModule::class,
         ContentPartialBlockModule::class,
