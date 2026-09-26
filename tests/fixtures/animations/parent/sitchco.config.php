@@ -59,6 +59,12 @@ return [
         // Numeric option values, to prove they survive normalization's key casting as strings.
         'test/numeric-allowed' => ['animation-tester' => ['allowed' => ['opacity' => ['10', '30', '50']]]],
 
+        /* An int default against string-keyed permitted values. Normalization casts the `allowed`
+         keys back to strings, so the cross-check has to compare as strings or flag this wrongly. */
+        'test/typed-default' => [
+            'animation-tester' => ['allowed' => ['speed' => ['25', '50']], 'defaults' => ['speed' => 25]],
+        ],
+
         // An animation no module provides, alongside one that exists.
         'test/unknown-animation' => ['no-such-animation' => true, 'animation-tester' => true],
 
@@ -78,5 +84,15 @@ return [
             'animation-tester' => ['defaults' => ['opacity' => '30', 'speed' => 25]],
         ],
         'test/child-clobbers-overrides' => ['animation-tester' => ['defaults' => ['opacity' => '30']]],
+        'test/child-clobbers-overrides-keyed' => ['animation-tester' => ['defaults' => ['opacity' => '30']]],
+        'test/child-keeps-overrides' => ['animation-tester' => ['defaults' => ['opacity' => '30']]],
+
+        // A default that IS permitted here, and stops being permitted once the child narrows it.
+        'test/child-orphans-default' => [
+            'animation-tester' => [
+                'allowed' => ['color' => ['purple', 'green']],
+                'defaults' => ['color' => 'green'],
+            ],
+        ],
     ],
 ];

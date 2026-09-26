@@ -35,7 +35,14 @@ use Sitchco\Utils\Logger;
  *     ],
  *
  * `allowed` and `defaults` are the only reserved sub-keys. Merging is additive, so a child theme
- * cannot delete a key an ancestor set — removal is `=> false`, at either level.
+ * cannot delete a key an ancestor set — removal is `=> false`. That works at exactly three points:
+ * a block (`'kadence/column' => false`), an animation on a block (`'parallax' => false`), and one
+ * permitted value inside `allowed` (`'allowed' => ['color' => ['green' => false]]`).
+ *
+ * It stops there. There is no way to unset a whole inherited restriction or default: `'allowed' =>
+ * false`, `'allowed' => ['color' => false]` and `'defaults' => false` are authoring mistakes, each
+ * logged and each leaving that option unrestricted or undefaulted. A theme wanting a different
+ * palette or default states the one it wants rather than removing the one it inherited.
  *
  * TWO SILENT TRAPS, neither of which this class can detect at runtime:
  *
@@ -49,10 +56,18 @@ use Sitchco\Utils\Logger;
  *
  *    Write every entry with an explicit key as soon as one of them needs overrides.
  *
- * 2. The bare-list form in a child theme is DESTRUCTIVE, not additive. ArrayUtil::mergeRecursiveDistinct
- *    replaces an array with a scalar, so a child writing `'kadence/rowlayout' => ['parallax']` against
- *    a parent's `'parallax' => ['defaults' => [...]]` overwrites those overrides with `true` and
- *    discards them. To add an animation while keeping an ancestor's overrides, use the keyed form.
+ * 2. Mentioning an inherited animation again as `true` REPLACES its overrides, in either form.
+ *    ConfigRegistry::normalizeData() rewrites a bare `'parallax'` into `'parallax' => true` before
+ *    anything merges, so the bare-list and keyed forms arrive as the same scalar — and
+ *    ArrayUtil::mergeRecursiveDistinct lets a scalar replace an array. A child writing either
+ *    `['parallax']` or `['parallax' => true]` over a parent's `'parallax' => ['defaults' => [...]]`
+ *    therefore discards those defaults, silently.
+ *
+ *        'kadence/rowlayout' => ['parallax' => []],   // keeps the parent's overrides
+ *
+ *    Two arrays merge, so `[]` leaves the ancestor's entry untouched; leaving the animation out
+ *    does the same. Naming a DIFFERENT animation is additive in either form and never touches its
+ *    siblings — it is only re-stating an inherited one as `true` that costs anything.
  *
  * The merged config is object-cached for a day under `sitchco_config`, so on non-local environments a
  * config edit — including one that fixes a warning logged from here — needs ConfigRegistry::clearCache()
@@ -87,21 +102,43 @@ class AnimationFrameworkModule extends Module
     /** Problems found during one resolution pass, emitted together as a single warning. */
     private array $configProblems = [];
 
+    /** Whether init() has run; until it has, nothing below memoizes. See getAnimations(). */
+    private bool $initialized = false;
+
     public function __construct(protected ModuleRegistry $moduleRegistry, protected ConfigRegistry $configRegistry) {}
+
+    /**
+     * Opens memoization, and nothing else.
+     *
+     * ModuleRegistry runs every init() only after the registration pass has finished, so this is the
+     * earliest moment at which the active-module list is whole and an answer is safe to keep.
+     */
+    public function init(): void
+    {
+        $this->initialized = true;
+    }
 
     /**
      * Every active animation, keyed by its key().
      *
-     * Safe from init() onward, never from a constructor. ModuleRegistry::activateModules() completes
-     * its registration pass before initializing anything, so the active-module list is already whole
-     * by the time any init() runs — but it is still filling while modules are being constructed, and
-     * this result is memoized, so discovering from a constructor would freeze a partial list in for
-     * the rest of the request.
+     * Safe from init() onward, never from a constructor. ModuleRegistry::registerActiveModule()
+     * builds a module through the container before adding it to the active list, so the list is
+     * still filling while constructors run; ModuleRegistry::activateModules() completes that whole
+     * registration pass before initializing anything, so by the time any init() runs it is whole.
+     *
+     * Memoizing a partial list would drop an animation for the rest of the request and say nothing,
+     * which is why the rule is enforced rather than just stated: until init() has run, this answers
+     * from whatever is registered so far but keeps nothing. A too-early caller gets a possibly short
+     * list; it cannot freeze one in for everyone else.
      *
      * @return array<string, AnimationModule>
      */
     public function getAnimations(): array
     {
+        if (!$this->initialized) {
+            return $this->discoverAnimations();
+        }
+
         return $this->animations ??= $this->discoverAnimations();
     }
 
@@ -137,6 +174,10 @@ class AnimationFrameworkModule extends Module
      */
     public function getBlockAnimations(): array
     {
+        if (!$this->initialized) {
+            return $this->resolveBlockAnimations();
+        }
+
         return $this->blockAnimations ??= $this->resolveBlockAnimations();
     }
 
@@ -278,8 +319,10 @@ class AnimationFrameworkModule extends Module
     {
         $empty = [self::OVERRIDE_ALLOWED => [], self::OVERRIDE_DEFAULTS => []];
 
-        /* An empty array is a legitimate way to say "enabled, nothing overridden" — most often what
-         is left after a child theme empties out an ancestor's overrides. Not a mistake. */
+        /* An empty array is a legitimate way to say "enabled, nothing overridden", and the way a
+         child theme re-states an inherited animation without discarding its overrides: two arrays
+         merge, so `[]` over an ancestor's overrides keeps them and never reaches here. This runs
+         only when someone wrote `[]` directly. Not a mistake either way. */
         if ($value === []) {
             return $empty;
         }
@@ -309,14 +352,62 @@ class AnimationFrameworkModule extends Module
             );
         }
 
-        return [
-            self::OVERRIDE_ALLOWED => array_key_exists(self::OVERRIDE_ALLOWED, $value)
-                ? $this->resolveAllowed($context, $value[self::OVERRIDE_ALLOWED])
-                : [],
-            self::OVERRIDE_DEFAULTS => array_key_exists(self::OVERRIDE_DEFAULTS, $value)
-                ? $this->resolveDefaults($context, $value[self::OVERRIDE_DEFAULTS])
-                : [],
-        ];
+        $allowed = array_key_exists(self::OVERRIDE_ALLOWED, $value)
+            ? $this->resolveAllowed($context, $value[self::OVERRIDE_ALLOWED])
+            : [];
+        $defaults = array_key_exists(self::OVERRIDE_DEFAULTS, $value)
+            ? $this->resolveDefaults($context, $value[self::OVERRIDE_DEFAULTS])
+            : [];
+
+        $this->flagUnpermittedDefaults($context, $allowed, $defaults);
+
+        return [self::OVERRIDE_ALLOWED => $allowed, self::OVERRIDE_DEFAULTS => $defaults];
+    }
+
+    /**
+     * Flag any default its own option's `allowed` list does not permit.
+     *
+     * The two halves are authored independently and resolved independently, so nothing else notices
+     * when they disagree. The case that actually happens is a child theme narrowing a palette and
+     * leaving an ancestor's default behind it: the editor then starts on a value its own control
+     * cannot offer. Every other authoring mistake here is flagged, so this one is too.
+     *
+     * Only defaults set in config are covered. An animation's own built-in defaults are its
+     * business, and this class never sees them.
+     *
+     * @param array<string, list<string>> $allowed
+     * @param array<string, mixed>        $defaults
+     */
+    private function flagUnpermittedDefaults(string $context, array $allowed, array $defaults): void
+    {
+        foreach ($defaults as $option => $value) {
+            /* Only values a control could offer from a list. A bool or null default is a literal
+             setting — `reverse => false` — with nothing to match against. */
+            if (!is_string($value) && !is_int($value) && !is_float($value)) {
+                continue;
+            }
+
+            /* No restriction to violate. An `allowed` list that permits nothing at all is already
+             flagged by resolveAllowed(), and one authoring mistake earns one problem. */
+            if (!isset($allowed[$option]) || $allowed[$option] === []) {
+                continue;
+            }
+
+            /* Compared as strings: resolveAllowed() casts permitted values to strings, while a
+             default keeps the type it was authored with, so `speed => 25` matches '25'. */
+            if (in_array((string) $value, $allowed[$option], true)) {
+                continue;
+            }
+
+            $this->flagProblem(
+                "{$context} / defaults / {$option}",
+                sprintf(
+                    'defaults to "%s", which its own `allowed` list does not permit (%s). The control will not offer it.',
+                    $value,
+                    implode(', ', $allowed[$option]),
+                ),
+            );
+        }
     }
 
     /**
@@ -325,7 +416,12 @@ class AnimationFrameworkModule extends Module
     private function resolveAllowed(string $context, mixed $allowed): array
     {
         if (!is_array($allowed)) {
-            $this->flagProblem($context, '`allowed` must map option names to their permitted values. Ignoring it.');
+            /* The merge has already replaced the ancestor's list with this scalar, so the
+             restriction is gone whatever happens here; say what the outcome is. */
+            $this->flagProblem(
+                $context,
+                '`allowed` must map option names to their permitted values. Leaving every option unrestricted.',
+            );
 
             return [];
         }
@@ -341,7 +437,7 @@ class AnimationFrameworkModule extends Module
             if (!is_array($values)) {
                 $this->flagProblem(
                     "{$context} / allowed / {$option}",
-                    'is not a list of permitted values. Ignoring it.',
+                    'is not a list of permitted values. Leaving the option unrestricted.',
                 );
                 continue;
             }
@@ -375,7 +471,10 @@ class AnimationFrameworkModule extends Module
     private function resolveDefaults(string $context, mixed $defaults): array
     {
         if (!is_array($defaults)) {
-            $this->flagProblem($context, '`defaults` must map option names to their default values. Ignoring it.');
+            $this->flagProblem(
+                $context,
+                '`defaults` must map option names to their default values. Applying no defaults.',
+            );
 
             return [];
         }
@@ -394,8 +493,9 @@ class AnimationFrameworkModule extends Module
                 continue;
             }
 
-            /* Everything else is taken literally, `false` and `null` included. There is no "unset the
-             inherited default" sentinel: a theme that wants a different default states it. */
+            /* Everything else is taken literally, `false` and `null` included — `reverse => false`
+             is a default, not a removal. There is no "unset the inherited default" sentinel here:
+             removal by `=> false` stops one level up, at the animation. */
             $resolved[$option] = $value;
         }
 

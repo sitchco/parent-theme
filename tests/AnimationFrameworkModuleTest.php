@@ -33,12 +33,18 @@ class AnimationFrameworkModuleTest extends TestCase
      * The same, reading a specific config instead of nothing. A ConfigRegistryTester with no fixture
      * directories finds no files at all, so `animations` resolves to an empty section and the
      * discovery cases above are unaffected by config.
+     *
+     * init() is called because ModuleRegistry would have: it is what opens memoization, and every
+     * case but the too-early one wants the coordinator in the state the site runs it in.
      */
     private function frameworkWithConfig(
         ConfigRegistry $configRegistry,
         string ...$moduleClassnames,
     ): AnimationFrameworkModule {
-        return new AnimationFrameworkModule($this->registryFor(...$moduleClassnames), $configRegistry);
+        $framework = new AnimationFrameworkModule($this->registryFor(...$moduleClassnames), $configRegistry);
+        $framework->init();
+
+        return $framework;
     }
 
     /**
@@ -102,12 +108,12 @@ class AnimationFrameworkModuleTest extends TestCase
         return $this->captureLogsAt(LogLevel::ERROR, $fn);
     }
 
-    public function test_key_defaults_to_the_hook_suffix(): void
+    public function testKeyDefaultsToTheHookSuffix(): void
     {
         $this->assertSame(AnimationTester::HOOK_SUFFIX, $this->container->get(AnimationTester::class)->key());
     }
 
-    public function test_key_can_be_overridden_away_from_the_hook_suffix(): void
+    public function testKeyCanBeOverriddenAwayFromTheHookSuffix(): void
     {
         $animation = $this->container->get(SecondAnimationTester::class);
 
@@ -115,7 +121,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertNotSame(SecondAnimationTester::HOOK_SUFFIX, $animation->key());
     }
 
-    public function test_discovers_active_animations_keyed_by_animation_key(): void
+    public function testDiscoversActiveAnimationsKeyedByAnimationKey(): void
     {
         $animations = $this->frameworkFor(AnimationTester::class)->getAnimations();
 
@@ -123,16 +129,18 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertInstanceOf(AnimationTester::class, $animations['animation-tester']);
     }
 
-    public function test_ignores_modules_that_are_not_animations(): void
+    public function testIgnoresModulesThatAreNotAnimations(): void
     {
         $registry = $this->registryFor(AnimationTester::class, ModuleTester::class);
-        $animations = (new AnimationFrameworkModule($registry, new ConfigRegistryTester()))->getAnimations();
+        $framework = new AnimationFrameworkModule($registry, new ConfigRegistryTester());
+        $framework->init();
+        $animations = $framework->getAnimations();
 
         $this->assertArrayHasKey(ModuleTester::class, $registry->getActiveModules());
         $this->assertSame(['animation-tester'], array_keys($animations));
     }
 
-    public function test_discovers_multiple_animations(): void
+    public function testDiscoversMultipleAnimations(): void
     {
         $animations = $this->frameworkFor(AnimationTester::class, SecondAnimationTester::class)->getAnimations();
 
@@ -140,7 +148,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertInstanceOf(SecondAnimationTester::class, $animations['second-tester']);
     }
 
-    public function test_get_animation_looks_up_by_key(): void
+    public function testGetAnimationLooksUpByKey(): void
     {
         $framework = $this->frameworkFor(AnimationTester::class);
 
@@ -148,7 +156,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertNull($framework->getAnimation('no-such-animation'));
     }
 
-    public function test_duplicate_key_keeps_the_first_animation_and_logs_an_error(): void
+    public function testDuplicateKeyKeepsTheFirstAnimationAndLogsAnError(): void
     {
         $framework = $this->frameworkFor(AnimationTester::class, DuplicateAnimationTester::class);
         $animations = null;
@@ -166,7 +174,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertStringContainsString(AnimationTester::class, $entry['value']);
     }
 
-    public function test_empty_key_is_dropped_with_an_error_without_losing_other_animations(): void
+    public function testEmptyKeyIsDroppedWithAnErrorWithoutLosingOtherAnimations(): void
     {
         $framework = $this->frameworkFor(EmptyKeyAnimationTester::class, AnimationTester::class);
         $animations = null;
@@ -180,22 +188,23 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertStringContainsString(EmptyKeyAnimationTester::class, $entry['value']);
     }
 
-    public function test_activating_an_animation_pulls_in_the_framework(): void
+    public function testActivatingAnAnimationPullsInTheFramework(): void
     {
         $active = $this->registryFor(AnimationTester::class)->getActiveModules();
 
         $this->assertArrayHasKey(AnimationFrameworkModule::class, $active);
     }
 
-    public function test_no_active_animations_discovers_nothing(): void
+    public function testNoActiveAnimationsDiscoversNothing(): void
     {
         $this->assertSame([], $this->frameworkFor(ModuleTester::class)->getAnimations());
     }
 
-    public function test_discovery_is_memoized(): void
+    public function testDiscoveryIsMemoized(): void
     {
         $registry = $this->registryFor(AnimationTester::class);
         $framework = new AnimationFrameworkModule($registry, new ConfigRegistryTester());
+        $framework->init();
         $first = $framework->getAnimations();
 
         // Activating another animation after the first lookup must not change what was resolved:
@@ -205,14 +214,30 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame($first, $framework->getAnimations());
     }
 
-    public function test_bare_list_enables_every_listed_animation_in_config_order(): void
+    public function testDiscoveryBeforeInitAnswersWithoutFreezingAPartialList(): void
+    {
+        /* ModuleRegistry builds a module before adding it to the active list, so a coordinator asked
+           from a constructor sees a list that is still filling. Memoizing that would drop an
+           animation for the whole request and say nothing, so nothing is kept until init(). */
+        $registry = $this->registryFor(AnimationTester::class);
+        $framework = new AnimationFrameworkModule($registry, new ConfigRegistryTester());
+
+        $this->assertSame(['animation-tester'], array_keys($framework->getAnimations()));
+
+        $registry->activateModules([SecondAnimationTester::class => true]);
+        $framework->init();
+
+        $this->assertSame(['animation-tester', 'second-tester'], array_keys($framework->getAnimations()));
+    }
+
+    public function testBareListEnablesEveryListedAnimationInConfigOrder(): void
     {
         $entries = $this->frameworkForFixtures('parent')->getAnimationsForBlock('test/bare-list');
 
         $this->assertSame(['animation-tester', 'second-tester'], array_keys($entries));
     }
 
-    public function test_an_entry_carries_the_key_label_and_empty_overrides(): void
+    public function testAnEntryCarriesTheKeyLabelAndEmptyOverrides(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/enabled-true');
 
@@ -227,7 +252,7 @@ class AnimationFrameworkModuleTest extends TestCase
         );
     }
 
-    public function test_an_empty_override_array_enables_rather_than_removes(): void
+    public function testAnEmptyOverrideArrayEnablesRatherThanRemoves(): void
     {
         // The distinction truthiness filtering would get wrong: [] is falsy but means "no overrides".
         $entries = $this->frameworkForFixtures('parent')->getAnimationsForBlock('test/empty-overrides');
@@ -235,14 +260,14 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertArrayHasKey('animation-tester', $entries);
     }
 
-    public function test_allowed_restricts_an_options_values(): void
+    public function testAllowedRestrictsAnOptionsValues(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/overrides');
 
         $this->assertSame(['color' => ['purple', 'green', 'red']], $entry['allowed']);
     }
 
-    public function test_defaults_keep_the_types_they_were_authored_with(): void
+    public function testDefaultsKeepTheTypesTheyWereAuthoredWith(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/overrides');
 
@@ -250,7 +275,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['opacity' => '30', 'speed' => 25, 'reverse' => false], $entry['defaults']);
     }
 
-    public function test_numeric_allowed_values_survive_normalization_as_strings(): void
+    public function testNumericAllowedValuesSurviveNormalizationAsStrings(): void
     {
         // Normalization turns permitted values into array keys, which casts numeric strings to ints.
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/numeric-allowed');
@@ -258,19 +283,19 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['opacity' => ['10', '30', '50']], $entry['allowed']);
     }
 
-    public function test_a_scalar_permitted_value_is_read_as_a_one_item_list(): void
+    public function testAScalarPermittedValueIsReadAsAOneItemList(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/allowed-scalar');
 
         $this->assertSame(['color' => ['purple']], $entry['allowed']);
     }
 
-    public function test_an_unconfigured_block_gets_no_animations(): void
+    public function testAnUnconfiguredBlockGetsNoAnimations(): void
     {
         $this->assertSame([], $this->frameworkForFixtures('parent')->getAnimationsForBlock('test/never-mentioned'));
     }
 
-    public function test_animations_for_block_is_a_view_of_the_resolved_map(): void
+    public function testAnimationsForBlockIsAViewOfTheResolvedMap(): void
     {
         $framework = $this->frameworkForFixtures('parent');
 
@@ -280,36 +305,33 @@ class AnimationFrameworkModuleTest extends TestCase
         );
     }
 
-    public function test_resolution_is_memoized(): void
+    public function testResolutionIsMemoized(): void
     {
-        $registry = $this->registryFor(AnimationTester::class);
-        $framework = new AnimationFrameworkModule(
-            $registry,
-            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/parent'),
-        );
-        $first = $framework->getBlockAnimations();
+        /* Asserted through the warning rather than the returned map: re-resolving would produce an
+           identical map, so comparing results passes with or without the memoization. The parent
+           fixture always logs its combined warning, and a second resolution could not help logging
+           it again. */
+        $framework = $this->frameworkForFixtures('parent');
 
-        // Activating a second animation after the first lookup must not change what was resolved.
-        $registry->activateModules([SecondAnimationTester::class => true]);
-
-        $this->assertSame($first, $framework->getBlockAnimations());
+        $this->assertNotNull($this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations()));
+        $this->assertNull($this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations()));
     }
 
-    public function test_child_theme_adds_a_block_the_parent_never_mentioned(): void
+    public function testChildThemeAddsABlockTheParentNeverMentioned(): void
     {
         $entries = $this->frameworkForFixtures('parent', 'child')->getAnimationsForBlock('test/child-adds-block');
 
         $this->assertSame(['second-tester'], array_keys($entries));
     }
 
-    public function test_child_theme_appends_an_animation_after_the_parents(): void
+    public function testChildThemeAppendsAnAnimationAfterTheParents(): void
     {
         $entries = $this->frameworkForFixtures('parent', 'child')->getAnimationsForBlock('test/child-appends');
 
         $this->assertSame(['animation-tester', 'second-tester'], array_keys($entries));
     }
 
-    public function test_child_theme_removes_one_animation_leaving_its_siblings(): void
+    public function testChildThemeRemovesOneAnimationLeavingItsSiblings(): void
     {
         $entries = $this->frameworkForFixtures('parent', 'child')->getAnimationsForBlock(
             'test/child-removes-animation',
@@ -318,34 +340,54 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['animation-tester'], array_keys($entries));
     }
 
-    public function test_child_theme_narrows_an_inherited_allowed_list(): void
+    public function testChildThemeNarrowsAnInheritedAllowedList(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent', 'child'), 'test/child-narrows-allowed');
 
         $this->assertSame(['color' => ['purple']], $entry['allowed']);
     }
 
-    public function test_child_theme_overrides_one_default_and_the_parents_siblings_survive(): void
+    public function testChildThemeOverridesOneDefaultAndTheParentsSiblingsSurvive(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent', 'child'), 'test/child-overrides-default');
 
         $this->assertSame(['opacity' => '50', 'speed' => 25], $entry['defaults']);
     }
 
-    public function test_child_theme_bare_list_form_discards_an_inherited_override(): void
+    /**
+     * @dataProvider clobberedOverrideProvider
+     */
+    public function testReStatingAnInheritedAnimationAsTrueDiscardsItsOverrides(string $blockName): void
     {
-        /* Documents the trap rather than endorsing it: mergeRecursiveDistinct replaces an array with
-           a scalar, so the bare-list form wipes out the overrides an ancestor set on that animation
-           instead of adding to them. A child theme wanting both uses the keyed form. */
-        $entry = $this->entryFor($this->frameworkForFixtures('parent', 'child'), 'test/child-clobbers-overrides');
+        /* Documents the trap rather than endorsing it, for BOTH forms: normalizeData() rewrites the
+           bare list into `animation-tester => true`, so the two are the same scalar by the time
+           mergeRecursiveDistinct replaces the parent's override array with it. The keyed form is not
+           the way out — see the next test for what is. */
+        $entry = $this->entryFor($this->frameworkForFixtures('parent', 'child'), $blockName);
 
         $this->assertSame([], $entry['defaults']);
+    }
+
+    public static function clobberedOverrideProvider(): array
+    {
+        return [
+            'bare list' => ['test/child-clobbers-overrides'],
+            'keyed true' => ['test/child-clobbers-overrides-keyed'],
+        ];
+    }
+
+    public function testChildThemeKeepsAnInheritedOverrideByReStatingItAsAnEmptyArray(): void
+    {
+        // Two arrays merge, so `=> []` is how a child re-states an animation without losing anything.
+        $entry = $this->entryFor($this->frameworkForFixtures('parent', 'child'), 'test/child-keeps-overrides');
+
+        $this->assertSame(['opacity' => '30'], $entry['defaults']);
     }
 
     /**
      * @dataProvider droppedBlockProvider
      */
-    public function test_block_is_dropped_from_the_resolved_map(string $blockName): void
+    public function testBlockIsDroppedFromTheResolvedMap(string $blockName): void
     {
         $blocks = $this->frameworkForFixtures('parent', 'child')->getBlockAnimations();
 
@@ -362,14 +404,14 @@ class AnimationFrameworkModuleTest extends TestCase
         ];
     }
 
-    public function test_an_animation_no_module_provides_is_dropped_without_losing_its_siblings(): void
+    public function testAnAnimationNoModuleProvidesIsDroppedWithoutLosingItsSiblings(): void
     {
         $entries = $this->frameworkForFixtures('parent')->getAnimationsForBlock('test/unknown-animation');
 
         $this->assertSame(['animation-tester'], array_keys($entries));
     }
 
-    public function test_override_array_with_neither_reserved_key_stays_enabled_with_nothing_applied(): void
+    public function testOverrideArrayWithNeitherReservedKeyStaysEnabledWithNothingApplied(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/no-reserved-keys');
 
@@ -378,21 +420,21 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame([], $entry['defaults']);
     }
 
-    public function test_a_stray_override_key_does_not_discard_the_recognized_one(): void
+    public function testAStrayOverrideKeyDoesNotDiscardTheRecognizedOne(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/stray-key');
 
         $this->assertSame(['color' => ['purple']], $entry['allowed']);
     }
 
-    public function test_an_array_default_is_dropped_without_losing_its_siblings(): void
+    public function testAnArrayDefaultIsDroppedWithoutLosingItsSiblings(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/mangled-default');
 
         $this->assertSame(['opacity' => '30'], $entry['defaults']);
     }
 
-    public function test_an_absent_animations_section_resolves_to_nothing_and_says_nothing(): void
+    public function testAnAbsentAnimationsSectionResolvesToNothingAndSaysNothing(): void
     {
         $framework = $this->frameworkFor(AnimationTester::class);
         $blocks = null;
@@ -405,7 +447,76 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertNull($entry);
     }
 
-    public function test_every_config_problem_is_reported_in_a_single_warning(): void
+    public function testAValidConfigResolvesToAMapAndSaysNothing(): void
+    {
+        /* The counterweight to every other fixture case: the parent fixture is mostly malformed, so
+         without this nothing would notice the resolver starting to flag valid entries. */
+        $framework = $this->frameworkForFixtures('clean');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+
+        $this->assertSame(['test/clean-bare', 'test/clean-overrides'], array_keys($blocks));
+        $this->assertSame(
+            ['color' => ['purple', 'green']],
+            $blocks['test/clean-overrides']['animation-tester']['allowed'],
+        );
+        $this->assertSame(
+            ['color' => 'purple', 'opacity' => '30'],
+            $blocks['test/clean-overrides']['animation-tester']['defaults'],
+        );
+        $this->assertNull($entry);
+    }
+
+    public function testAFalseAnimationsSectionDropsEveryBlockWithoutAWord(): void
+    {
+        /* The `=> false` removal one level up. FileRegistry::load() finds a non-array at the key and
+         returns its default, so the parent fixture's malformed entries are never even read. */
+        $framework = $this->frameworkForFixtures('parent', 'disabled');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+
+        $this->assertSame([], $blocks);
+        $this->assertNull($entry);
+    }
+
+    public function testADefaultItsOwnAllowedListForbidsIsFlagged(): void
+    {
+        /* The child narrows the palette and leaves the parent's default outside it, so the editor
+         would open on a value its control cannot offer. Nothing else compares the two halves. */
+        $framework = $this->frameworkForFixtures('parent', 'child');
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations());
+        $problems = array_values(
+            array_filter(
+                $entry['value']['problems'],
+                fn(string $problem) => str_contains($problem, 'child-orphans-default'),
+            ),
+        );
+
+        $this->assertCount(1, $problems);
+        $this->assertStringContainsString('defaults / color', $problems[0]);
+        $this->assertStringContainsString('green', $problems[0]);
+    }
+
+    public function testAPermittedDefaultOfAnotherTypeIsNotFlagged(): void
+    {
+        // `allowed` values are strings by the time they arrive; a default keeps the type it was
+        // authored with, so an int 25 must still match the permitted '25'.
+        $framework = $this->frameworkForFixtures('parent');
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations());
+
+        $this->assertStringNotContainsString('test/typed-default', $entry['message']);
+        $this->assertSame(['speed' => 25], $this->entryFor($framework, 'test/typed-default')['defaults']);
+    }
+
+    public function testEveryConfigProblemIsReportedInASingleWarning(): void
     {
         $framework = $this->frameworkForFixtures('parent');
 
@@ -429,5 +540,9 @@ class AnimationFrameworkModuleTest extends TestCase
         ) {
             $this->assertStringContainsString($offender, $entry['message']);
         }
+
+        /* Counted as well as named: substrings alone would not notice the resolver growing a
+         false positive on one of the fixture's many valid entries. */
+        $this->assertCount(7, $entry['value']['problems']);
     }
 }

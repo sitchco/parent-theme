@@ -54,13 +54,16 @@ return [
      *
      * `allowed` and `defaults` are the only reserved sub-keys. An animation named here must also be
      * activated in `modules` above, or it is dropped with a logged warning. Merging is additive, so
-     * removal is `=> false` — `'parallax' => false` to drop one animation from a block, or
-     * `'core/group' => false` to drop the block entirely.
+     * removal is `=> false` — `'parallax' => false` to drop one animation from a block,
+     * `'core/group' => false` to drop the block entirely, or `'animations' => false` to drop every
+     * block's animations, an ancestor's included. Removal stops there: an inherited `allowed` list
+     * or `defaults` map cannot be unset, only replaced with the one you want.
      *
      * Do not mix the bare-list and keyed forms in one block: a numeric-keyed array is discarded by
-     * config normalization before anything reads it. And in a child theme, prefer the keyed form —
-     * the bare-list form replaces an ancestor's entry outright rather than adding to it, silently
-     * taking its overrides with it. Both traps are spelled out on AnimationFrameworkModule.
+     * config normalization before anything reads it. And in a child theme, re-stating an animation
+     * an ancestor already configured as `true` — bare or keyed, the two normalize identically —
+     * replaces its overrides. To keep them, leave the animation out or write `'parallax' => []`.
+     * Both traps are spelled out on AnimationFrameworkModule.
      */
     'animations' => [],
     'disallowedBlocks' => [

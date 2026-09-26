@@ -27,21 +27,30 @@ use Sitchco\Framework\Module;
  *
  * Two things that are easy to get wrong:
  *
- * 1. Assets enqueue GLOBALLY, not per block. An animation loads its CSS and JS on every page, from
- *    init() via enqueueFrontendAssets(), rather than conditionally wherever it happens to be used.
- *    Animations are expected across many blocks and pages, and it is the per-block data-animation
- *    attribute that actually triggers one on a given element; a stylesheet with no matching
- *    attribute on the page costs nothing but its transfer size, while conditional loading produces
- *    an inconsistent feel. If one animation's payload grows heavy, revisit it alone rather than
- *    changing this default.
+ * 1. Assets load on every page, not per block, and only on the front end. An animation enqueues its
+ *    CSS and JS from init() via enqueueFrontendAssets(), rather than conditionally wherever it
+ *    happens to be used. Animations are expected across many blocks and pages, and it is the
+ *    per-block data-animation attribute that actually triggers one on a given element; a stylesheet
+ *    with no matching attribute on the page costs nothing but its transfer size, while conditional
+ *    loading produces an inconsistent feel. If one animation's payload grows heavy, revisit it alone
+ *    rather than changing this default.
+ *
+ *    enqueueFrontendAssets() hooks wp_enqueue_scripts, which does not fire for the block editor
+ *    canvas, so an animation built this way does not preview in the editor. That is intended for
+ *    now: nothing emits the attributes an animation reacts to yet. If editor preview is wanted
+ *    later, the stylesheet moves to enqueueEditorPreviewAssets() and the decision about whether
+ *    animation JS should run inside the editor gets made then, not by accident.
  *
  * 2. DEPENDENCIES does not merge. PHP replaces a class constant rather than combining it, so a
- *    subclass needing its own dependency must repeat the framework in its own array:
+ *    subclass needing its own dependency has to carry the parent's forward:
  *
- *        public const DEPENDENCIES = [AnimationFrameworkModule::class, ExtendBlockModule::class];
+ *        public const DEPENDENCIES = [...parent::DEPENDENCIES, ExtendBlockModule::class];
  *
- *    Leaving it out means this animation never activates the framework, so nothing discovers it and
- *    nothing indicates why.
+ *    Writing `[ExtendBlockModule::class]` instead drops the coordinator from this animation's
+ *    dependencies. The parent theme activates it unconditionally today, so nothing breaks — but a
+ *    child theme that switches it off with `AnimationFrameworkModule::class => false` would then
+ *    leave this animation with nothing to discover it. ModuleRegistry follows DEPENDENCIES without
+ *    consulting config, so keeping the parent's entry is what turns the coordinator back on.
  */
 abstract class AnimationModule extends Module
 {

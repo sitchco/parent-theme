@@ -30,10 +30,17 @@ return [
         // Overrides one default; the parent's sibling defaults survive.
         'test/child-overrides-default' => ['animation-tester' => ['defaults' => ['opacity' => '50']]],
 
-        /* The destructive-merge trap. The bare-list form replaces the parent's override array with
-           `true` rather than adding to it, so the parent's defaults are silently discarded. Correct
-           behaviour for mergeRecursiveDistinct, and exactly why the keyed form is the one to reach
-           for in a child theme. */
+        /* The destructive-merge trap, in both its forms. normalizeData() rewrites the bare list
+           into `animation-tester => true`, so these two entries are identical by the time
+           mergeRecursiveDistinct sees them, and a scalar replaces an array — the parent's defaults
+           are discarded either way. The keyed form is NOT the safe alternative. */
         'test/child-clobbers-overrides' => ['animation-tester'],
+        'test/child-clobbers-overrides-keyed' => ['animation-tester' => true],
+
+        // The way to re-state an inherited animation and keep its overrides: two arrays merge.
+        'test/child-keeps-overrides' => ['animation-tester' => []],
+
+        // Narrows the palette out from under the parent's default, which is no longer offered.
+        'test/child-orphans-default' => ['animation-tester' => ['allowed' => ['color' => ['green' => false]]]],
     ],
 ];
