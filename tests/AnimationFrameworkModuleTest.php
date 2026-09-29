@@ -5,6 +5,8 @@ namespace Sitchco\Parent\Tests;
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\ModuleRegistry;
 use Sitchco\Parent\Modules\Animation\AnimationFrameworkModule;
+use Sitchco\Modules\UIFramework\UIFramework;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Parent\Tests\Support\AnimationTester;
 use Sitchco\Parent\Tests\Support\ConfigRegistryTester;
 use Sitchco\Parent\Tests\Support\DuplicateAnimationTester;
@@ -78,6 +80,44 @@ class AnimationFrameworkModuleTest extends TestCase
         $registry->activateModules(array_fill_keys($moduleClassnames, true));
 
         return $registry;
+    }
+
+    /**
+     * Fire the editor-assets hook against one coordinator and return what it queued.
+     *
+     * Isolated on both sides. The script queue is swapped for a fresh one, so a handle registered
+     * by one case is invisible to the next — which is what lets the no-config case assert an
+     * absence at all. And the hook itself is emptied first: every case in this file calls init(),
+     * each leaving its enqueue closure behind, so without this do_action() would replay every
+     * fixture config the file has resolved so far onto the same handle. Both are restored
+     * afterwards rather than left cleared, since they are global for the rest of the suite.
+     *
+     * Follows ModuleAssetsTest::resetWPDependencies(), which does the same for wp_footer.
+     */
+    private function queuedEditorScripts(callable $buildFramework): \WP_Scripts
+    {
+        $hook = 'enqueue_block_editor_assets';
+        $savedScripts = $GLOBALS['wp_scripts'] ?? null;
+        $savedHook = $GLOBALS['wp_filter'][$hook] ?? null;
+
+        unset($GLOBALS['wp_scripts'], $GLOBALS['wp_filter'][$hook]);
+
+        try {
+            $buildFramework();
+            do_action($hook);
+
+            return wp_scripts();
+        } finally {
+            $GLOBALS['wp_scripts'] = $savedScripts;
+            if ($savedHook) {
+                $GLOBALS['wp_filter'][$hook] = $savedHook;
+            }
+        }
+    }
+
+    private function editorHandle(): string
+    {
+        return AnimationFrameworkModule::hookName('editor-ui');
     }
 
     /**
@@ -194,6 +234,16 @@ class AnimationFrameworkModuleTest extends TestCase
         $active = $this->registryFor(AnimationTester::class)->getActiveModules();
 
         $this->assertArrayHasKey(AnimationFrameworkModule::class, $active);
+    }
+
+    public function testActivatingTheFrameworkPullsInExtendBlock(): void
+    {
+        /* The editor control is an ExtendBlock registration, and ModuleRegistry follows
+           DEPENDENCIES without consulting config — so this is what guarantees the library is
+           present wherever an animation is, without either theme having to list it. */
+        $active = $this->registryFor(AnimationFrameworkModule::class)->getActiveModules();
+
+        $this->assertArrayHasKey(ExtendBlockModule::class, $active);
     }
 
     public function testNoActiveAnimationsDiscoversNothing(): void
@@ -494,6 +544,40 @@ class AnimationFrameworkModuleTest extends TestCase
             $blocks['test/clean-overrides']['animation-tester']['defaults'],
         );
         $this->assertNull($entry);
+    }
+
+    public function testTheEditorScriptCarriesTheResolvedMapAndTheLibraryThatConsumesIt(): void
+    {
+        $framework = null;
+        $scripts = $this->queuedEditorScripts(function () use (&$framework) {
+            $framework = $this->frameworkForFixtures('clean');
+        });
+        $handle = $this->editorHandle();
+
+        $this->assertContains($handle, $scripts->queue);
+
+        /* The control is an extendBlock() call against window.sitchco.extendBlock, and it has to
+         register during editorReady — so both handles are load-bearing, not incidental. */
+        $registered = $scripts->registered[$handle];
+        $this->assertContains(ExtendBlockModule::hookName(), $registered->deps);
+        $this->assertContains(UIFramework::hookName('editor'), $registered->deps);
+
+        /* The map has to arrive intact under the global the editor script reads. Asserting the
+           decoded payload rather than the encoded string is what makes this catch a value that
+           resolves in PHP but does not survive wp_json_encode(). */
+        $inline = implode('', array_filter((array) ($registered->extra['before'] ?? []), 'is_string'));
+        $this->assertStringContainsString('window.sitchco.animations', $inline);
+        $this->assertSame(1, preg_match('/window\\.sitchco\\.animations = (.+);$/', $inline, $matches));
+        $this->assertSame($framework->getBlockAnimations(), json_decode($matches[1], true));
+    }
+
+    public function testNoConfiguredBlockMeansNoEditorScriptAtAll(): void
+    {
+        /* The parent theme ships `'animations' => []`, so this is the shipped state: an active
+         animation, no block configured for it, and nothing enqueued to build a control with. */
+        $scripts = $this->queuedEditorScripts(fn() => $this->frameworkFor(AnimationTester::class));
+
+        $this->assertArrayNotHasKey($this->editorHandle(), $scripts->registered);
     }
 
     public function testAFalseAnimationsSectionDropsEveryBlockWithoutAWord(): void
