@@ -4,6 +4,7 @@ import {
     TextControl,
     __experimentalNumberControl as NumberControl,
 } from '@wordpress/components';
+import { resolveOptions } from './utils/options';
 
 /**
  * Creates a field definition with the given type and defaults.
@@ -27,6 +28,13 @@ function createField(type, defaults) {
  * - attributeType: The Gutenberg attribute type
  * - default: Default value for the attribute
  * - render: React component for the inspector control
+ *
+ * A field emits through two independent, optional channels, both gated by `condition`:
+ * - className:  (value) => string | string[] | null    — merged into the wrapper's class
+ * - attributes: (value, context) => Object | null      — merged onto the wrapper as props
+ *
+ * Use `className` for anything a stylesheet matches and `attributes` for anything JS reads.
+ * The attribute channel drops `class`, `className` and `style`; those belong to the other one.
  */
 export const fields = {
     /**
@@ -35,19 +43,22 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {Array<{label: string, value: string}>} config.options - Dropdown options
+     * @param {Array<{label: string, value: string}>|Function} config.options - Dropdown options,
+     *   or a function of the render context — `({ blockName, clientId, deviceType }) => options` —
+     *   when one registration serves blocks or breakpoints whose choices differ
      * @param {string} [config.default=''] - Default value
      * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     select: createField('select', {
         attributeType: 'string',
         default: '',
-        render: ({ field, value, onChange }) => (
+        render: ({ field, value, onChange, context }) => (
             <SelectControl
                 label={field.label}
                 value={value}
-                options={field.options}
+                options={resolveOptions(field, context)}
                 onChange={onChange}
                 help={field.help}
             />
@@ -62,6 +73,7 @@ export const fields = {
      * @param {string} config.label - Control label
      * @param {boolean} [config.default=false] - Default value
      * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     toggle: createField('toggle', {
@@ -80,6 +92,7 @@ export const fields = {
      * @param {string} config.label - Control label
      * @param {string} [config.default=''] - Default value
      * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     text: createField('text', {
@@ -100,6 +113,7 @@ export const fields = {
      * @param {number} [config.min] - Minimum value
      * @param {number} [config.max] - Maximum value
      * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     number: createField('number', {
@@ -124,8 +138,9 @@ export const fields = {
      * @param {string} config.name - Attribute name
      * @param {string} config.attributeType - Gutenberg attribute type
      * @param {*} config.default - Default value
-     * @param {Function} config.render - Render function ({ field, value, onChange }) => JSX
+     * @param {Function} config.render - Render function ({ field, value, onChange, context }) => JSX
      * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      */
     custom: (config) => ({
         type: 'custom',

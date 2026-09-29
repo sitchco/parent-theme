@@ -6,6 +6,7 @@ import { useEffect, useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames } from './utils/class-names';
+import { generateFieldAttributes, mergeAttributes } from './utils/attributes';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 
 /**
@@ -139,6 +140,13 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             const { attributes, setAttributes } = props;
             const isDynamic = isDynamicBlock(props.name);
 
+            // Identifies which block is being rendered, so one registration can serve several
+            // blocks whose options or gating differ. Stable for the life of the component.
+            const context = {
+                blockName: props.name,
+                clientId: props.clientId,
+            };
+
             // Extract only the field attribute values to avoid depending on full attributes object
             const fieldNames = allFields.map((f) => f.name);
             const fieldValues = fieldNames.map((name) => attributes[name]);
@@ -146,8 +154,8 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             // Memoize the class string based only on relevant field values
             const classString = useMemo(() => {
                 const newClasses = classGenerator
-                    ? classGenerator(attributes)
-                    : generateFieldClasses(allFields, attributes);
+                    ? classGenerator(attributes, context)
+                    : generateFieldClasses(allFields, attributes, context);
                 return newClasses.join(' ');
             }, fieldValues);
 
@@ -212,7 +220,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                                         if (!field.render) {
                                             return null;
                                         }
-                                        if (field.condition && !field.condition(attributes)) {
+                                        if (field.condition && !field.condition(attributes, context)) {
                                             return null;
                                         }
 
@@ -226,6 +234,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                                                 onChange={onChange}
                                                 attributes={attributes}
                                                 setAttributes={setAttributes}
+                                                context={context}
                                             />
                                         );
                                     })}
@@ -240,39 +249,69 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
 }
 
 /**
- * Creates the save content class filter.
+ * Creates the save content props filter — classes and arbitrary attributes, for static blocks.
+ *
+ * `blocks.getSaveContent.extraProps` merges whatever is returned onto the saved wrapper
+ * element, so an attribute needs no special treatment here beyond being spread.
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} allFields - All field definitions
- * @param {Function} [classGenerator] - Custom class generator override
+ * @param {Object} [generators]
+ * @param {Function} [generators.classGenerator] - Custom class generator override
+ * @param {Function} [generators.attributeGenerator] - Custom attribute generator override
  * @returns {Function} Filter function
  */
-function createSaveClassFilter(targetBlocks, allFields, classGenerator) {
+function createSavePropsFilter(targetBlocks, allFields, { classGenerator, attributeGenerator } = {}) {
     return (props, blockType, attributes) => {
         if (!isTargetBlock(blockType.name, targetBlocks)) {
             return props;
         }
 
-        const newClasses = classGenerator ? classGenerator(attributes) : generateFieldClasses(allFields, attributes);
-        if (newClasses.length === 0) {
+        const context = { blockName: blockType.name };
+        const newClasses = classGenerator
+            ? classGenerator(attributes, context)
+            : generateFieldClasses(allFields, attributes, context);
+        const newAttributes = attributeGenerator
+            ? mergeAttributes(attributeGenerator(attributes, context))
+            : generateFieldAttributes(allFields, attributes, context);
+        const hasAttributes = Object.keys(newAttributes).length > 0;
+        // Nothing to add means the props object is handed back untouched, so serialized output
+        // is byte-identical to a block that was never extended. Existing content keeps
+        // validating only because this stays a strict no-op.
+        if (newClasses.length === 0 && !hasAttributes) {
             return props;
         }
-        return {
+
+        // className is assigned after the attribute spread simply because the two channels write
+        // the same object. Keeping them from colliding is mergeAttributes' job, not this one's:
+        // it drops `class`, `className` and `style` before they ever get here.
+        const nextProps = {
             ...props,
-            className: mergeClassNames(props.className, newClasses),
+            ...newAttributes,
         };
+        if (newClasses.length > 0) {
+            nextProps.className = mergeClassNames(props.className, newClasses);
+        }
+        return nextProps;
     };
 }
 
 /**
- * Creates the editor block list class filter.
+ * Creates the editor block list props filter — the canvas counterpart of the save filter.
+ *
+ * Note the asymmetry with the save path: `editor.BlockListBlock` forwards only `className` and
+ * `wrapperProps` to the DOM, so arbitrary props passed at the top level are dropped silently.
+ * Attributes therefore go through `wrapperProps`, merged over whatever another extension or
+ * the block itself already put there.
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} allFields - All field definitions
- * @param {Function} [classGenerator] - Custom class generator override
+ * @param {Object} [generators]
+ * @param {Function} [generators.classGenerator] - Custom class generator override
+ * @param {Function} [generators.attributeGenerator] - Custom attribute generator override
  * @returns {Function} Higher-order component
  */
-function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
+function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attributeGenerator } = {}) {
     const hasResponsiveFields = allFields.some((f) => f.responsive);
     return createHigherOrderComponent((BlockListBlock) => {
         return (props) => {
@@ -290,19 +329,37 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
                 [hasResponsiveFields]
             );
 
+            const context = {
+                blockName: props.name,
+                clientId: props.clientId,
+                deviceType,
+            };
             const newClasses = classGenerator
-                ? classGenerator(props.attributes)
+                ? classGenerator(props.attributes, context)
                 : hasResponsiveFields
-                  ? generateEditorFieldClasses(allFields, props.attributes, deviceType)
-                  : generateFieldClasses(allFields, props.attributes);
-            if (newClasses.length === 0) {
+                  ? generateEditorFieldClasses(allFields, props.attributes, context)
+                  : generateFieldClasses(allFields, props.attributes, context);
+            const newAttributes = attributeGenerator
+                ? mergeAttributes(attributeGenerator(props.attributes, context))
+                : generateFieldAttributes(allFields, props.attributes, context);
+            const hasAttributes = Object.keys(newAttributes).length > 0;
+            if (newClasses.length === 0 && !hasAttributes) {
                 return <BlockListBlock {...props} />;
             }
 
-            const mergedClassName = mergeClassNames(props.className, newClasses);
-            return <BlockListBlock {...props} className={mergedClassName} />;
+            const extraProps = {};
+            if (newClasses.length > 0) {
+                extraProps.className = mergeClassNames(props.className, newClasses);
+            }
+            if (hasAttributes) {
+                extraProps.wrapperProps = {
+                    ...props.wrapperProps,
+                    ...newAttributes,
+                };
+            }
+            return <BlockListBlock {...props} {...extraProps} />;
         };
-    }, 'withExtendedBlockClasses');
+    }, 'withExtendedBlockProps');
 }
 
 /**
@@ -323,6 +380,9 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
  * @param {Function} [config.shouldRender] - Custom condition for rendering controls
  * @param {Function} [config.useSetup] - Custom setup hook for complex logic
  * @param {Function} [config.classGenerator] - Override default class generation
+ * @param {Function} [config.attributeGenerator] - Override default attribute generation:
+ *   (attributes, context) => Object. Returned props are merged onto the saved wrapper and,
+ *   in the editor canvas, onto wrapperProps. Return nothing to add nothing.
  * @param {boolean} [config.kadenceTabAware] - Auto-detect Kadence tabs (default: true for kadence/* blocks)
  *
  * @example
@@ -357,6 +417,22 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
  * });
  *
  * @example
+ * // Emitting data attributes alongside (or instead of) classes
+ * extendBlock({
+ *     blocks: ['core/group'],
+ *     namespace: 'mytheme/animation',
+ *     panel: { title: 'Animation', group: 'settings' },
+ *     fields: [
+ *         fields.select({
+ *             name: 'animation',
+ *             label: 'Animation',
+ *             options: ({ blockName }) => optionsFor(blockName),
+ *             attributes: (value) => ({ 'data-animation': value || undefined }),
+ *         }),
+ *     ],
+ * });
+ *
+ * @example
  * // Kadence block with tab awareness disabled
  * extendBlock({
  *     blocks: ['kadence/column'],
@@ -367,7 +443,15 @@ function createEditorClassFilter(targetBlocks, allFields, classGenerator) {
  * });
  */
 export function extendBlock(config) {
-    const { blocks: blocksConfig, namespace, shouldRender, useSetup, classGenerator, kadenceTabAware } = config;
+    const {
+        blocks: blocksConfig,
+        namespace,
+        shouldRender,
+        useSetup,
+        classGenerator,
+        attributeGenerator,
+        kadenceTabAware,
+    } = config;
     if (!namespace) {
         throw new Error('extendBlock requires a namespace');
     }
@@ -387,27 +471,36 @@ export function extendBlock(config) {
 
     // Check if any target blocks are dynamic (need extendBlockClasses attribute)
     const hasDynamicBlocks = blocks.some(isDynamicBlock);
-    // Only register attribute and class filters if we have fields
+    // 1. Register attributes (include extendBlockClasses for dynamic blocks). Only fields
+    //    produce block attributes, so a generator-only extension registers nothing here.
     if (allFields.length > 0) {
-        // 1. Register attributes (include extendBlockClasses for dynamic blocks)
         addFilter(
             'blocks.registerBlockType',
             `${namespace}/add-attributes`,
             createAttributeFilter(blocks, allFields, hasDynamicBlocks)
         );
-
-        // 3. Add classes to saved content (for static blocks)
+    }
+    // 3 & 4. Emit classes and attributes into saved content and the editor canvas.
+    //    `classGenerator` alone still belongs to extendBlockClasses(), unchanged — it is
+    //    `attributeGenerator` that earns a registration without fields, because there is no
+    //    attributes-only path through the field list.
+    if (allFields.length > 0 || attributeGenerator) {
         addFilter(
             'blocks.getSaveContent.extraProps',
-            `${namespace}/add-save-classes`,
-            createSaveClassFilter(blocks, allFields, classGenerator)
+            `${namespace}/add-save-props`,
+            createSavePropsFilter(blocks, allFields, {
+                classGenerator,
+                attributeGenerator,
+            })
         );
 
-        // 4. Add classes in editor
         addFilter(
             'editor.BlockListBlock',
-            `${namespace}/add-editor-classes`,
-            createEditorClassFilter(blocks, allFields, classGenerator)
+            `${namespace}/add-editor-props`,
+            createEditorPropsFilter(blocks, allFields, {
+                classGenerator,
+                attributeGenerator,
+            })
         );
     }
     // 2. Add inspector controls (only if we have panels with fields)
@@ -456,12 +549,58 @@ export function extendBlockClasses(config) {
     addFilter(
         'blocks.getSaveContent.extraProps',
         `${namespace}/add-save-classes`,
-        createSaveClassFilter(blocks, [], classGenerator)
+        createSavePropsFilter(blocks, [], { classGenerator })
     );
 
     addFilter(
         'editor.BlockListBlock',
         `${namespace}/add-editor-classes`,
-        createEditorClassFilter(blocks, [], classGenerator)
+        createEditorPropsFilter(blocks, [], { classGenerator })
+    );
+}
+
+/**
+ * Extends blocks with only attribute generation (no controls, no classes).
+ *
+ * The attributes-only counterpart of extendBlockClasses(), for when a block's wrapper needs
+ * data attributes derived from attributes it already has.
+ *
+ * Like extendBlockClasses(), this registers no `editor.BlockEdit` filter — so on a dynamic
+ * block nothing syncs to the server side and the attributes exist only in the editor canvas.
+ * Reach for full extendBlock() when a dynamic block has to carry them to the front end.
+ *
+ * @param {Object} config - Extension configuration
+ * @param {string|string[]} config.blocks - Block name(s) to extend
+ * @param {string} config.namespace - Unique namespace for hook registration
+ * @param {Function} config.attributeGenerator - (attributes, context) => Object
+ *
+ * @example
+ * extendBlockAttributes({
+ *     blocks: ['core/group'],
+ *     namespace: 'mytheme/group-density',
+ *     attributeGenerator: (attributes) => ({ 'data-density': attributes.density || undefined }),
+ * });
+ */
+export function extendBlockAttributes(config) {
+    const { blocks: blocksConfig, namespace, attributeGenerator } = config;
+    if (!namespace) {
+        throw new Error('extendBlockAttributes requires a namespace');
+    }
+    if (!attributeGenerator) {
+        throw new Error('extendBlockAttributes requires an attributeGenerator function');
+    }
+
+    const blocks = Array.isArray(blocksConfig) ? blocksConfig : [blocksConfig];
+
+    addFilter(
+        'blocks.getSaveContent.extraProps',
+        `${namespace}/add-save-attributes`,
+        createSavePropsFilter(blocks, [], { attributeGenerator })
+    );
+
+    addFilter(
+        'editor.BlockListBlock',
+        `${namespace}/add-editor-attributes`,
+        createEditorPropsFilter(blocks, [], { attributeGenerator })
     );
 }

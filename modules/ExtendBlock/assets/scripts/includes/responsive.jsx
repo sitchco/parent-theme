@@ -1,5 +1,6 @@
 import { useSelect, useDispatch } from '@wordpress/data';
 import { Dashicon, Button, ButtonGroup } from '@wordpress/components';
+import { resolveResponsiveOptions } from './utils/options';
 
 const BREAKPOINTS = [
     {
@@ -54,6 +55,9 @@ function prefixClassName(classNameFn, prefix) {
  * @param {Object} fieldDef - A field definition from fields.select(), fields.toggle(), etc.
  * @returns {Object[]} Array of 3 field definitions
  *
+ * An `options` function on a wrapped field is called `(deviceType, context)` — the breakpoint
+ * string first, for backward compatibility, then the same context every other field gets.
+ *
  * @example
  * responsive(fields.select({
  *     name: 'borderRadiusTop',
@@ -85,7 +89,7 @@ export function responsive(fieldDef) {
  * Renders a field with Kadence-style device toggle buttons (Desktop/Tablet/Mobile).
  * Reads and writes breakpoint-specific attributes based on the active preview device.
  */
-function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, setAttributes }) {
+function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, setAttributes, context }) {
     const deviceType = useSelect((select) => select('core/editor')?.getDeviceType?.() || 'Desktop', []);
 
     const { __experimentalSetPreviewDeviceType: setPreviewDeviceType } = useDispatch('core/edit-post');
@@ -96,7 +100,15 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
     const currentValue = attributes[attrName];
     const handleChange = (newValue) => setAttributes({ [attrName]: newValue });
 
-    const resolvedOptions = typeof field.options === 'function' ? field.options(deviceType) : field.options;
+    const responsiveContext = {
+        ...context,
+        deviceType,
+    };
+
+    /* Called `(deviceType, context)`, not `(context)`, so the breakpoint stays the first argument
+       for the consuming themes that already pass `(breakpoint) => …`. See the note on
+       resolveResponsiveOptions for what has to happen before that can be tidied up. */
+    const resolvedOptions = resolveResponsiveOptions(field, responsiveContext);
 
     const renderField = resolvedOptions
         ? {
@@ -137,6 +149,9 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
                     field: renderField,
                     value: currentValue,
                     onChange: handleChange,
+                    attributes,
+                    setAttributes,
+                    context: responsiveContext,
                 })}
             </div>
         </div>

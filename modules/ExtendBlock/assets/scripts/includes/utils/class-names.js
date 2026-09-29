@@ -23,16 +23,18 @@ export function classNames(...classes) {
  *
  * @param {Array} fields - Array of field definitions
  * @param {Object} attributes - Block attributes
+ * @param {Object} [context] - Render context, passed on to `condition`; its keys differ per
+ *   phase — see the note at the top of utils/attributes.js
  * @returns {string[]} Array of class names
  */
-export function generateFieldClasses(fields, attributes) {
+export function generateFieldClasses(fields, attributes, context = {}) {
     const classes = [];
 
     for (const field of fields) {
         if (!field.className) {
             continue;
         }
-        if (field.condition && !field.condition(attributes)) {
+        if (field.condition && !field.condition(attributes, context)) {
             continue;
         }
 
@@ -59,17 +61,21 @@ export function generateFieldClasses(fields, attributes) {
  *
  * @param {Array} fields - Array of field definitions (may include responsive fields)
  * @param {Object} attributes - Block attributes
- * @param {string} device - 'Desktop', 'Tablet', or 'Mobile'
+ * @param {Object} [context] - Render context, passed on to `condition`; its keys differ per
+ *   phase — see the note at the top of utils/attributes.js
  * @returns {string[]} Array of class names
  */
-export function generateEditorFieldClasses(fields, attributes, device) {
+export function generateEditorFieldClasses(fields, attributes, context = {}) {
+    /* Defaulted rather than required: a caller with no responsive fields has no reason to
+       resolve the preview device, and desktop is the unprefixed baseline. */
+    const device = context.deviceType || 'Desktop';
     const classes = [];
 
     for (const field of fields) {
         if (!field.className) {
             continue;
         }
-        if (field.condition && !field.condition(attributes)) {
+        if (field.condition && !field.condition(attributes, context)) {
             continue;
         }
         if (field.responsive) {
