@@ -7,6 +7,7 @@ import { useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames } from './utils/class-names';
 import { generateFieldAttributes, mergeAttributes } from './utils/attributes';
+import { nextExtendBlockClasses } from './utils/extend-block-classes';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 
 /**
@@ -166,17 +167,11 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                     return;
                 }
 
-                const currentClasses =
-                    typeof attributes.extendBlockClasses === 'object' && attributes.extendBlockClasses !== null
-                        ? attributes.extendBlockClasses
-                        : {};
-                if (currentClasses[namespace] !== classString) {
-                    setAttributes({
-                        extendBlockClasses: {
-                            ...currentClasses,
-                            [namespace]: classString,
-                        },
-                    });
+                // Every rule about what to write lives in nextExtendBlockClasses, including why an
+                // extension with nothing to say must not create its key. null means leave it alone.
+                const nextClasses = nextExtendBlockClasses(attributes.extendBlockClasses, namespace, classString);
+                if (nextClasses) {
+                    setAttributes({ extendBlockClasses: nextClasses });
                 }
             }, [classString, isDynamic, namespace, setAttributes, attributes.extendBlockClasses]);
 
