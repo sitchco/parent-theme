@@ -1,6 +1,7 @@
 <?php
 
 use Sitchco\Modules\Wordpress\Cleanup;
+use Sitchco\Parent\Modules\Animation\AnimationFrameworkModule;
 use Sitchco\Parent\Modules\ButtonConfig\ButtonConfigModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialModule;
 use Sitchco\Parent\Modules\ContentPartial\ContentPartialPost;
@@ -21,6 +22,7 @@ return [
         Cleanup::class => [
             'disableGutenbergStyles' => false,
         ],
+        AnimationFrameworkModule::class,
         ButtonConfigModule::class,
         ContentPartialModule::class,
         ContentPartialBlockModule::class,
@@ -35,6 +37,43 @@ return [
         PatternsModule::class,
         GravityForms::class,
     ],
+    /**
+     * Which blocks may use which animations.
+     *
+     * Block name => a list of animation keys, or a map of them when a block needs overrides:
+     *
+     *     'core/group' => ['parallax', 'fade-up'],
+     *
+     *     'kadence/rowlayout' => [
+     *         'letter' => [
+     *             'allowed'  => ['color' => ['purple', 'green']],  // restrict the palette here
+     *             'defaults' => ['opacity' => '30'],               // and start at 30%
+     *         ],
+     *         'parallax' => true,
+     *     ],
+     *
+     * `allowed` and `defaults` are the only reserved sub-keys. An animation named here must also be
+     * activated in `modules` above, or it is dropped with a logged warning.
+     *
+     * Merging is additive, so removal is `=> false` — `null` works wherever `false` does — and it
+     * applies at exactly four points: `'animations' => false` drops every block's animations, an
+     * ancestor's included; `'core/group' => false` drops one block; `'parallax' => false` drops one
+     * animation from a block; and `'allowed' => ['color' => ['green' => false]]` drops one permitted
+     * value. It stops there — `'allowed' => false` and `'defaults' => false` are authoring mistakes
+     * rather than a fifth removal idiom.
+     *
+     * Nor is an inherited `allowed` list replaced by stating the one you want: it MERGES, so a
+     * child's `['red']` over a parent's `['purple', 'green']` permits all three, silently. Narrow it
+     * with `=> false` per value, or replace it outright with a single scalar. `defaults` are replaced
+     * key by key, as you would expect.
+     *
+     * Do not mix the bare-list and keyed forms in one block: a numeric-keyed array is discarded by
+     * config normalization before anything reads it. And in a child theme, mentioning an inherited
+     * animation again as `true` — bare or keyed, the two normalize identically — replaces its
+     * overrides. To keep them, leave the animation out or write `'parallax' => []`. All three traps,
+     * the third being non-integer numeric values, are spelled out on AnimationFrameworkModule.
+     */
+    'animations' => [],
     'disallowedBlocks' => [
         /** TEXT */
         'core/code',
