@@ -110,9 +110,13 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
        resolveResponsiveOptions for what has to happen before that can be tidied up. */
     const resolvedOptions = resolveResponsiveOptions(field, responsiveContext);
 
+    /* `name` is the breakpoint's attribute, not the Desktop one the field was spread from, so a
+       custom render writing `setAttributes({ [field.name]: v })` edits the breakpoint on screen.
+       `field.responsive.baseName` still carries the unsuffixed name. */
     const renderField = resolvedOptions
         ? {
               ...field,
+              name: attrName,
               label: undefined,
               options: [
                   {
@@ -124,6 +128,7 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
           }
         : {
               ...field,
+              name: attrName,
               label: undefined,
           };
     return (

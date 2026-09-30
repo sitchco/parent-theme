@@ -23,8 +23,8 @@ export function classNames(...classes) {
  *
  * @param {Array} fields - Array of field definitions
  * @param {Object} attributes - Block attributes
- * @param {Object} [context] - Render context, passed on to `condition`; its keys differ per
- *   phase — see the note at the top of utils/attributes.js
+ * @param {Object} [context] - Output context, `{ blockName }`, passed on to `condition` — see the
+ *   note at the top of utils/attributes.js
  * @returns {string[]} Array of class names
  */
 export function generateFieldClasses(fields, attributes, context = {}) {
@@ -61,14 +61,14 @@ export function generateFieldClasses(fields, attributes, context = {}) {
  *
  * @param {Array} fields - Array of field definitions (may include responsive fields)
  * @param {Object} attributes - Block attributes
- * @param {Object} [context] - Render context, passed on to `condition`; its keys differ per
- *   phase — see the note at the top of utils/attributes.js
+ * @param {Object} [context] - Output context, `{ blockName }`, passed on to `condition` — see the
+ *   note at the top of utils/attributes.js
+ * @param {string} [device='Desktop'] - The editor's preview device. Its own argument rather than
+ *   part of the context, because only this cascade may read it: nothing that decides output does.
+ *   Defaulted because desktop is the unprefixed baseline.
  * @returns {string[]} Array of class names
  */
-export function generateEditorFieldClasses(fields, attributes, context = {}) {
-    /* Defaulted rather than required: a caller with no responsive fields has no reason to
-       resolve the preview device, and desktop is the unprefixed baseline. */
-    const device = context.deviceType || 'Desktop';
+export function generateEditorFieldClasses(fields, attributes, context = {}, device = 'Desktop') {
     const classes = [];
 
     for (const field of fields) {

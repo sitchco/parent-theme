@@ -87,6 +87,12 @@ describe('animation controls', () => {
             attributeType: 'string',
             default: '',
         });
+
+        /* The select writes the attribute and emits nothing, which is the whole of this PR's "no
+           block-validation risk" claim — toMatchObject alone would ignore an output channel added
+           later. S6 is meant to break this on purpose. */
+        expect(field.className).toBeUndefined();
+        expect(field.attributes).toBeUndefined();
     });
 
     /* The heart of the design: one registration still offers a different list per block, because

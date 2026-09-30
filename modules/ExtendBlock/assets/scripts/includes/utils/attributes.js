@@ -9,21 +9,26 @@
  * Plain JS on purpose, with no JSX and no @wordpress imports, so the logic below is unit
  * testable without a transform. See tests/js/attributes.test.js.
  *
- * The render context is NOT the same shape in every phase — it carries what the phase actually
- * knows:
+ * What a generator author has to know:
  *
- *     save (blocks.getSaveContent.extraProps)  { blockName }
- *     inspector (editor.BlockEdit)             { blockName, clientId }
- *     canvas (editor.BlockListBlock)           { blockName, clientId, deviceType }
+ * - Return `undefined` (or `null`) for unset. Those are dropped; `''`, `0` and `false` are not,
+ *   and WordPress serializes them — `''` as `data-x=""`, `false` on a `data-`/`aria-` attribute
+ *   as `"false"`. The select and text fields default to `''` and the toggle to `false`, so the
+ *   obvious `(v) => ({ 'data-x': v })` adds markup to every untouched block and breaks
+ *   validation. Write `(v) => ({ 'data-x': v || undefined })`.
+ * - `class`, `className` and `style` are dropped; they belong to the class channel.
+ * - In the editor canvas, core sets `id`, `role`, `aria-label`, `data-block`, `data-type` and
+ *   `data-title` after `wrapperProps`, so core wins those keys there.
+ * - Dynamic blocks get these attributes in the editor canvas only, until S7. Their front end is
+ *   rendered by PHP, and only classes are synced to it (through `extendBlockClasses`).
  *
- * So a callback that decides class or attribute OUTPUT must depend only on `blockName` and the
- * block's own attributes. Branch on `deviceType` or `clientId` and the editor and the saved
- * markup will disagree, silently — the save path has neither. Those two are for rendering a
- * control, not for deciding what it emits.
- *
- * One exception, and it is only about argument order: a field wrapped in responsive() still gets
- * its `options` called as `(deviceType, context)` rather than `(context)`. See
- * resolveResponsiveOptions in utils/options.js.
+ * Every callback that decides OUTPUT — `condition`, a field's `className` or `attributes`, and
+ * the `classGenerator` / `attributeGenerator` overrides — gets the same output context in every
+ * phase: `{ blockName }`. Save knows nothing more, so the editor is not allowed to know more
+ * either; if it did, a callback branching on the preview device or the clientId would make the
+ * canvas and the saved markup disagree, silently. The richer render context, `{ blockName,
+ * clientId }` plus `deviceType` inside responsive(), goes only to `render` and `options`, which
+ * draw a control and never decide what the block emits.
  */
 
 /**
@@ -79,7 +84,7 @@ export function mergeAttributes(...sources) {
  *
  * @param {Array}  fields     - Array of field definitions
  * @param {Object} attributes - Block attributes
- * @param {Object} [context]  - Render context; see the note at the top of this file
+ * @param {Object} [context]  - Output context, `{ blockName }`; see the note at the top of this file
  * @returns {Object} Attribute name => value, empty when nothing applies
  */
 export function generateFieldAttributes(fields, attributes, context = {}) {

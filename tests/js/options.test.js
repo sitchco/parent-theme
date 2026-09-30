@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     resolveOptions,
     resolveResponsiveOptions,
+    withStaleValue,
 } from '../../modules/ExtendBlock/assets/scripts/includes/utils/options';
 
 describe('resolveOptions', () => {
@@ -34,9 +35,9 @@ describe('resolveOptions', () => {
         ]);
     });
 
-    /* Responsive fields resolve through the same helper, with deviceType folded into the same
-       context object rather than passed as a second, incompatible signature. */
-    it('carries deviceType in the same context', () => {
+    /* resolveOptions passes along whatever context it is given. Responsive fields do not come
+       through here: they are called (deviceType, context) — see resolveResponsiveOptions below. */
+    it('passes the whole context through', () => {
         const field = {
             options: ({ deviceType }) => [
                 {
@@ -141,5 +142,50 @@ describe('resolveResponsiveOptions', () => {
 
     it('defaults the context so a bare call cannot throw', () => {
         expect(resolveResponsiveOptions({ options: (deviceType) => [deviceType] })).toEqual([undefined]);
+    });
+});
+
+describe('withStaleValue', () => {
+    const options = [
+        {
+            label: 'None',
+            value: '',
+        },
+        {
+            label: 'Fade Up',
+            value: 'fade-up',
+        },
+    ];
+
+    it('leaves the list alone when the value is empty', () => {
+        expect(withStaleValue(options, '')).toBe(options);
+        expect(withStaleValue(options, undefined)).toBe(options);
+    });
+
+    it('leaves the list alone when the value is offered', () => {
+        expect(withStaleValue(options, 'fade-up')).toBe(options);
+    });
+
+    /* Otherwise SelectControl shows None while the attribute keeps the old value, and picking
+       None does nothing because it already looks selected. */
+    it('appends a value no option offers as a disabled entry', () => {
+        expect(withStaleValue(options, 'parallax')).toEqual([
+            ...options,
+            {
+                label: 'parallax (unavailable)',
+                value: 'parallax',
+                disabled: true,
+            },
+        ]);
+    });
+
+    it('does not mutate the list it was given', () => {
+        withStaleValue(options, 'parallax');
+
+        expect(options).toHaveLength(2);
+    });
+
+    it('passes a missing list through', () => {
+        expect(withStaleValue(undefined, 'parallax')).toBeUndefined();
     });
 });

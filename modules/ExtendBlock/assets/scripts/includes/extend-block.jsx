@@ -7,8 +7,10 @@ import { useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames } from './utils/class-names';
 import { generateFieldAttributes, mergeAttributes } from './utils/attributes';
+import { createSavePropsFilter } from './utils/save-props';
 import { nextExtendBlockClasses } from './utils/extend-block-classes';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
+import { resolveKadenceTab } from './utils/kadence-tabs';
 
 /**
  * Dynamic blocks that render server-side and need PHP filter treatment.
@@ -119,7 +121,8 @@ function createAttributeFilter(targetBlocks, allFields, includeClassesAttribute 
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} panels - Panel configurations
  * @param {string} [panels[].kadenceTab] - On Kadence blocks, which of Kadence's own tabs
- *   ('general' | 'style' | 'advanced') this panel renders on. Defaults to 'general'.
+ *   ('general' | 'style' | 'advanced') this panel renders on. Defaults to 'general', and falls
+ *   back to it (with a console warning) on a block that doesn't draw the requested tab.
  *   Ignored for non-Kadence blocks and when `kadenceTabAware` is false.
  * @param {Object[]} allFields - All field definitions (for class sync)
  * @param {string} namespace - Unique namespace for this extension
@@ -142,11 +145,15 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             const isDynamic = isDynamicBlock(props.name);
 
             // Identifies which block is being rendered, so one registration can serve several
-            // blocks whose options or gating differ. Stable for the life of the component.
+            // blocks whose options differ. Stable for the life of the component. The render
+            // context is for drawing a control; everything that decides output — condition,
+            // className, attributes and the generators — gets the output context, which is the
+            // same `{ blockName }` save sees. See the note at the top of utils/attributes.js.
             const context = {
                 blockName: props.name,
                 clientId: props.clientId,
             };
+            const outputContext = { blockName: props.name };
 
             // Extract only the field attribute values to avoid depending on full attributes object
             const fieldNames = allFields.map((f) => f.name);
@@ -155,8 +162,8 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             // Memoize the class string based only on relevant field values
             const classString = useMemo(() => {
                 const newClasses = classGenerator
-                    ? classGenerator(attributes, context)
-                    : generateFieldClasses(allFields, attributes, context);
+                    ? classGenerator(attributes, outputContext)
+                    : generateFieldClasses(allFields, attributes, outputContext);
                 return newClasses.join(' ');
             }, fieldValues);
 
@@ -197,13 +204,18 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             // tabs render into the same default inspector group, toggled by React state in the
             // `kadenceblocks/data` store. So tab targeting is ours to do: a panel declares the
             // tab it belongs to and is simply not rendered on the others. Defaults to 'general',
-            // which is where every panel lived before `kadenceTab` existed.
+            // which is where every panel lived before `kadenceTab` existed. A block that doesn't
+            // draw the requested tab gets the panel on 'general' instead (see utils/kadence-tabs.js).
             const activeKadenceTab = kadenceTab.activeTab || 'general';
             return (
                 <>
                     <BlockEdit {...props} />
                     {panels.map((panel, panelIndex) => {
-                        if (isKadence && (panel.kadenceTab ?? 'general') !== activeKadenceTab) {
+                        if (
+                            isKadence &&
+                            resolveKadenceTab(props.name, panel.kadenceTab ?? 'general', panel.title) !==
+                                activeKadenceTab
+                        ) {
                             return null;
                         }
                         // Keyed by the original index, so returning null above doesn't shift
@@ -215,7 +227,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                                         if (!field.render) {
                                             return null;
                                         }
-                                        if (field.condition && !field.condition(attributes, context)) {
+                                        if (field.condition && !field.condition(attributes, outputContext)) {
                                             return null;
                                         }
 
@@ -244,60 +256,13 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
 }
 
 /**
- * Creates the save content props filter — classes and arbitrary attributes, for static blocks.
- *
- * `blocks.getSaveContent.extraProps` merges whatever is returned onto the saved wrapper
- * element, so an attribute needs no special treatment here beyond being spread.
- *
- * @param {string[]} targetBlocks - Block names to target
- * @param {Object[]} allFields - All field definitions
- * @param {Object} [generators]
- * @param {Function} [generators.classGenerator] - Custom class generator override
- * @param {Function} [generators.attributeGenerator] - Custom attribute generator override
- * @returns {Function} Filter function
- */
-function createSavePropsFilter(targetBlocks, allFields, { classGenerator, attributeGenerator } = {}) {
-    return (props, blockType, attributes) => {
-        if (!isTargetBlock(blockType.name, targetBlocks)) {
-            return props;
-        }
-
-        const context = { blockName: blockType.name };
-        const newClasses = classGenerator
-            ? classGenerator(attributes, context)
-            : generateFieldClasses(allFields, attributes, context);
-        const newAttributes = attributeGenerator
-            ? mergeAttributes(attributeGenerator(attributes, context))
-            : generateFieldAttributes(allFields, attributes, context);
-        const hasAttributes = Object.keys(newAttributes).length > 0;
-        // Nothing to add means the props object is handed back untouched, so serialized output
-        // is byte-identical to a block that was never extended. Existing content keeps
-        // validating only because this stays a strict no-op.
-        if (newClasses.length === 0 && !hasAttributes) {
-            return props;
-        }
-
-        // className is assigned after the attribute spread simply because the two channels write
-        // the same object. Keeping them from colliding is mergeAttributes' job, not this one's:
-        // it drops `class`, `className` and `style` before they ever get here.
-        const nextProps = {
-            ...props,
-            ...newAttributes,
-        };
-        if (newClasses.length > 0) {
-            nextProps.className = mergeClassNames(props.className, newClasses);
-        }
-        return nextProps;
-    };
-}
-
-/**
  * Creates the editor block list props filter — the canvas counterpart of the save filter.
  *
  * Note the asymmetry with the save path: `editor.BlockListBlock` forwards only `className` and
  * `wrapperProps` to the DOM, so arbitrary props passed at the top level are dropped silently.
- * Attributes therefore go through `wrapperProps`, merged over whatever another extension or
- * the block itself already put there.
+ * Attributes therefore go through `wrapperProps`. Core still has the last word on its own
+ * wrapper keys — it sets `id`, `role`, `aria-label` and `data-block`/`data-type`/`data-title`
+ * after spreading `wrapperProps` — so those cannot be overridden from here.
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} allFields - All field definitions
@@ -324,15 +289,14 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
                 [hasResponsiveFields]
             );
 
-            const context = {
-                blockName: props.name,
-                clientId: props.clientId,
-                deviceType,
-            };
+            // The same context save builds, so a callback cannot make the canvas and the saved
+            // markup disagree. The preview device is not part of it: only the responsive class
+            // cascade needs it, and that takes it as its own argument.
+            const context = { blockName: props.name };
             const newClasses = classGenerator
                 ? classGenerator(props.attributes, context)
                 : hasResponsiveFields
-                  ? generateEditorFieldClasses(allFields, props.attributes, context)
+                  ? generateEditorFieldClasses(allFields, props.attributes, context, deviceType)
                   : generateFieldClasses(allFields, props.attributes, context);
             const newAttributes = attributeGenerator
                 ? mergeAttributes(attributeGenerator(props.attributes, context))
@@ -347,9 +311,16 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
                 extraProps.className = mergeClassNames(props.className, newClasses);
             }
             if (hasAttributes) {
+                /* Ours first, then whatever is already there — the reverse of save's spread, and
+                   that is what makes the two agree. On save each filter spreads last, so the last
+                   registration wins a shared key. Here withFilters wraps each later registration
+                   OUTSIDE the earlier ones, so `props.wrapperProps` at this layer holds only what
+                   later registrations produced (core's own BlockListBlock filters register with
+                   block-editor, before any theme script, so they sit inside us). Letting it win
+                   is therefore letting the last registration win. */
                 extraProps.wrapperProps = {
-                    ...props.wrapperProps,
                     ...newAttributes,
+                    ...props.wrapperProps,
                 };
             }
             return <BlockListBlock {...props} {...extraProps} />;
@@ -361,7 +332,9 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
  * Extends one or more Gutenberg blocks with custom attributes, inspector controls, and classes.
  *
  * For Kadence blocks (kadence/*), inspector controls appear on the "General" tab by default.
- * Give a panel `kadenceTab: 'style'` or `'advanced'` to put it on one of the other two.
+ * Give a panel `kadenceTab: 'style'` or `'advanced'` to put it on one of the other two. Blocks
+ * that don't draw that tab (the Buttons container, Spacer, form fields, …) get the panel on
+ * 'General' instead, with a one-time console warning.
  * Set `kadenceTabAware: false` to opt out of tab targeting entirely and always render.
  *
  * @param {Object} config - Extension configuration
@@ -374,10 +347,18 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
  * @param {Object[]} [config.fields] - Fields for single panel (used with config.panel)
  * @param {Function} [config.shouldRender] - Custom condition for rendering controls
  * @param {Function} [config.useSetup] - Custom setup hook for complex logic
- * @param {Function} [config.classGenerator] - Override default class generation
+ * @param {Function} [config.classGenerator] - Override default class generation:
+ *   (attributes, { blockName }) => string[]. Only takes effect alongside fields or an
+ *   attributeGenerator; for classes alone, use extendBlockClasses().
  * @param {Function} [config.attributeGenerator] - Override default attribute generation:
- *   (attributes, context) => Object. Returned props are merged onto the saved wrapper and,
- *   in the editor canvas, onto wrapperProps. Return nothing to add nothing.
+ *   (attributes, { blockName }) => Object. Returned props are merged onto a static block's saved
+ *   wrapper and, in the editor canvas, onto wrapperProps. A dynamic block's front end does not
+ *   get them until S7 — only classes are synced to it. Return `undefined` for anything unset:
+ *   `''`, `0` and `false` all serialize. See the rules at the top of utils/attributes.js.
+ *
+ * `condition`, `className`, `attributes` and both generators receive `{ blockName }` in every
+ * phase — save, inspector and canvas alike — so none of them can make the editor preview and the
+ * saved markup disagree. Only `render` and `options` see the richer render context.
  * @param {boolean} [config.kadenceTabAware] - Auto-detect Kadence tabs (default: true for kadence/* blocks)
  *
  * @example
@@ -520,7 +501,7 @@ export function extendBlock(config) {
  * @param {Object} config - Extension configuration
  * @param {string|string[]} config.blocks - Block name(s) to extend
  * @param {string} config.namespace - Unique namespace for hook registration
- * @param {Function} config.classGenerator - Class generator (attributes) => string[]
+ * @param {Function} config.classGenerator - Class generator (attributes, { blockName }) => string[]
  *
  * @example
  * extendBlockClasses({
@@ -560,14 +541,14 @@ export function extendBlockClasses(config) {
  * The attributes-only counterpart of extendBlockClasses(), for when a block's wrapper needs
  * data attributes derived from attributes it already has.
  *
- * Like extendBlockClasses(), this registers no `editor.BlockEdit` filter — so on a dynamic
- * block nothing syncs to the server side and the attributes exist only in the editor canvas.
- * Reach for full extendBlock() when a dynamic block has to carry them to the front end.
+ * On a dynamic block the attributes exist only in the editor canvas, since its front end is
+ * rendered by PHP. That is true of full extendBlock() too until S7: today only classes are synced
+ * to the server side.
  *
  * @param {Object} config - Extension configuration
  * @param {string|string[]} config.blocks - Block name(s) to extend
  * @param {string} config.namespace - Unique namespace for hook registration
- * @param {Function} config.attributeGenerator - (attributes, context) => Object
+ * @param {Function} config.attributeGenerator - (attributes, { blockName }) => Object
  *
  * @example
  * extendBlockAttributes({
