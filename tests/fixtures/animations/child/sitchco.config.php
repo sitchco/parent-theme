@@ -4,7 +4,9 @@
  * Fixture config standing in for a child theme layering over the parent fixture.
  *
  * Every entry here exists to exercise one merge behaviour against its counterpart in
- * ../parent/sitchco.config.php. Nothing here is malformed.
+ * ../parent/sitchco.config.php. Nothing here is malformed entry by entry — but
+ * test/child-orphans-default is designed to warn once layered, narrowing a palette out from under
+ * an inherited default, which takes the parent+child chain to eight problems rather than seven.
  */
 
 return [
@@ -39,6 +41,10 @@ return [
 
         // The way to re-state an inherited animation and keep its overrides: two arrays merge.
         'test/child-keeps-overrides' => ['animation-tester' => []],
+
+        /* Stating a palette does NOT replace the inherited one: two arrays merge, so this resolves
+         to the parent's purple and green plus red. Narrowing is the `=> false` idiom above. */
+        'test/child-widens-allowed' => ['animation-tester' => ['allowed' => ['color' => ['red']]]],
 
         // Narrows the palette out from under the parent's default, which is no longer offered.
         'test/child-orphans-default' => ['animation-tester' => ['allowed' => ['color' => ['green' => false]]]],

@@ -31,10 +31,28 @@ class ConfigRegistryTester extends ConfigRegistry
     }
 
     /**
+     * Clear before reading, because the cache key is a constant and therefore shared.
+     *
+     * WP_UnitTestCase flushes the object cache between tests, so nothing leaks from one test to the
+     * next. Within one test it would: two testers over different fixture layers would have the
+     * second load() served the first one's merge. Clearing in the constructor is not enough, since
+     * both are built before either is read.
+     */
+    public function load(?string $key = null, array $default = []): array
+    {
+        $this->clearCache();
+
+        return parent::load($key, $default);
+    }
+
+    /**
      * ConfigRegistry refuses to cache a merge that the active theme's own sitchco.config.php did not
      * contribute to, to catch a mid-deploy degraded config. Both themes have one on disk during a
      * test run and no fixture directory can ever be one of them, so that guard would discard every
-     * fixture merge and leave load() silently returning nothing. Fall back to the base rule.
+     * fixture merge and leave load() returning the empty default — noisily, since FileRegistry logs
+     * "Discarding a non-empty but incomplete config merge" at WARNING each time, which only
+     * tests/phpunit.php pinning SITCHCO_LOG_LEVEL to ERROR keeps out of the output. Fall back to the
+     * base rule.
      */
     protected function isMergedDataCacheable(?array $merged): bool
     {

@@ -34,17 +34,34 @@ use Sitchco\Utils\Logger;
  *         ],
  *     ],
  *
- * `allowed` and `defaults` are the only reserved sub-keys. Merging is additive, so a child theme
- * cannot delete a key an ancestor set — removal is `=> false`. That works at exactly three points:
- * a block (`'kadence/column' => false`), an animation on a block (`'parallax' => false`), and one
- * permitted value inside `allowed` (`'allowed' => ['color' => ['green' => false]]`).
+ * `allowed` and `defaults` are the only reserved sub-keys.
  *
- * It stops there. There is no way to unset a whole inherited restriction or default: `'allowed' =>
- * false`, `'allowed' => ['color' => false]` and `'defaults' => false` are authoring mistakes, each
- * logged and each leaving that option unrestricted or undefaulted. A theme wanting a different
- * palette or default states the one it wants rather than removing the one it inherited.
+ * REMOVAL. Merging is additive, so a child theme cannot delete a key an ancestor set — removal is
+ * `=> false`, and `null` works wherever `false` does. That applies at exactly four points:
  *
- * TWO SILENT TRAPS, neither of which this class can detect at runtime:
+ *     'animations' => false,                          // the whole section: every block at once
+ *     'kadence/column' => false,                      // one block
+ *     'parallax' => false,                            // one animation on a block
+ *     'allowed' => ['color' => ['green' => false]],   // one permitted value
+ *
+ * It stops there. `'allowed' => false`, `'allowed' => ['color' => false]` and `'defaults' => false`
+ * are not a fourth and fifth removal idiom: they are authoring mistakes, each logged, each leaving
+ * that option unrestricted or undefaulted. The one thing that does clear a whole inherited override
+ * array is trap 2 below, and it does so by accident rather than on request.
+ *
+ * REPLACING an inherited restriction or default is not a matter of stating the one you want. What
+ * the merge actually does:
+ *
+ *   - An `allowed` list you write MERGES with the inherited one. Over a parent's
+ *     `'color' => ['purple', 'green']`, a child's `['red']` resolves to purple, green AND red, and
+ *     a child's `['purple']` changes nothing at all. Neither logs a word, and the inherited default
+ *     is still permitted, so nothing downstream notices either.
+ *   - To narrow a list, remove each value you do not want: `'color' => ['green' => false]`.
+ *   - A single SCALAR replaces the whole list: `'color' => 'red'` resolves to red alone.
+ *   - `defaults` are replaced key by key, which is the intuitive behaviour: a child's
+ *     `'opacity' => '50'` wins, and an ancestor's sibling defaults survive.
+ *
+ * THREE SILENT TRAPS, none of which this class can detect at runtime:
  *
  * 1. A numeric-keyed ARRAY is discarded by ConfigRegistry::normalizeData() before it ever reaches
  *    here. Never mix the two forms in one list:
@@ -68,6 +85,11 @@ use Sitchco\Utils\Logger;
  *    Two arrays merge, so `[]` leaves the ancestor's entry untouched; leaving the animation out
  *    does the same. Naming a DIFFERENT animation is additive in either form and never touches its
  *    siblings — it is only re-stating an inherited one as `true` that costs anything.
+ *
+ * 3. A non-integer numeric permitted value has to be QUOTED. Normalization turns each permitted
+ *    value into an array key, and PHP truncates a float key to an int, so `[0.5, 0.7]` collapses
+ *    into the single key 0 and comes back as `['0']`. Write `['0.5', '0.7']`. Integers are safe
+ *    either way: `[10, 30]` and `['10', '30']` both resolve to '10' and '30'.
  *
  * The merged config is object-cached for a day under `sitchco_config`, so on non-local environments a
  * config edit — including one that fixes a warning logged from here — needs ConfigRegistry::clearCache()
@@ -151,7 +173,9 @@ class AnimationFrameworkModule extends Module
     }
 
     /**
-     * Every configured block, in config order, mapped to the animations it may use.
+     * Every block this resolves something for, in config order, mapped to the animations it may use.
+     * A configured block is left out when it is removed, written bare, written as a scalar, or ends
+     * up with no animations at all — see droppedBlockProvider() in the tests for the full set.
      *
      * Resolved in one pass rather than per block on demand, for two reasons: the editor needs the
      * whole map anyway to build its controls, and lazy per-block resolution would make the config
@@ -159,7 +183,7 @@ class AnimationFrameworkModule extends Module
      * render. Memoized, and subject to the same timing rule as getAnimations(), which it calls.
      *
      * The result is deliberately plain, JSON-serializable data rather than AnimationModule instances:
-     * it is passed to the editor as inline script data, and anything needing the module itself has
+     * it will be passed to the editor as inline script data, and anything needing the module itself has
      * the key to look it up with getAnimation().
      *
      * Not object-cached. It depends on the runtime active-module set and not only on config, so
@@ -203,8 +227,10 @@ class AnimationFrameworkModule extends Module
                 continue;
             }
 
-            /* Reachable only through an override: the default key() returns HOOK_SUFFIX, which
-             ModuleRegistry::addModules() has already refused to leave empty. */
+            /* Normally reachable only through an override: the default key() returns HOOK_SUFFIX,
+             which ModuleRegistry::addModules() has already refused to leave empty. An animation
+             pulled in solely through another module's DEPENDENCIES never passes through that
+             check at all — see ModuleRegistry::registerActiveModule(). */
             $key = $module->key();
             if ($key === '') {
                 Logger::error("Animation {$classname} returned an empty key(). Skipping.");
@@ -273,9 +299,9 @@ class AnimationFrameworkModule extends Module
         $entries = [];
 
         foreach ($blockConfig as $key => $value) {
-            /* The removal idiom. Tested explicitly rather than by truthiness, because an override
-               array and an empty array are both falsy-adjacent values that must survive: `[]` means
-               "enabled, no overrides", and array_filter() or a `=== true` test would drop both. */
+            /* The removal idiom, tested explicitly rather than by truthiness. A `=== true` test, as
+               BlockConfig::filterDisabledBlocks() uses, would drop every override array; and `[]`
+               means "enabled, no overrides", which array_filter() would drop. */
             if ($value === false || $value === null) {
                 continue;
             }
@@ -337,7 +363,7 @@ class AnimationFrameworkModule extends Module
             $this->flagProblem(
                 $context,
                 sprintf(
-                    'has an override array with neither `allowed` nor `defaults` (found: %s). Ignoring the overrides.',
+                    'has an override array with neither `allowed` nor `defaults` (found: %s). Ignoring the overrides. The animation stays enabled.',
                     implode(', ', $unknown),
                 ),
             );
@@ -449,10 +475,30 @@ class AnimationFrameworkModule extends Module
                matched against an editor control's own string values.
                Note the asymmetry with defaults, whose values keep the type they were authored with
                because normalization leaves a string key's scalar value alone. */
-            $resolved[$option] = array_map(
-                'strval',
-                array_keys(array_filter($values, fn($permitted) => $permitted !== false && $permitted !== null)),
-            );
+            $permitted = [];
+
+            foreach ($values as $value => $marker) {
+                if ($marker === false || $marker === null) {
+                    continue;
+                }
+
+                /* Anything but `true` would otherwise read as permission, and the two ways of
+                   getting one are both worth a word: a forgotten nesting level, where
+                   ['brand' => ['purple', 'green']] permits the literal "brand" and loses the
+                   palette; and a value marked with something that is not a marker, where
+                   ['purple' => 0] permits purple all the same. */
+                if ($marker !== true) {
+                    $this->flagProblem(
+                        "{$context} / allowed / {$option} / {$value}",
+                        'is marked with neither `true` nor `false`, so it is not a permitted value as written. Dropping the value.',
+                    );
+                    continue;
+                }
+
+                $permitted[] = (string) $value;
+            }
+
+            $resolved[$option] = $permitted;
 
             if ($resolved[$option] === []) {
                 $this->flagProblem(
@@ -483,12 +529,14 @@ class AnimationFrameworkModule extends Module
 
         foreach ($defaults as $option => $value) {
             if (is_array($value)) {
-                /* Unrecoverable by the time it arrives: ConfigRegistry::normalizeData() has already
-                   rewritten ['a', 'b'] into ['a' => true, 'b' => true], so neither the authored order
-                   nor the fact that it was a list survives to be interpreted. */
+                /* A default is one value, and there is nothing sensible to do with several. An
+                   authored list has lost the fact that it was one by the time it arrives, too:
+                   ConfigRegistry::normalizeData() rewrites ['a', 'b'] into ['a' => true, 'b' => true],
+                   which is indistinguishable from an authored map. Order survives; only list-versus-map
+                   does not, and a string-keyed map like ['mobile' => '10'] arrives untouched. */
                 $this->flagProblem(
                     "{$context} / defaults / {$option}",
-                    'has an array default, which config normalization rewrites into a keyed map. Give it a scalar default instead. Dropping it.',
+                    'has an array default where one scalar value was expected. Dropping it.',
                 );
                 continue;
             }
@@ -510,10 +558,12 @@ class AnimationFrameworkModule extends Module
     /**
      * One warning per resolution, not one per problem.
      *
-     * Every one of these is a config authoring mistake with a defined, safe fallback — the offending
-     * entry is dropped — so none of them is an error. Collecting them keeps the log to a single line,
-     * makes their order deterministic, and keeps them all assertable: Logger retains only its last
-     * entry, so separate calls would hide each other.
+     * Every one of these is a config authoring mistake with a defined, safe fallback, so none of them
+     * is an error. The fallbacks differ — some drop the offending entry, others keep the animation and
+     * apply nothing, or keep a flagged default the control will not offer — so each message states its
+     * own rather than relying on a rule stated once here. Collecting them keeps the log to a single
+     * line, makes their order deterministic, and keeps them all assertable: Logger retains only its
+     * last entry, so separate calls would hide each other.
      */
     private function reportConfigProblems(): void
     {

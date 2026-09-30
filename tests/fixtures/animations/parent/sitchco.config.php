@@ -10,9 +10,11 @@
  *
  * The animation keys are the test animations' own: `animation-tester` and `second-tester`.
  *
- * Several entries below are deliberately malformed. Resolving this file therefore always produces
- * the aggregated config warning — tests that need a clean, silent resolution use a registry with no
- * fixture directories at all.
+ * Seven of the entries below are deliberately malformed. Resolving this file therefore always
+ * produces the aggregated config warning, with exactly seven problems in it — a count
+ * testEveryConfigProblemIsReportedInASingleWarning pins, so an entry added here must either be
+ * valid or move that number deliberately. Tests that need a clean, silent resolution use the
+ * `clean` layer instead.
  */
 
 return [
@@ -37,8 +39,12 @@ return [
         // A single permitted value written as a scalar rather than a one-item list.
         'test/allowed-scalar' => ['animation-tester' => ['allowed' => ['color' => 'purple']]],
 
-        // Permits nothing, which is legal but almost certainly a mistake.
-        'test/allowed-empty' => ['animation-tester' => ['allowed' => ['color' => []]]],
+        /* Permits nothing, which is legal but almost certainly a mistake — one problem, from
+           resolveAllowed(). The default is here to pin flagUnpermittedDefaults()' empty-list skip:
+           one authoring mistake earns one problem, so this must not produce a second. */
+        'test/allowed-empty' => [
+            'animation-tester' => ['allowed' => ['color' => []], 'defaults' => ['color' => 'purple']],
+        ],
 
         // Option names where `allowed` or `defaults` belongs — unguessable, so nothing is applied.
         'test/no-reserved-keys' => ['animation-tester' => ['color' => ['purple']]],
@@ -51,7 +57,7 @@ return [
             ],
         ],
 
-        // An array default, which normalization has already rewritten beyond recovery.
+        // An array default: one value too many, and unrecoverable as a list by the time it arrives.
         'test/mangled-default' => [
             'animation-tester' => ['defaults' => ['color' => ['purple', 'green'], 'opacity' => '30']],
         ],
@@ -59,10 +65,20 @@ return [
         // Numeric option values, to prove they survive normalization's key casting as strings.
         'test/numeric-allowed' => ['animation-tester' => ['allowed' => ['opacity' => ['10', '30', '50']]]],
 
-        /* An int default against string-keyed permitted values. Normalization casts the `allowed`
-         keys back to strings, so the cross-check has to compare as strings or flag this wrongly. */
+        /* An int default against string-keyed permitted values. Normalization turns permitted values
+         into array keys and PHP casts a numeric-string key to an int; it is the strval() in
+         resolveAllowed() that casts them back, so the cross-check compares as strings or flags
+         this wrongly. */
         'test/typed-default' => [
             'animation-tester' => ['allowed' => ['speed' => ['25', '50']], 'defaults' => ['speed' => 25]],
+        ],
+
+        /* A bool default on an option that does have an `allowed` list, pinning
+           flagUnpermittedDefaults()' type skip. A literal setting has nothing to match against;
+           without the skip, (string) false is '' and would be flagged. `reverse => false` on
+           test/overrides pins nothing, because it has no `allowed` entry and skips on isset first. */
+        'test/bool-default' => [
+            'animation-tester' => ['allowed' => ['reverse' => ['on', 'off']], 'defaults' => ['reverse' => false]],
         ],
 
         // An animation no module provides, alongside one that exists.
@@ -86,6 +102,7 @@ return [
         'test/child-clobbers-overrides' => ['animation-tester' => ['defaults' => ['opacity' => '30']]],
         'test/child-clobbers-overrides-keyed' => ['animation-tester' => ['defaults' => ['opacity' => '30']]],
         'test/child-keeps-overrides' => ['animation-tester' => ['defaults' => ['opacity' => '30']]],
+        'test/child-widens-allowed' => ['animation-tester' => ['allowed' => ['color' => ['purple', 'green']]]],
 
         // A default that IS permitted here, and stops being permitted once the child narrows it.
         'test/child-orphans-default' => [

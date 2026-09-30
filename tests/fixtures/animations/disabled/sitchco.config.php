@@ -9,7 +9,8 @@
  * why it is worth pinning. A different path from "the section was never declared", which is all
  * the no-fixture case covers.
  *
- * Layered over the parent fixture, whose malformed entries must therefore go unread and unlogged.
+ * Layered over the parent fixture, whose malformed entries therefore go unlogged. Core still reads
+ * and normalizes every file in the chain; it is only the resolver that never sees the section.
  */
 
 return [

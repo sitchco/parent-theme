@@ -32,7 +32,8 @@ class AnimationFrameworkModuleTest extends TestCase
     /**
      * The same, reading a specific config instead of nothing. A ConfigRegistryTester with no fixture
      * directories finds no files at all, so `animations` resolves to an empty section and the
-     * discovery cases above are unaffected by config.
+     * discovery cases below — the first is testDiscoversActiveAnimationsKeyedByAnimationKey — are
+     * unaffected by config.
      *
      * init() is called because ModuleRegistry would have: it is what opens memoization, and every
      * case but the too-early one wants the coordinator in the state the site runs it in.
@@ -317,6 +318,29 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertNull($this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations()));
     }
 
+    public function testBlockResolutionBeforeInitAnswersWithoutFreezingAPartialMap(): void
+    {
+        /* getBlockAnimations() needs the same guard as getAnimations() and its own case for it:
+           resolution looks every configured animation up in the module list, so a map resolved
+           while that list is still filling is short an animation — and memoizing it would keep
+           everyone else short for the rest of the request, silently. */
+        $registry = $this->registryFor(AnimationTester::class);
+        $framework = new AnimationFrameworkModule(
+            $registry,
+            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/clean'),
+        );
+
+        $this->assertSame(['animation-tester'], array_keys($framework->getAnimationsForBlock('test/clean-bare')));
+
+        $registry->activateModules([SecondAnimationTester::class => true]);
+        $framework->init();
+
+        $this->assertSame(
+            ['animation-tester', 'second-tester'],
+            array_keys($framework->getAnimationsForBlock('test/clean-bare')),
+        );
+    }
+
     public function testChildThemeAddsABlockTheParentNeverMentioned(): void
     {
         $entries = $this->frameworkForFixtures('parent', 'child')->getAnimationsForBlock('test/child-adds-block');
@@ -449,8 +473,10 @@ class AnimationFrameworkModuleTest extends TestCase
 
     public function testAValidConfigResolvesToAMapAndSaysNothing(): void
     {
-        /* The counterweight to every other fixture case: the parent fixture is mostly malformed, so
-         without this nothing would notice the resolver starting to flag valid entries. */
+        /* The counterweight to every other fixture case. Seven of the parent fixture's entries are
+         malformed and every test reading it resolves with the aggregated warning, so without a
+         layer where nothing is wrong, nothing would notice the resolver starting to flag valid
+         entries. */
         $framework = $this->frameworkForFixtures('clean');
         $blocks = null;
 
@@ -473,7 +499,8 @@ class AnimationFrameworkModuleTest extends TestCase
     public function testAFalseAnimationsSectionDropsEveryBlockWithoutAWord(): void
     {
         /* The `=> false` removal one level up. FileRegistry::load() finds a non-array at the key and
-         returns its default, so the parent fixture's malformed entries are never even read. */
+         returns its default, so the parent fixture's malformed entries go unlogged — core still
+         reads and normalizes the file, but the resolver never sees the section. */
         $framework = $this->frameworkForFixtures('parent', 'disabled');
         $blocks = null;
 
@@ -502,6 +529,11 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertCount(1, $problems);
         $this->assertStringContainsString('defaults / color', $problems[0]);
         $this->assertStringContainsString('green', $problems[0]);
+
+        /* The whole chain counted, not just the one problem filtered for above: every other entry
+           the child adds is a removal idiom or an additive merge, and none of them may start
+           warning. The parent's seven plus this one. */
+        $this->assertCount(8, $entry['value']['problems']);
     }
 
     public function testAPermittedDefaultOfAnotherTypeIsNotFlagged(): void
@@ -514,6 +546,103 @@ class AnimationFrameworkModuleTest extends TestCase
 
         $this->assertStringNotContainsString('test/typed-default', $entry['message']);
         $this->assertSame(['speed' => 25], $this->entryFor($framework, 'test/typed-default')['defaults']);
+    }
+
+    public function testAChildStatingAnAllowedListWidensTheInheritedOneRatherThanReplacingIt(): void
+    {
+        /* The counter-intuitive half of the merge, and the reason the authoring docs tell you to
+           narrow with `=> false` instead: two arrays merge, so a child's palette is added to the
+           parent's rather than put in its place — and nothing logs a word about it. */
+        $framework = $this->frameworkForFixtures('parent', 'child');
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations());
+
+        $this->assertSame(
+            ['purple', 'green', 'red'],
+            $this->entryFor($framework, 'test/child-widens-allowed')['allowed']['color'],
+        );
+        $this->assertStringNotContainsString('test/child-widens-allowed', $entry['message']);
+    }
+
+    public function testEveryOverrideMistakeIsFlaggedWithItsFallback(): void
+    {
+        /* Its own fixture layer, because the parent's problem count is pinned. Every case here is
+           one that would otherwise pass for something legal — `=> false` is a removal idiom one
+           level up, and a marker that is not `true` still reads as permission — so each is
+           asserted through both its message and the fallback that message promises. */
+        $framework = $this->frameworkForFixtures('malformed-overrides');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+        $problems = $entry['value']['problems'];
+
+        $this->assertContains(
+            'test/allowed-false / animation-tester: `allowed` must map option names to their permitted values. Leaving every option unrestricted.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/allowed-false']['animation-tester']['allowed']);
+
+        $this->assertContains(
+            'test/allowed-option-false / animation-tester / allowed / color: is not a list of permitted values. Leaving the option unrestricted.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/allowed-option-false']['animation-tester']['allowed']);
+
+        $this->assertContains(
+            'test/defaults-false / animation-tester: `defaults` must map option names to their default values. Applying no defaults.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/defaults-false']['animation-tester']['defaults']);
+
+        // Counted as well as named, for the same reason the parent fixture's count is pinned.
+        $this->assertCount(7, $problems);
+    }
+
+    public function testAKnownAnimationMappedToAScalarIsDropped(): void
+    {
+        $framework = $this->frameworkForFixtures('malformed-overrides');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+
+        $this->assertContains(
+            'test/scalar-animation / animation-tester: has a scalar value where `true` or an override array was expected. Dropping it.',
+            $entry['value']['problems'],
+        );
+
+        // Its only animation dropped, the block has nothing to offer and leaves the map entirely.
+        $this->assertArrayNotHasKey('test/scalar-animation', $blocks);
+    }
+
+    public function testAPermittedValueMarkedWithAnythingButTrueIsDroppedAndFlagged(): void
+    {
+        /* After normalization a permitted value arrives as `value => true`, and a child's removal
+           as `value => false`. Anything else is a mistake that would otherwise read as permission:
+           a forgotten nesting level permits the wrapper's name and loses the palette behind it. */
+        $framework = $this->frameworkForFixtures('malformed-overrides');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+        $problems = $entry['value']['problems'];
+
+        $this->assertContains(
+            'test/nested-allowed / animation-tester / allowed / color / brand: is marked with neither `true` nor `false`, so it is not a permitted value as written. Dropping the value.',
+            $problems,
+        );
+        $this->assertSame(['color' => []], $blocks['test/nested-allowed']['animation-tester']['allowed']);
+
+        // The sibling marked `true` is still permitted; only the odd one out is dropped.
+        $this->assertContains(
+            'test/odd-marker / animation-tester / allowed / color / purple: is marked with neither `true` nor `false`, so it is not a permitted value as written. Dropping the value.',
+            $problems,
+        );
+        $this->assertSame(['color' => ['green']], $blocks['test/odd-marker']['animation-tester']['allowed']);
     }
 
     public function testEveryConfigProblemIsReportedInASingleWarning(): void

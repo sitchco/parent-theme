@@ -53,17 +53,25 @@ return [
      *     ],
      *
      * `allowed` and `defaults` are the only reserved sub-keys. An animation named here must also be
-     * activated in `modules` above, or it is dropped with a logged warning. Merging is additive, so
-     * removal is `=> false` — `'parallax' => false` to drop one animation from a block,
-     * `'core/group' => false` to drop the block entirely, or `'animations' => false` to drop every
-     * block's animations, an ancestor's included. Removal stops there: an inherited `allowed` list
-     * or `defaults` map cannot be unset, only replaced with the one you want.
+     * activated in `modules` above, or it is dropped with a logged warning.
+     *
+     * Merging is additive, so removal is `=> false` — `null` works wherever `false` does — and it
+     * applies at exactly four points: `'animations' => false` drops every block's animations, an
+     * ancestor's included; `'core/group' => false` drops one block; `'parallax' => false` drops one
+     * animation from a block; and `'allowed' => ['color' => ['green' => false]]` drops one permitted
+     * value. It stops there — `'allowed' => false` and `'defaults' => false` are authoring mistakes
+     * rather than a fifth removal idiom.
+     *
+     * Nor is an inherited `allowed` list replaced by stating the one you want: it MERGES, so a
+     * child's `['red']` over a parent's `['purple', 'green']` permits all three, silently. Narrow it
+     * with `=> false` per value, or replace it outright with a single scalar. `defaults` are replaced
+     * key by key, as you would expect.
      *
      * Do not mix the bare-list and keyed forms in one block: a numeric-keyed array is discarded by
-     * config normalization before anything reads it. And in a child theme, re-stating an animation
-     * an ancestor already configured as `true` — bare or keyed, the two normalize identically —
-     * replaces its overrides. To keep them, leave the animation out or write `'parallax' => []`.
-     * Both traps are spelled out on AnimationFrameworkModule.
+     * config normalization before anything reads it. And in a child theme, mentioning an inherited
+     * animation again as `true` — bare or keyed, the two normalize identically — replaces its
+     * overrides. To keep them, leave the animation out or write `'parallax' => []`. All three traps,
+     * the third being non-integer numeric values, are spelled out on AnimationFrameworkModule.
      */
     'animations' => [],
     'disallowedBlocks' => [

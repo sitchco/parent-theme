@@ -31,15 +31,19 @@ use Sitchco\Framework\Module;
  *    CSS and JS from init() via enqueueFrontendAssets(), rather than conditionally wherever it
  *    happens to be used. Animations are expected across many blocks and pages, and it is the
  *    per-block data-animation attribute that actually triggers one on a given element; a stylesheet
- *    with no matching attribute on the page costs nothing but its transfer size, while conditional
- *    loading produces an inconsistent feel. If one animation's payload grows heavy, revisit it alone
- *    rather than changing this default.
+ *    with no matching attribute on the page costs only its transfer size and the render-blocking
+ *    parse it pays for in the head, while conditional loading produces an inconsistent feel. If one
+ *    animation's payload grows heavy, revisit it alone rather than changing this default.
  *
  *    enqueueFrontendAssets() hooks wp_enqueue_scripts, which does not fire for the block editor
  *    canvas, so an animation built this way does not preview in the editor. That is intended for
  *    now: nothing emits the attributes an animation reacts to yet. If editor preview is wanted
- *    later, the stylesheet moves to enqueueEditorPreviewAssets() and the decision about whether
- *    animation JS should run inside the editor gets made then, not by accident.
+ *    later, the stylesheet moves to enqueueGlobalAssets() — which hooks enqueue_block_assets and so
+ *    covers the front end and the editor both — while the script stays on enqueueFrontendAssets().
+ *    That is the split KadenceBlocks.php:24-30 already uses, and it keeps whether animation JS runs
+ *    inside the editor a decision made then rather than by accident. Not enqueueEditorPreviewAssets():
+ *    it hooks enqueue_block_assets behind an is_admin() guard (Module.php:122), so moving the
+ *    stylesheet there would take it off the front end.
  *
  * 2. DEPENDENCIES does not merge. PHP replaces a class constant rather than combining it, so a
  *    subclass needing its own dependency has to carry the parent's forward:
