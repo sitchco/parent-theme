@@ -1,5 +1,8 @@
+import { buildAnimationFields } from './animation-fields';
+
 /**
- * The Animation select, on every block the `animations` config section names.
+ * The Animation select, on every block the `animations` config section names, followed by the
+ * selected animation's own controls.
  *
  * One extendBlock() registration covers every configured block rather than one per group of
  * blocks sharing an animation set. Two reasons: each registration adds an editor.BlockEdit
@@ -12,21 +15,30 @@
  * label and never learns which blocks offer it. The narrowing is entirely the config's doing,
  * resolved in AnimationFrameworkModule and handed over as the map below.
  *
- * Shape of blockAnimations, keyed by block name then animation key:
+ * Shape of the blob, as AnimationFrameworkModule serializes it:
  *
  *     {
- *         'core/group': {
- *             parallax: { key: 'parallax', label: 'Parallax', allowed: {}, defaults: {} },
+ *         blocks: {
+ *             'core/group': {
+ *                 parallax: { key: 'parallax', label: 'Parallax', allowed: {}, defaults: { speed: 25 } },
+ *             },
+ *         },
+ *         controls: {
+ *             parallax: [{ type: 'number', name: 'speed', attribute: 'parallaxSpeed', label: 'Speed', default: 50 }],
  *         },
  *     }
  *
- * `allowed` and `defaults` are per-animation option overrides. Nothing reads them yet — they
- * belong to the per-animation controls, and arrive with them.
+ * `blocks` decides which animations each block offers, and narrows their controls per block
+ * through `allowed` and `defaults`. `controls` holds each animation's own control definitions,
+ * which buildAnimationFields() turns into the fields below the select.
  *
- * @param {Object} api             - window.sitchco.extendBlock
- * @param {Object} blockAnimations - Resolved block => animations map from PHP
+ * @param {Object}   api                 - window.sitchco.extendBlock
+ * @param {Object}   blob                - The resolved map from PHP
+ * @param {Object}   blob.blocks         - Block name => animation key => entry
+ * @param {Object}   [blob.controls]     - Animation key => serialized controls
+ * @param {Function} [applyFilters]      - sitchco.hooks.applyFilters, for options from a JS hook
  */
-export default function ({ extendBlock, fields }, blockAnimations) {
+export default function ({ extendBlock, fields }, { blocks: blockAnimations = {}, controls = {} }, applyFilters) {
     const blocks = Object.keys(blockAnimations);
     /* PHP already skips the enqueue when the map is empty, so this only catches a blob that
        failed to land. Registering over an empty block list would add filters that can never
@@ -67,6 +79,14 @@ export default function ({ extendBlock, fields }, blockAnimations) {
                     })),
                 ],
             }),
+            ...buildAnimationFields(
+                fields,
+                {
+                    blocks: blockAnimations,
+                    controls,
+                },
+                applyFilters
+            ),
         ],
     });
 }
