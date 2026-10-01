@@ -49,6 +49,12 @@ const BREAKPOINTS = [
  * }))
  */
 export function responsive(fieldDef) {
+    // The breakpoint cascade reads raw values with `|| ''`, which would mask a function default
+    // rather than apply it. Refused outright rather than half-working; see utils/field-value.js.
+    if (typeof fieldDef.default === 'function') {
+        throw new Error(`responsive() does not support a function default (field "${fieldDef.name}")`);
+    }
+
     const { name, className: originalClassName, render: originalRender, ...rest } = fieldDef;
     return BREAKPOINTS.map(({ key, suffix, prefix }, index) => ({
         ...rest,

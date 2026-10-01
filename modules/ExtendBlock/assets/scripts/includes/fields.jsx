@@ -5,6 +5,7 @@ import {
     __experimentalNumberControl as NumberControl,
 } from '@wordpress/components';
 import { resolveOptions, withStaleValue } from './utils/options';
+import { hasContextualDefault } from './utils/field-value';
 
 /**
  * Creates a field definition with the given type and defaults.
@@ -47,6 +48,11 @@ function createField(type, defaults) {
  *
  * `condition`, `className` and `attributes` receive the output context, `{ blockName }`, in
  * every phase. `render` and `options` receive the richer render context.
+ *
+ * `default` may be a function of the output context, `({ blockName }) => value`, when one
+ * registration serves blocks whose defaults differ. The attribute is then registered without a
+ * default and the value is resolved on every read, so an untouched block follows the default and
+ * a picked value is stored for good. Not supported inside responsive(). See utils/field-value.js.
  */
 export const fields = {
     /**
@@ -181,10 +187,14 @@ export function fieldsToAttributes(fields) {
             throw new Error('Field is missing required "name" property');
         }
 
-        attributes[field.name] = {
-            type: field.attributeType,
-            default: field.default,
-        };
+        // A function default is supplied at read time, so the attribute is registered without one
+        // and stays undefined until an author picks something. See utils/field-value.js.
+        attributes[field.name] = hasContextualDefault(field)
+            ? { type: field.attributeType }
+            : {
+                  type: field.attributeType,
+                  default: field.default,
+              };
     }
     return attributes;
 }
