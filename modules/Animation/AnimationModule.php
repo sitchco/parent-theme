@@ -94,7 +94,7 @@ abstract class AnimationModule extends Module
      *
      * None by default: an animation driven purely by its own stylesheet needs no controls.
      *
-     * Names are local — `color`, not `letterColor`. The framework builds each block attribute from
+     * Names are local — `color`, not `letterAnimationColor`. The framework builds each block attribute from
      * key() and the name (AnimationFrameworkModule::attributeName()), which is what keeps two
      * animations' controls from colliding. That makes a control's name content in the same way the
      * key is: saved blocks store their values under it, so renaming a control on an animation that

@@ -11,7 +11,7 @@ use Sitchco\Parent\Modules\Animation\AnimationModule;
  *
  * Its controls cover what AnimationTester's do not: a number, a select with a non-empty default of
  * its own, and a select whose options come from a JS hook. The hyphenated key also exercises
- * attribute naming: `speed` is stored as secondTesterSpeed.
+ * attribute naming: `speed` is stored as secondTesterAnimationSpeed.
  */
 class SecondAnimationTester extends AnimationModule
 {

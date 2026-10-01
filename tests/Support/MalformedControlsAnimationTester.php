@@ -9,8 +9,8 @@ use Sitchco\Parent\Modules\Animation\AnimationModule;
  * An animation whose controls break every definition rule the coordinator enforces, alongside one
  * that is fine. A fake of its own because the AnimationModule contract is what is under test here.
  *
- * Keyed `second` so that its `testerSpeed` meets SecondAnimationTester's `speed` in one attribute
- * name, secondTesterSpeed: distinct keys and distinct control names, one collision.
+ * Keyed `secondTester` so that its `speed` meets SecondAnimationTester's (keyed `second-tester`) in
+ * one attribute name, secondTesterAnimationSpeed: distinct keys, one collision.
  */
 class MalformedControlsAnimationTester extends AnimationModule
 {
@@ -18,7 +18,7 @@ class MalformedControlsAnimationTester extends AnimationModule
 
     public function key(): string
     {
-        return 'second';
+        return 'secondTester';
     }
 
     public function label(): string
@@ -37,7 +37,7 @@ class MalformedControlsAnimationTester extends AnimationModule
                 'optionsFilter' => 'test.tint-options',
             ]),
             AnimationControl::select('looseOptions', 'Loose options', ['options' => ['a', 'b']]),
-            AnimationControl::number('testerSpeed', 'Collides'),
+            AnimationControl::number('speed', 'Collides'),
             AnimationControl::toggle('ok', 'Kept'),
             AnimationControl::toggle('ok', 'Declared twice'),
         ];

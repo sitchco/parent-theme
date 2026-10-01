@@ -23,7 +23,7 @@ namespace Sitchco\Parent\Modules\Animation;
  *         ];
  *     }
  *
- * `name` is local to the animation: `color`, never `letterColor`. The framework builds the block
+ * `name` is local to the animation: `color`, never `letterAnimationColor`. The framework builds the block
  * attribute from the animation key and this name (AnimationFrameworkModule::attributeName()), so two
  * animations can each have a `color` without colliding.
  *

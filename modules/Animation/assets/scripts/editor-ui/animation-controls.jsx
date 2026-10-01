@@ -24,7 +24,7 @@ import { buildAnimationFields } from './animation-fields';
  *             },
  *         },
  *         controls: {
- *             parallax: [{ type: 'number', name: 'speed', attribute: 'parallaxSpeed', label: 'Speed', default: 50 }],
+ *             parallax: [{ type: 'number', name: 'speed', attribute: 'parallaxAnimationSpeed', label: 'Speed', default: 50 }],
  *         },
  *     }
  *

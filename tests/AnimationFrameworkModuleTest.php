@@ -769,11 +769,11 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertCount(8, $entry['value']['problems']);
     }
 
-    public function testAttributeNamesCamelCaseTheKeyAndAppendTheControlName(): void
+    public function testAttributeNamesJoinTheCamelCaseKeyAnimationAndTheControlName(): void
     {
-        $this->assertSame('letterColor', AnimationFrameworkModule::attributeName('letter', 'color'));
-        $this->assertSame('fadeUpSpeed', AnimationFrameworkModule::attributeName('fade-up', 'speed'));
-        $this->assertSame('fadeUpStartAt', AnimationFrameworkModule::attributeName('fade-up', 'startAt'));
+        $this->assertSame('letterAnimationColor', AnimationFrameworkModule::attributeName('letter', 'color'));
+        $this->assertSame('fadeUpAnimationSpeed', AnimationFrameworkModule::attributeName('fade-up', 'speed'));
+        $this->assertSame('fadeUpAnimationStartAt', AnimationFrameworkModule::attributeName('fade-up', 'startAt'));
     }
 
     public function testControlsAreKeyedByAnimationAndName(): void
@@ -797,7 +797,7 @@ class AnimationFrameworkModuleTest extends TestCase
                 'default' => 50,
                 'min' => 0,
                 'max' => 100,
-                'attribute' => 'secondTesterSpeed',
+                'attribute' => 'secondTesterAnimationSpeed',
             ],
             $serialized['second-tester'][0],
         );
@@ -819,22 +819,22 @@ class AnimationFrameworkModuleTest extends TestCase
             $controls = $framework->getControls();
         });
 
-        // SecondAnimationTester registered first, so it keeps secondTesterSpeed; of the two `ok`
+        // SecondAnimationTester registered first, so it keeps secondTesterAnimationSpeed; of the two `ok`
         // toggles, the first declared is kept.
         $this->assertSame(['speed', 'direction', 'tint'], array_keys($controls['second-tester']));
-        $this->assertSame(['ok'], array_keys($controls['second']));
-        $this->assertSame('Kept', $controls['second']['ok']->label);
+        $this->assertSame(['ok'], array_keys($controls['secondTester']));
+        $this->assertSame('Kept', $controls['secondTester']['ok']->label);
 
         $this->assertSame(LogLevel::ERROR, $entry['level']);
         $this->assertSame(
             [
-                'second / #0: is not an AnimationControl. Dropping it.',
-                'second / Bad-Name: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.',
-                'second / noOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                'second / bothOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                "second / looseOptions: `options` must be a list of ['label' => …, 'value' => …] pairs. Dropping it.",
-                'second / testerSpeed: its attribute "secondTesterSpeed" is already used by second-tester / speed. Dropping it.',
-                'second / ok: is declared twice. Keeping the first.',
+                'secondTester / #0: is not an AnimationControl. Dropping it.',
+                'secondTester / Bad-Name: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.',
+                'secondTester / noOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                'secondTester / bothOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                "secondTester / looseOptions: `options` must be a list of ['label' => …, 'value' => …] pairs. Dropping it.",
+                'secondTester / speed: its attribute "secondTesterAnimationSpeed" is already used by second-tester / speed. Dropping it.',
+                'secondTester / ok: is declared twice. Keeping the first.',
             ],
             $entry['value']['problems'],
         );

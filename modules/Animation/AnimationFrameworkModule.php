@@ -139,8 +139,15 @@ class AnimationFrameworkModule extends Module
 
     /**
      * The block attribute a control's value is stored under: the animation key in camelCase, then
-     * the control name with its first letter raised. `letter` + `color` is `letterColor`;
-     * `fade-up` + `speed` is `fadeUpSpeed`.
+     * `Animation`, then the control name with its first letter raised. `letter` + `color` is
+     * `letterAnimationColor`; `fade-up` + `speed` is `fadeUpAnimationSpeed`.
+     *
+     * `Animation` is in the name because a key alone often says nothing about what it is —
+     * `letterColor` or `stickyOffset` could belong to anything on the block. By convention an
+     * animation's class is named `{Key}Animation` (LetterAnimation for `letter`), so the attribute
+     * reads as the module's own name. It is derived from the key and not from the class because the
+     * key is the value pinned against renames; a class can be renamed in a refactor, and every saved
+     * value would follow it into orphanhood.
      *
      * Built here, once, and handed to the editor with each control, so nothing on the JS side ever
      * derives it a second time. Both inputs are content — see key() and controls() — so the result
@@ -148,7 +155,7 @@ class AnimationFrameworkModule extends Module
      */
     public static function attributeName(string $key, string $name): string
     {
-        return lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $key)))) . ucfirst($name);
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $key)))) . 'Animation' . ucfirst($name);
     }
 
     /**
@@ -341,9 +348,10 @@ class AnimationFrameworkModule extends Module
                     }
                 }
 
-                /* Distinct keys can still meet in one attribute name — `second` + `testerSpeed` and
-                   `second-tester` + `speed` are both secondTesterSpeed — and two controls writing
-                   one attribute would overwrite each other's saved values. */
+                /* Distinct keys can still meet in one attribute name — `second-tester` and
+                   `secondTester` both camelCase to secondTester, so their `speed` controls are both
+                   secondTesterAnimationSpeed — and two controls writing one attribute would
+                   overwrite each other's saved values. */
                 $attribute = static::attributeName($key, $control->name);
                 if (isset($attributeOwners[$attribute])) {
                     $problems[] = "{$context}: its attribute \"{$attribute}\" is already used by {$attributeOwners[$attribute]}. Dropping it.";

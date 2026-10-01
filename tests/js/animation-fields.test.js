@@ -34,7 +34,7 @@ const CONTROLS = {
         {
             type: 'select',
             name: 'color',
-            attribute: 'letterColor',
+            attribute: 'letterAnimationColor',
             label: 'Color',
             default: '',
             optionsFilter: 'theme.color-options',
@@ -42,7 +42,7 @@ const CONTROLS = {
         {
             type: 'select',
             name: 'opacity',
-            attribute: 'letterOpacity',
+            attribute: 'letterAnimationOpacity',
             label: 'Opacity',
             default: '',
             options: options('', '10', '30', '50'),
@@ -52,7 +52,7 @@ const CONTROLS = {
         {
             type: 'number',
             name: 'speed',
-            attribute: 'fadeUpSpeed',
+            attribute: 'fadeUpAnimationSpeed',
             label: 'Speed',
             default: 50,
             min: 0,
@@ -61,7 +61,7 @@ const CONTROLS = {
         {
             type: 'toggle',
             name: 'reverse',
-            attribute: 'fadeUpReverse',
+            attribute: 'fadeUpAnimationReverse',
             label: 'Reverse',
             default: false,
         },
@@ -119,9 +119,14 @@ describe('buildAnimationFields', () => {
     it('builds one field per control, stored under the attribute PHP named', () => {
         const built = build();
 
-        expect(Object.keys(built)).toEqual(['letterColor', 'letterOpacity', 'fadeUpSpeed', 'fadeUpReverse']);
+        expect(Object.keys(built)).toEqual([
+            'letterAnimationColor',
+            'letterAnimationOpacity',
+            'fadeUpAnimationSpeed',
+            'fadeUpAnimationReverse',
+        ]);
 
-        expect(built.fadeUpSpeed).toMatchObject({
+        expect(built.fadeUpAnimationSpeed).toMatchObject({
             type: 'number',
             attributeType: 'number',
             label: 'Speed',
@@ -129,7 +134,7 @@ describe('buildAnimationFields', () => {
             max: 100,
         });
 
-        expect(built.fadeUpReverse.type).toBe('toggle');
+        expect(built.fadeUpAnimationReverse.type).toBe('toggle');
     });
 
     it('builds nothing when no animation has controls', () => {
@@ -158,8 +163,8 @@ describe('buildAnimationFields', () => {
     });
 
     describe('condition', () => {
-        const { fadeUpSpeed } = build();
-        const on = (blockName, animation) => fadeUpSpeed.condition({ animation }, { blockName });
+        const { fadeUpAnimationSpeed } = build();
+        const on = (blockName, animation) => fadeUpAnimationSpeed.condition({ animation }, { blockName });
 
         it('shows a control only while its animation is selected', () => {
             expect(on('core/group', 'fade-up')).toBe(true);
@@ -174,10 +179,10 @@ describe('buildAnimationFields', () => {
 
     describe('options', () => {
         it('narrows a hook’s palette to the block’s allowed list, keeping Default', () => {
-            const { letterColor } = build();
+            const { letterAnimationColor } = build();
 
             expect(
-                resolveOptions(letterColor, {
+                resolveOptions(letterAnimationColor, {
                     blockName: 'kadence/rowlayout',
                     clientId: 'x',
                 }).map((o) => o.value)
@@ -185,29 +190,29 @@ describe('buildAnimationFields', () => {
         });
 
         it('offers a static select in full where nothing restricts it', () => {
-            const { letterOpacity } = build();
+            const { letterAnimationOpacity } = build();
 
-            expect(resolveOptions(letterOpacity, { blockName: 'kadence/rowlayout' })).toEqual(
+            expect(resolveOptions(letterAnimationOpacity, { blockName: 'kadence/rowlayout' })).toEqual(
                 CONTROLS.letter[1].options
             );
         });
 
         it('gives non-select controls no options', () => {
-            expect(build().fadeUpSpeed.options).toBeUndefined();
+            expect(build().fadeUpAnimationSpeed.options).toBeUndefined();
         });
     });
 
     describe('default', () => {
         it('starts an untouched block on its config default, else the control’s own', () => {
-            const { fadeUpSpeed, letterOpacity } = build();
+            const { fadeUpAnimationSpeed, letterAnimationOpacity } = build();
 
-            expect(readFieldValue(fadeUpSpeed, {}, { blockName: 'kadence/rowlayout' })).toBe(25);
-            expect(readFieldValue(fadeUpSpeed, {}, { blockName: 'core/group' })).toBe(50);
-            expect(readFieldValue(letterOpacity, {}, { blockName: 'kadence/rowlayout' })).toBe('30');
+            expect(readFieldValue(fadeUpAnimationSpeed, {}, { blockName: 'kadence/rowlayout' })).toBe(25);
+            expect(readFieldValue(fadeUpAnimationSpeed, {}, { blockName: 'core/group' })).toBe(50);
+            expect(readFieldValue(letterAnimationOpacity, {}, { blockName: 'kadence/rowlayout' })).toBe('30');
         });
 
         it('honours a config default that is falsy', () => {
-            const { fadeUpReverse } = build(
+            const { fadeUpAnimationReverse } = build(
                 { 'core/group': { 'fade-up': entry('fade-up', { defaults: { reverse: false } }) } },
                 {
                     'fade-up': [
@@ -219,11 +224,11 @@ describe('buildAnimationFields', () => {
                 }
             );
 
-            expect(readFieldValue(fadeUpReverse, {}, { blockName: 'core/group' })).toBe(false);
+            expect(readFieldValue(fadeUpAnimationReverse, {}, { blockName: 'core/group' })).toBe(false);
         });
 
         it('copes with the empty defaults PHP serializes as a list', () => {
-            const { fadeUpSpeed } = build({
+            const { fadeUpAnimationSpeed } = build({
                 'core/group': {
                     'fade-up': entry('fade-up', {
                         defaults: [],
@@ -232,7 +237,7 @@ describe('buildAnimationFields', () => {
                 },
             });
 
-            expect(readFieldValue(fadeUpSpeed, {}, { blockName: 'core/group' })).toBe(50);
+            expect(readFieldValue(fadeUpAnimationSpeed, {}, { blockName: 'core/group' })).toBe(50);
         });
     });
 
@@ -242,8 +247,8 @@ describe('buildAnimationFields', () => {
         const built = Object.values(build());
         const attributes = {
             animation: 'fade-up',
-            fadeUpSpeed: 80,
-            fadeUpReverse: true,
+            fadeUpAnimationSpeed: 80,
+            fadeUpAnimationReverse: true,
         };
 
         for (const field of built) {

@@ -187,7 +187,7 @@ describe('animation controls', () => {
                     {
                         type: 'toggle',
                         name: 'reverse',
-                        attribute: 'parallaxReverse',
+                        attribute: 'parallaxAnimationReverse',
                         label: 'Reverse',
                         default: false,
                     },
@@ -196,6 +196,6 @@ describe('animation controls', () => {
         });
 
         expect(sitchco.calls).toHaveLength(1);
-        expect(sitchco.calls[0].fields.map((f) => f.name)).toEqual(['animation', 'parallaxReverse']);
+        expect(sitchco.calls[0].fields.map((f) => f.name)).toEqual(['animation', 'parallaxAnimationReverse']);
     });
 });

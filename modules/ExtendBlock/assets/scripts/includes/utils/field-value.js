@@ -9,7 +9,7 @@
  *
  * Such a field declares `default` as a function of the output context instead:
  *
- *     fields.select({ name: 'fadeUpSpeed', default: ({ blockName }) => speedFor(blockName), … })
+ *     fields.select({ name: 'fadeUpAnimationSpeed', default: ({ blockName }) => speedFor(blockName), … })
  *
  * The attribute is then registered with no default at all, so it stays `undefined` until an author
  * picks something, and every read — the inspector's value, the class and attribute channels, the
