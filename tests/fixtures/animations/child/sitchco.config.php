@@ -6,7 +6,7 @@
  * Every entry here exists to exercise one merge behaviour against its counterpart in
  * ../parent/sitchco.config.php. Nothing here is malformed entry by entry — but
  * test/child-orphans-default is designed to warn once layered, narrowing a palette out from under
- * an inherited default, which takes the parent+child chain to eight problems rather than seven.
+ * an inherited default, which takes the parent+child chain to nine problems rather than eight.
  */
 
 return [

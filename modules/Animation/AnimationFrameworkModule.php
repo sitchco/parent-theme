@@ -26,9 +26,10 @@ use Sitchco\Utils\Logger;
  * config edit — including one that fixes a warning logged from here — needs ConfigRegistry::clearCache()
  * or a cache flush before it takes effect.
  *
- * The coordinator discovers, resolves, and hands the resolved map to the editor, where one
- * ExtendBlock registration turns it into an Animation select per configured block. Emitting the
- * data attributes and injecting per-animation markup arrive with the stories that need them.
+ * The coordinator discovers animations and their controls, resolves config against both, and hands
+ * the result to the editor, where one ExtendBlock registration turns it into an Animation select
+ * per configured block plus each animation's own controls. Emitting the data attributes and
+ * injecting per-animation markup arrive with the stories that need them.
  */
 class AnimationFrameworkModule extends Module
 {
@@ -51,6 +52,12 @@ class AnimationFrameworkModule extends Module
      * @var array<string, array<string, array{key: string, label: string, allowed: array<string, list<string>>, defaults: array<string, mixed>}>>|null
      */
     private ?array $blockAnimations = null;
+
+    /**
+     * Memoized result of validateControls(); null until first asked.
+     * @var array<string, array<string, AnimationControl>>|null
+     */
+    private ?array $controls = null;
 
     /** Whether init() has run; until it has, nothing below memoizes. See getAnimations(). */
     private bool $initialized = false;
@@ -91,7 +98,10 @@ class AnimationFrameworkModule extends Module
                 UIFramework::hookName('editor'),
                 ExtendBlockModule::hookName(),
             ]);
-            $assets->inlineScriptData(static::hookName('editor-ui'), 'animations', $blockAnimations);
+            $assets->inlineScriptData(static::hookName('editor-ui'), 'animations', [
+                'blocks' => $blockAnimations,
+                'controls' => $this->getAnimationControls(),
+            ]);
         });
     }
 
@@ -125,6 +135,61 @@ class AnimationFrameworkModule extends Module
     public function getAnimation(string $key): ?AnimationModule
     {
         return $this->getAnimations()[$key] ?? null;
+    }
+
+    /**
+     * The block attribute a control's value is stored under: the animation key in camelCase, then
+     * the control name with its first letter raised. `letter` + `color` is `letterColor`;
+     * `fade-up` + `speed` is `fadeUpSpeed`.
+     *
+     * Built here, once, and handed to the editor with each control, so nothing on the JS side ever
+     * derives it a second time. Both inputs are content — see key() and controls() — so the result
+     * is too: it is the name saved blocks store their values under.
+     */
+    public static function attributeName(string $key, string $name): string
+    {
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $key)))) . ucfirst($name);
+    }
+
+    /**
+     * Every active animation's valid controls, keyed by animation key and then control name.
+     *
+     * Validated once and memoized, under the same timing rule as getAnimations(). A control that
+     * fails validation is dropped here with an error, so everything downstream — config resolution
+     * and the editor alike — sees only controls that work.
+     *
+     * @return array<string, array<string, AnimationControl>>
+     */
+    public function getControls(): array
+    {
+        if (!$this->initialized) {
+            return $this->validateControls();
+        }
+
+        return $this->controls ??= $this->validateControls();
+    }
+
+    /**
+     * The controls as the editor receives them: per animation key, a list of serialized controls,
+     * each carrying the `attribute` its value is stored under. Animations without controls are left
+     * out.
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public function getAnimationControls(): array
+    {
+        $serialized = [];
+
+        foreach ($this->getControls() as $key => $controls) {
+            foreach ($controls as $control) {
+                $serialized[$key][] = [
+                    ...$control->jsonSerialize(),
+                    'attribute' => static::attributeName($key, $control->name),
+                ];
+            }
+        }
+
+        return $serialized;
     }
 
     /**
@@ -218,12 +283,94 @@ class AnimationFrameworkModule extends Module
         $resolver = new AnimationConfigResolver(
             $this->configRegistry->load(static::CONFIG_KEY),
             fn(string $key) => $this->getAnimation($key),
+            fn(string $key) => $this->getControls()[$key] ?? [],
         );
         ['blocks' => $blocks, 'problems' => $problems] = $resolver->resolve();
 
         $this->reportConfigProblems($problems);
 
         return $blocks;
+    }
+
+    /**
+     * Drops every control that cannot work, reporting them all in one error.
+     *
+     * These are mistakes in an animation's code rather than in config, so they log as errors, as a
+     * duplicate animation key does — and, as there, the first definition wins: animations are
+     * visited in registration order and controls in declaration order, so which one is kept is
+     * stable across requests.
+     *
+     * @return array<string, array<string, AnimationControl>>
+     */
+    private function validateControls(): array
+    {
+        $valid = [];
+        $attributeOwners = [];
+        $problems = [];
+
+        foreach ($this->getAnimations() as $key => $animation) {
+            foreach ($animation->controls() as $index => $control) {
+                if (!($control instanceof AnimationControl)) {
+                    $problems[] = "{$key} / #{$index}: is not an AnimationControl. Dropping it.";
+                    continue;
+                }
+
+                $context = "{$key} / {$control->name}";
+
+                /* The name becomes the tail of a block attribute name and a key in config, so it is
+                 held to something that is safe as both. */
+                if (!preg_match('/^[a-z][a-zA-Z0-9]*$/', $control->name)) {
+                    $problems[] = "{$context}: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.";
+                    continue;
+                }
+
+                if (isset($valid[$key][$control->name])) {
+                    $problems[] = "{$context}: is declared twice. Keeping the first.";
+                    continue;
+                }
+
+                if ($control->type === 'select') {
+                    if (($control->options === null) === ($control->optionsFilter === null)) {
+                        $problems[] = "{$context}: a select needs exactly one of `options` or `optionsFilter`. Dropping it.";
+                        continue;
+                    }
+
+                    if ($control->options !== null && !$this->isOptionList($control->options)) {
+                        $problems[] = "{$context}: `options` must be a list of ['label' => …, 'value' => …] pairs. Dropping it.";
+                        continue;
+                    }
+                }
+
+                /* Distinct keys can still meet in one attribute name — `second` + `testerSpeed` and
+                   `second-tester` + `speed` are both secondTesterSpeed — and two controls writing
+                   one attribute would overwrite each other's saved values. */
+                $attribute = static::attributeName($key, $control->name);
+                if (isset($attributeOwners[$attribute])) {
+                    $problems[] = "{$context}: its attribute \"{$attribute}\" is already used by {$attributeOwners[$attribute]}. Dropping it.";
+                    continue;
+                }
+
+                $attributeOwners[$attribute] = $context;
+                $valid[$key][$control->name] = $control;
+            }
+        }
+
+        if ($problems) {
+            Logger::error(['message' => 'Animation control problems.', 'problems' => $problems]);
+        }
+
+        return $valid;
+    }
+
+    private function isOptionList(array $options): bool
+    {
+        foreach ($options as $option) {
+            if (!is_array($option) || !array_key_exists('label', $option) || !array_key_exists('value', $option)) {
+                return false;
+            }
+        }
+
+        return array_is_list($options);
     }
 
     /**

@@ -81,6 +81,18 @@ namespace Sitchco\Parent\Modules\Animation;
  *    does the same. Naming a DIFFERENT animation is additive in either form and never touches its
  *    siblings — it is only re-stating an inherited one as `true` that costs anything.
  *
+ * CONTROLS. Every option name under `allowed` or `defaults` must name one of the animation's own
+ * controls (AnimationModule::controls()), and is checked against it:
+ *
+ *   - `allowed` applies to select controls only, and every permitted value must be one the select
+ *     offers. A select whose options come from a JS hook (`optionsFilter`) cannot be checked from
+ *     here, so its permitted values are taken as written. The empty "no override" value is never
+ *     listed and never removed.
+ *   - A default must suit its control: a string for a select or text field, a bool for a toggle,
+ *     a number for a number field. Numeric strings are accepted for a number, and numbers for a
+ *     select, each cast to the control's own type — a select's values are strings, and the editor
+ *     matches them strictly.
+ *
  * 3. A non-integer numeric permitted value has to be QUOTED. Normalization turns each permitted
  *    value into an array key, and PHP truncates a float key to an int, so `[0.5, 0.7]` collapses
  *    into the single key 0 and comes back as `['0']`. Write `['0.5', '0.7']`. Integers are safe
@@ -95,16 +107,21 @@ class AnimationConfigResolver
     /** @var callable(string): ?AnimationModule */
     private $findAnimation;
 
+    /** @var callable(string): array<string, AnimationControl> */
+    private $findControls;
+
     /** Problems found during one resolution pass. */
     private array $problems = [];
 
     /**
-     * @param array                               $section       The `animations` config section, as loaded
-     * @param callable(string): ?AnimationModule  $findAnimation Looks an active animation up by key
+     * @param array                                              $section       The `animations` config section, as loaded
+     * @param callable(string): ?AnimationModule                 $findAnimation Looks an active animation up by key
+     * @param callable(string): array<string, AnimationControl>  $findControls  An animation's valid controls, by name
      */
-    public function __construct(private readonly array $section, callable $findAnimation)
+    public function __construct(private readonly array $section, callable $findAnimation, callable $findControls)
     {
         $this->findAnimation = $findAnimation;
+        $this->findControls = $findControls;
     }
 
     /**
@@ -181,7 +198,7 @@ class AnimationConfigResolver
             }
 
             $overrides = is_array($value)
-                ? $this->resolveOverrides($blockName, (string) $key, $value)
+                ? $this->resolveOverrides($blockName, (string) $key, $value, ($this->findControls)((string) $key))
                 : [self::OVERRIDE_ALLOWED => [], self::OVERRIDE_DEFAULTS => []];
 
             $entries[$key] = [
@@ -196,9 +213,10 @@ class AnimationConfigResolver
     }
 
     /**
+     * @param array<string, AnimationControl> $controls
      * @return array{allowed: array<string, list<string>>, defaults: array<string, mixed>}
      */
-    private function resolveOverrides(string $blockName, string $key, array $value): array
+    private function resolveOverrides(string $blockName, string $key, array $value, array $controls): array
     {
         $empty = [self::OVERRIDE_ALLOWED => [], self::OVERRIDE_DEFAULTS => []];
 
@@ -236,67 +254,67 @@ class AnimationConfigResolver
         }
 
         $allowed = array_key_exists(self::OVERRIDE_ALLOWED, $value)
-            ? $this->resolveAllowed($context, $value[self::OVERRIDE_ALLOWED])
+            ? $this->resolveAllowed($context, $value[self::OVERRIDE_ALLOWED], $controls)
             : [];
         $defaults = array_key_exists(self::OVERRIDE_DEFAULTS, $value)
-            ? $this->resolveDefaults($context, $value[self::OVERRIDE_DEFAULTS])
+            ? $this->resolveDefaults($context, $value[self::OVERRIDE_DEFAULTS], $controls)
             : [];
 
-        $this->flagUnpermittedDefaults($context, $allowed, $defaults);
+        $this->flagUnpermittedDefaults($context, $allowed, $defaults, $controls);
 
         return [self::OVERRIDE_ALLOWED => $allowed, self::OVERRIDE_DEFAULTS => $defaults];
     }
 
     /**
-     * Flag any default its own option's `allowed` list does not permit.
+     * Flag a restricted select whose starting value its own `allowed` list does not permit.
      *
      * The two halves are authored independently and resolved independently, so nothing else notices
      * when they disagree. The case that actually happens is a child theme narrowing a palette and
      * leaving an ancestor's default behind it: the editor then starts on a value its own control
      * cannot offer. Every other authoring mistake here is flagged, so this one is too.
      *
-     * Only defaults set in config are covered. An animation's own built-in defaults are its
-     * business, and this class never sees them.
+     * The starting value is the config default when there is one, and otherwise the control's own
+     * default — narrowing a palette away from the value the animation itself starts on is the same
+     * mistake. The empty "no override" value is exempt, since `allowed` never removes it.
      *
-     * @param array<string, list<string>> $allowed
-     * @param array<string, mixed>        $defaults
+     * @param array<string, list<string>>     $allowed
+     * @param array<string, mixed>            $defaults
+     * @param array<string, AnimationControl> $controls
      */
-    private function flagUnpermittedDefaults(string $context, array $allowed, array $defaults): void
+    private function flagUnpermittedDefaults(string $context, array $allowed, array $defaults, array $controls): void
     {
-        foreach ($defaults as $option => $value) {
-            /* Only values a control could offer from a list. A bool or null default is a literal
-             setting — `reverse => false` — with nothing to match against. */
-            if (!is_string($value) && !is_int($value) && !is_float($value)) {
-                continue;
-            }
-
+        foreach ($allowed as $option => $permitted) {
             /* No restriction to violate. An `allowed` list that permits nothing at all is already
              flagged by resolveAllowed(), and one authoring mistake earns one problem. */
-            if (!isset($allowed[$option]) || $allowed[$option] === []) {
+            if ($permitted === []) {
                 continue;
             }
 
-            /* Compared as strings: resolveAllowed() casts permitted values to strings, while a
-             default keeps the type it was authored with, so `speed => 25` matches '25'. */
-            if (in_array((string) $value, $allowed[$option], true)) {
+            $fromConfig = array_key_exists($option, $defaults);
+            $value = $fromConfig ? $defaults[$option] : $controls[$option]->default;
+
+            if ($value === '' || in_array($value, $permitted, true)) {
                 continue;
             }
 
             $this->flagProblem(
-                "{$context} / defaults / {$option}",
+                $fromConfig ? "{$context} / defaults / {$option}" : "{$context} / allowed / {$option}",
                 sprintf(
-                    'defaults to "%s", which its own `allowed` list does not permit (%s). The control will not offer it.',
+                    $fromConfig
+                        ? 'defaults to "%s", which its own `allowed` list does not permit (%s). The control will not offer it.'
+                        : 'excludes the control\'s own default "%s" (permits %s). The control will start on a value it does not offer — permit it, or set a default here.',
                     $value,
-                    implode(', ', $allowed[$option]),
+                    implode(', ', $permitted),
                 ),
             );
         }
     }
 
     /**
+     * @param array<string, AnimationControl> $controls
      * @return array<string, list<string>>
      */
-    private function resolveAllowed(string $context, mixed $allowed): array
+    private function resolveAllowed(string $context, mixed $allowed, array $controls): array
     {
         if (!is_array($allowed)) {
             /* The merge has already replaced the ancestor's list with this scalar, so the
@@ -312,8 +330,25 @@ class AnimationConfigResolver
         $resolved = [];
 
         foreach ($allowed as $option => $values) {
+            $control = $controls[$option] ?? null;
+            if (!$control) {
+                $this->flagProblem(
+                    "{$context} / allowed / {$option}",
+                    'names no control this animation has. Ignoring it.',
+                );
+                continue;
+            }
+
+            if ($control->type !== 'select') {
+                $this->flagProblem(
+                    "{$context} / allowed / {$option}",
+                    "only applies to a select, and this is a {$control->type} control. Ignoring it.",
+                );
+                continue;
+            }
+
             if (is_string($values) || is_int($values) || is_float($values)) {
-                $resolved[$option] = [(string) $values];
+                $resolved[$option] = $this->offeredValues($context, $option, [(string) $values], $control);
                 continue;
             }
 
@@ -355,7 +390,7 @@ class AnimationConfigResolver
                 $permitted[] = (string) $value;
             }
 
-            $resolved[$option] = $permitted;
+            $resolved[$option] = $this->offeredValues($context, $option, $permitted, $control);
 
             if ($resolved[$option] === []) {
                 $this->flagProblem(
@@ -369,9 +404,43 @@ class AnimationConfigResolver
     }
 
     /**
+     * Drops permitted values a static select does not offer, flagging each.
+     *
+     * Left alone for a select whose options come from a JS hook: those values exist only in the
+     * editor, so there is nothing here to check them against.
+     *
+     * @param list<string> $permitted
+     * @return list<string>
+     */
+    private function offeredValues(string $context, string $option, array $permitted, AnimationControl $control): array
+    {
+        $offered = $control->optionValues();
+        if ($offered === null) {
+            return $permitted;
+        }
+
+        $kept = [];
+
+        foreach ($permitted as $value) {
+            if (!in_array($value, $offered, true)) {
+                $this->flagProblem(
+                    "{$context} / allowed / {$option} / {$value}",
+                    'is not one of the control\'s options. Dropping the value.',
+                );
+                continue;
+            }
+
+            $kept[] = $value;
+        }
+
+        return $kept;
+    }
+
+    /**
+     * @param array<string, AnimationControl> $controls
      * @return array<string, mixed>
      */
-    private function resolveDefaults(string $context, mixed $defaults): array
+    private function resolveDefaults(string $context, mixed $defaults, array $controls): array
     {
         if (!is_array($defaults)) {
             $this->flagProblem(
@@ -398,13 +467,56 @@ class AnimationConfigResolver
                 continue;
             }
 
-            /* Everything else is taken literally, `false` and `null` included — `reverse => false`
-             is a default, not a removal. There is no "unset the inherited default" sentinel here:
-             removal by `=> false` stops one level up, at the animation. */
-            $resolved[$option] = $value;
+            $control = $controls[$option] ?? null;
+            if (!$control) {
+                $this->flagProblem(
+                    "{$context} / defaults / {$option}",
+                    'names no control this animation has. Ignoring it.',
+                );
+                continue;
+            }
+
+            /* `false` is a default like any other — `reverse => false` on a toggle — not a removal.
+             There is no "unset the inherited default" sentinel here: removal by `=> false` stops one
+             level up, at the animation. */
+            $typed = $this->castDefault($control, $value);
+            if ($typed === null) {
+                $this->flagProblem(
+                    "{$context} / defaults / {$option}",
+                    sprintf(
+                        'has a %s default, which a %s control cannot take. Dropping it.',
+                        get_debug_type($value),
+                        $control->type,
+                    ),
+                );
+                continue;
+            }
+
+            $resolved[$option] = $typed;
         }
 
         return $resolved;
+    }
+
+    /**
+     * A config default in its control's own type, or null when it cannot be one.
+     *
+     * Casting rather than refusing where the meaning is unambiguous: a select's values are strings
+     * and the editor compares them strictly, so `speed => 25` has to arrive as '25'; and a number
+     * written as '25' is still 25.
+     */
+    private function castDefault(AnimationControl $control, mixed $value): string|bool|int|float|null
+    {
+        return match ($control->type) {
+            'select', 'text' => is_string($value) || is_int($value) || is_float($value) ? (string) $value : null,
+            'toggle' => is_bool($value) ? $value : null,
+            'number' => is_int($value) || is_float($value)
+                ? $value
+                : (is_string($value) && is_numeric($value)
+                    ? $value + 0
+                    : null),
+            default => null,
+        };
     }
 
     private function flagProblem(string $context, string $problem): void

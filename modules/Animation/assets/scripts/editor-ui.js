@@ -18,5 +18,5 @@ import extendAnimation from './editor-ui/animation-controls.jsx';
  * makes inline data arrive late on the front end.
  */
 sitchco.editorReady(() => {
-    extendAnimation(sitchco.extendBlock, sitchco.animations ?? {});
+    extendAnimation(sitchco.extendBlock, sitchco.animations?.blocks ?? {});
 });
