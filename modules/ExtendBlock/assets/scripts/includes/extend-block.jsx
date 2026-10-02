@@ -11,6 +11,7 @@ import { createEditorPropsBuilder } from './utils/editor-props';
 import { nextExtendBlockClasses } from './utils/extend-block-classes';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 import { resolveKadenceTab } from './utils/kadence-tabs';
+import { readFieldValue } from './utils/field-value';
 
 /**
  * Dynamic blocks that render server-side and need PHP filter treatment.
@@ -156,8 +157,8 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             const outputContext = { blockName: props.name };
 
             // Extract only the field attribute values to avoid depending on full attributes object
-            const fieldNames = allFields.map((f) => f.name);
-            const fieldValues = fieldNames.map((name) => attributes[name]);
+            // Effective values, so a function default that changes what a field emits counts too.
+            const fieldValues = allFields.map((field) => readFieldValue(field, attributes, outputContext));
 
             // Memoize the class string based only on relevant field values
             const classString = useMemo(() => {
@@ -231,7 +232,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                                             return null;
                                         }
 
-                                        const value = attributes[field.name];
+                                        const value = readFieldValue(field, attributes, outputContext);
                                         const onChange = (newValue) => setAttributes({ [field.name]: newValue });
                                         return (
                                             <field.render

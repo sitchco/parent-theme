@@ -116,6 +116,19 @@ describe('generateFieldClasses', () => {
 
         expect(seen).toEqual([{ blockName: 'kadence/column' }]);
     });
+
+    it('applies a function default to an untouched block, and a stored value over it', () => {
+        const fields = [
+            {
+                name: 'tone',
+                default: ({ blockName }) => (blockName === 'core/group' ? 'dark' : 'light'),
+                className: (v) => (v ? `tone-${v}` : null),
+            },
+        ];
+
+        expect(generateFieldClasses(fields, {}, { blockName: 'core/group' })).toEqual(['tone-dark']);
+        expect(generateFieldClasses(fields, { tone: '' }, { blockName: 'core/group' })).toEqual([]);
+    });
 });
 
 describe('generateEditorFieldClasses', () => {
@@ -202,6 +215,18 @@ describe('generateEditorFieldClasses', () => {
         generateEditorFieldClasses(fields, { theme: 'dark' }, { blockName: 'core/group' }, 'Mobile');
 
         expect(seen).toEqual([{ blockName: 'core/group' }]);
+    });
+
+    it('applies a function default from the block name', () => {
+        const fields = [
+            {
+                name: 'tone',
+                default: ({ blockName }) => `${blockName}-tone`,
+                className: (v) => v,
+            },
+        ];
+
+        expect(generateEditorFieldClasses(fields, {}, { blockName: 'core/group' })).toEqual(['core/group-tone']);
     });
 });
 

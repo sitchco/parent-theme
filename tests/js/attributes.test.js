@@ -219,4 +219,16 @@ describe('generateFieldAttributes', () => {
             'data-animation': 'letter',
         });
     });
+
+    it('emits from a function default while the attribute is absent', () => {
+        const fields = [
+            {
+                ...attributeField('speed', 'data-speed'),
+                default: ({ blockName }) => (blockName === 'core/group' ? '25' : undefined),
+            },
+        ];
+
+        expect(generateFieldAttributes(fields, {}, { blockName: 'core/group' })).toEqual({ 'data-speed': '25' });
+        expect(generateFieldAttributes(fields, {}, { blockName: 'core/column' })).toEqual({});
+    });
 });

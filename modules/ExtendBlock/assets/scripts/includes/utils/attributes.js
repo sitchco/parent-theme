@@ -36,7 +36,13 @@
  * canvas and the saved markup disagree, silently. The richer render context, `{ blockName,
  * clientId }` plus `deviceType` inside responsive(), goes only to `render` and `options`, which
  * draw a control and never decide what the block emits.
+ *
+ * A function `default` is part of the same rule. It decides what an untouched block emits, so it
+ * too gets `{ blockName }` only, and every value read here goes through readFieldValue() so the
+ * default is applied identically on save and in the canvas. See utils/field-value.js.
  */
+
+import { readFieldValue } from './field-value';
 
 /**
  * The names the attribute channel emits: `data-*` and `aria-*`, nothing else.
@@ -133,7 +139,7 @@ export function generateFieldAttributes(fields, attributes, context = {}) {
             continue;
         }
 
-        generated.push(field.attributes(attributes[field.name], context));
+        generated.push(field.attributes(readFieldValue(field, attributes, context), context));
     }
     return mergeAttributes(...generated);
 }
