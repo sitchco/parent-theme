@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     generateEditorFieldClasses,
     generateFieldClasses,
+    prefixClassName,
 } from '../../modules/ExtendBlock/assets/scripts/includes/utils/class-names';
 
 /**
@@ -76,6 +77,44 @@ describe('generateFieldClasses', () => {
 
         expect(seen[0]).toEqual({ blockName: 'core/group' });
     });
+
+    it('hands className the output context', () => {
+        const seen = [];
+        const fields = [
+            {
+                name: 'theme',
+                className: (value, context) => {
+                    seen.push(context);
+                    return `theme-${value}`;
+                },
+            },
+        ];
+
+        generateFieldClasses(fields, { theme: 'dark' }, { blockName: 'core/group' });
+
+        expect(seen).toEqual([{ blockName: 'core/group' }]);
+    });
+
+    /* responsive() builds its tablet and mobile `className` with prefixClassName, and those are
+       what save calls. The wrapper must not swallow the context on the way through. */
+    it('hands a prefixed breakpoint className the output context', () => {
+        const seen = [];
+        const fields = [
+            {
+                name: 'radiusTablet',
+                className: prefixClassName((value, context) => {
+                    seen.push(context);
+                    return `rounded-${value}`;
+                }, 'tablet:'),
+            },
+        ];
+
+        expect(generateFieldClasses(fields, { radiusTablet: 'md' }, { blockName: 'kadence/column' })).toEqual([
+            'tablet:rounded-md',
+        ]);
+
+        expect(seen).toEqual([{ blockName: 'kadence/column' }]);
+    });
 });
 
 describe('generateEditorFieldClasses', () => {
@@ -124,5 +163,43 @@ describe('generateEditorFieldClasses', () => {
         generateEditorFieldClasses(fields, attributes, { blockName: 'kadence/column' }, 'Tablet');
 
         expect(seen[0]).toEqual({ blockName: 'kadence/column' });
+    });
+
+    it('hands the responsive className the output context, never the device', () => {
+        const seen = [];
+
+        const originalClassName = (value, context) => {
+            seen.push(context);
+            return value ? `rounded-${value}` : null;
+        };
+
+        const fields = responsiveRadius().map((f) => ({
+            ...f,
+            responsive: {
+                ...f.responsive,
+                originalClassName,
+            },
+        }));
+
+        generateEditorFieldClasses(fields, attributes, { blockName: 'kadence/column' }, 'Tablet');
+
+        expect(seen).toEqual([{ blockName: 'kadence/column' }]);
+    });
+
+    it('hands a non-responsive className the output context', () => {
+        const seen = [];
+        const fields = [
+            {
+                name: 'theme',
+                className: (value, context) => {
+                    seen.push(context);
+                    return `theme-${value}`;
+                },
+            },
+        ];
+
+        generateEditorFieldClasses(fields, { theme: 'dark' }, { blockName: 'core/group' }, 'Mobile');
+
+        expect(seen).toEqual([{ blockName: 'core/group' }]);
     });
 });

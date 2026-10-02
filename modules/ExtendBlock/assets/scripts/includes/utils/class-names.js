@@ -23,8 +23,8 @@ export function classNames(...classes) {
  *
  * @param {Array} fields - Array of field definitions
  * @param {Object} attributes - Block attributes
- * @param {Object} [context] - Output context, `{ blockName }`, passed on to `condition` — see the
- *   note at the top of utils/attributes.js
+ * @param {Object} [context] - Output context, `{ blockName }`, passed on to `condition` and `className` —
+ *   see the note at the top of utils/attributes.js
  * @returns {string[]} Array of class names
  */
 export function generateFieldClasses(fields, attributes, context = {}) {
@@ -39,7 +39,7 @@ export function generateFieldClasses(fields, attributes, context = {}) {
         }
 
         const value = attributes[field.name];
-        const result = field.className(value);
+        const result = field.className(value, context);
         if (result) {
             if (Array.isArray(result)) {
                 classes.push(...result);
@@ -61,8 +61,8 @@ export function generateFieldClasses(fields, attributes, context = {}) {
  *
  * @param {Array} fields - Array of field definitions (may include responsive fields)
  * @param {Object} attributes - Block attributes
- * @param {Object} [context] - Output context, `{ blockName }`, passed on to `condition` — see the
- *   note at the top of utils/attributes.js
+ * @param {Object} [context] - Output context, `{ blockName }`, passed on to `condition` and `className` —
+ *   see the note at the top of utils/attributes.js
  * @param {string} [device='Desktop'] - The editor's preview device. Its own argument rather than
  *   part of the context, because only this cascade may read it: nothing that decides output does.
  *   Defaulted because desktop is the unprefixed baseline.
@@ -99,7 +99,7 @@ export function generateEditorFieldClasses(fields, attributes, context = {}, dev
                 value = desktopValue;
             }
 
-            const result = originalClassName(value);
+            const result = originalClassName(value, context);
             if (result) {
                 if (Array.isArray(result)) {
                     classes.push(...result);
@@ -110,7 +110,7 @@ export function generateEditorFieldClasses(fields, attributes, context = {}, dev
         } else {
             // Non-responsive field — unchanged behavior
             const value = attributes[field.name];
-            const result = field.className(value);
+            const result = field.className(value, context);
             if (result) {
                 if (Array.isArray(result)) {
                     classes.push(...result);
@@ -121,6 +121,33 @@ export function generateEditorFieldClasses(fields, attributes, context = {}, dev
         }
     }
     return classes;
+}
+
+/**
+ * Wraps a className callback to prefix its output with a breakpoint prefix.
+ *
+ * Lives here rather than in responsive.jsx so it can be tested in node. The wrapper hands the
+ * output context through: a tablet or mobile field is still a field, and its `className` gets the
+ * same `{ blockName }` as any other.
+ *
+ * @param {Function|undefined} classNameFn - The field's own className callback
+ * @param {string} prefix - Breakpoint prefix, e.g. 'tablet:'; empty for desktop
+ * @returns {Function|undefined}
+ */
+export function prefixClassName(classNameFn, prefix) {
+    if (!classNameFn || !prefix) {
+        return classNameFn;
+    }
+    return (value, context) => {
+        const result = classNameFn(value, context);
+        if (!result) {
+            return result;
+        }
+        if (Array.isArray(result)) {
+            return result.map((c) => `${prefix}${c}`);
+        }
+        return `${prefix}${result}`;
+    };
 }
 
 /**

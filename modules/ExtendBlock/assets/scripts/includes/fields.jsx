@@ -30,8 +30,8 @@ function createField(type, defaults) {
  * - render: React component for the inspector control
  *
  * A field emits through two independent, optional channels, both gated by `condition`:
- * - className:  (value) => string | string[] | null    — merged into the wrapper's class
- * - attributes: (value, context) => Object | null      — merged onto the wrapper as props: the
+ * - className:  (value, context) => string | string[] | null — merged into the wrapper's class
+ * - attributes: (value, context) => Object | null          — merged onto the wrapper as props: the
  *   saved markup of a static block, and the editor canvas of any block. A dynamic block's
  *   front end does not get them until S7; only classes are synced there.
  *
@@ -62,7 +62,7 @@ export const fields = {
      *   A saved value no option offers is shown as a disabled "(unavailable)" entry, so it stays
      *   visible and choosing another option clears it
      * @param {string} [config.default=''] - Default value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
@@ -87,7 +87,7 @@ export const fields = {
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
      * @param {boolean} [config.default=false] - Default value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
@@ -106,7 +106,7 @@ export const fields = {
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
      * @param {string} [config.default=''] - Default value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
@@ -127,7 +127,7 @@ export const fields = {
      * @param {number} [config.default=0] - Default value
      * @param {number} [config.min] - Minimum value
      * @param {number} [config.max] - Maximum value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
@@ -158,7 +158,7 @@ export const fields = {
      *   responsive(), `field.name` is the active breakpoint's attribute name (`fooTablet`, …) and
      *   `field.responsive.baseName` the unsuffixed one, so `setAttributes({ [field.name]: v })`
      *   writes the breakpoint being edited.
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      */
     custom: (config) => ({

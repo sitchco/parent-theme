@@ -1,6 +1,7 @@
 import { useSelect, useDispatch } from '@wordpress/data';
 import { Dashicon, Button, ButtonGroup } from '@wordpress/components';
 import { resolveResponsiveOptions } from './utils/options';
+import { prefixClassName } from './utils/class-names';
 
 const BREAKPOINTS = [
     {
@@ -25,25 +26,6 @@ const BREAKPOINTS = [
         itemClass: 'kb-mobile-tab',
     },
 ];
-
-/**
- * Wraps a className callback to prefix its output with a breakpoint prefix.
- */
-function prefixClassName(classNameFn, prefix) {
-    if (!classNameFn || !prefix) {
-        return classNameFn;
-    }
-    return (value) => {
-        const result = classNameFn(value);
-        if (!result) {
-            return result;
-        }
-        if (Array.isArray(result)) {
-            return result.map((c) => `${prefix}${c}`);
-        }
-        return `${prefix}${result}`;
-    };
-}
 
 /**
  * Wraps a field definition to add responsive (desktop/tablet/mobile) support.
