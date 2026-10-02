@@ -93,6 +93,8 @@ describe('animation controls', () => {
            later. S6 is meant to break this on purpose. */
         expect(field.className).toBeUndefined();
         expect(field.attributes).toBeUndefined();
+        expect(sitchco.calls[0].classGenerator).toBeUndefined();
+        expect(sitchco.calls[0].attributeGenerator).toBeUndefined();
     });
 
     /* The heart of the design: one registration still offers a different list per block, because

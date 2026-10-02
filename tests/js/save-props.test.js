@@ -106,4 +106,26 @@ describe('createSavePropsFilter', () => {
 
         expect(filter({}, GROUP, {})).toEqual({ className: 'a b' });
     });
+
+    /* Each registration adds its own filter; neither may clobber the other's classes, and the
+       last one wins a shared attribute, as it does in the canvas. */
+    it('stacks two registrations on one block, last registration winning', () => {
+        const first = createSavePropsFilter(['core/group'], [], {
+            classGenerator: () => ['first'],
+            attributeGenerator: () => ({
+                'data-x': 'first',
+                'data-first': '1',
+            }),
+        });
+        const second = createSavePropsFilter(['core/group'], [], {
+            classGenerator: () => ['second'],
+            attributeGenerator: () => ({ 'data-x': 'second' }),
+        });
+
+        expect(second(first({ className: 'x' }, GROUP, {}), GROUP, {})).toEqual({
+            className: 'x first second',
+            'data-x': 'second',
+            'data-first': '1',
+        });
+    });
 });

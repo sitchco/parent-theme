@@ -5,9 +5,9 @@ import { PanelBody } from '@wordpress/components';
 import { useEffect, useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
-import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames, toClassList } from './utils/class-names';
-import { generateFieldAttributes, mergeAttributes } from './utils/attributes';
+import { generateFieldClasses, toClassList } from './utils/class-names';
 import { createSavePropsFilter } from './utils/save-props';
+import { createEditorPropsBuilder } from './utils/editor-props';
 import { nextExtendBlockClasses } from './utils/extend-block-classes';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 import { resolveKadenceTab } from './utils/kadence-tabs';
@@ -271,8 +271,9 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
  * @param {Function} [generators.attributeGenerator] - Custom attribute generator override
  * @returns {Function} Higher-order component
  */
-function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attributeGenerator } = {}) {
+function createEditorPropsFilter(targetBlocks, allFields, generators = {}) {
     const hasResponsiveFields = allFields.some((f) => f.responsive);
+    const buildProps = createEditorPropsBuilder(allFields, generators);
     return createHigherOrderComponent((BlockListBlock) => {
         return (props) => {
             if (!isTargetBlock(props.name, targetBlocks)) {
@@ -288,42 +289,7 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
                 },
                 [hasResponsiveFields]
             );
-
-            // The same context save builds, so a callback cannot make the canvas and the saved
-            // markup disagree. The preview device is not part of it: only the responsive class
-            // cascade needs it, and that takes it as its own argument.
-            const context = { blockName: props.name };
-            const newClasses = classGenerator
-                ? toClassList(classGenerator(props.attributes, context))
-                : hasResponsiveFields
-                  ? generateEditorFieldClasses(allFields, props.attributes, context, deviceType)
-                  : generateFieldClasses(allFields, props.attributes, context);
-            const newAttributes = attributeGenerator
-                ? mergeAttributes(attributeGenerator(props.attributes, context))
-                : generateFieldAttributes(allFields, props.attributes, context);
-            const hasAttributes = Object.keys(newAttributes).length > 0;
-            if (newClasses.length === 0 && !hasAttributes) {
-                return <BlockListBlock {...props} />;
-            }
-
-            const extraProps = {};
-            if (newClasses.length > 0) {
-                extraProps.className = mergeClassNames(props.className, newClasses);
-            }
-            if (hasAttributes) {
-                /* Ours first, then whatever is already there — the reverse of save's spread, and
-                   that is what makes the two agree. On save each filter spreads last, so the last
-                   registration wins a shared key. Here withFilters wraps each later registration
-                   OUTSIDE the earlier ones, so `props.wrapperProps` at this layer holds only what
-                   later registrations produced (core's own BlockListBlock filters register with
-                   block-editor, before any theme script, so they sit inside us). Letting it win
-                   is therefore letting the last registration win. */
-                extraProps.wrapperProps = {
-                    ...newAttributes,
-                    ...props.wrapperProps,
-                };
-            }
-            return <BlockListBlock {...props} {...extraProps} />;
+            return <BlockListBlock {...props} {...buildProps(props, deviceType)} />;
         };
     }, 'withExtendedBlockProps');
 }
