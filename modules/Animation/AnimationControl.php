@@ -43,7 +43,7 @@ namespace Sitchco\Parent\Modules\Animation;
 readonly class AnimationControl implements \JsonSerializable
 {
     /**
-     * @param list<array{label: string, value: string}>|null $options
+     * @param list<array{label: string, value: string|int|float}>|null $options
      */
     private function __construct(
         public string $type,
@@ -58,7 +58,7 @@ readonly class AnimationControl implements \JsonSerializable
     ) {}
 
     /**
-     * @param array{options?: list<array{label: string, value: string}>, optionsFilter?: string, default?: string, help?: string} $options
+     * @param array{options?: list<array{label: string, value: string|int|float}>, optionsFilter?: string, default?: string, help?: string} $options
      */
     public static function select(string $name, string $label, array $options = []): self
     {
@@ -121,15 +121,32 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public function optionValues(): ?array
     {
+        $options = $this->stringOptions();
+
+        return $options === null ? null : array_column($options, 'value');
+    }
+
+    /**
+     * The static options with each value cast to a string, so `30` and `'30'` are one value
+     * everywhere. Any other keys are kept as declared.
+     *
+     * @return list<array{label: string, value: string}>|null
+     */
+    private function stringOptions(): ?array
+    {
         if ($this->options === null) {
             return null;
         }
 
-        return array_map(fn(array $option) => (string) ($option['value'] ?? ''), $this->options);
+        return array_map(fn(array $option) => [...$option, 'value' => (string) $option['value']], $this->options);
     }
 
     /**
      * Unset settings are left out rather than sent as null.
+     *
+     * Option values are sent as strings, the same form optionValues() gives config checks: the
+     * editor matches them with `===`, so a `30` here would never match the `'30'` that `allowed`
+     * was checked as, nor a stored value.
      */
     public function jsonSerialize(): array
     {
@@ -140,7 +157,7 @@ readonly class AnimationControl implements \JsonSerializable
                 'label' => $this->label,
                 'default' => $this->default,
                 'help' => $this->help,
-                'options' => $this->options,
+                'options' => $this->stringOptions(),
                 'optionsFilter' => $this->optionsFilter,
                 'min' => $this->min,
                 'max' => $this->max,

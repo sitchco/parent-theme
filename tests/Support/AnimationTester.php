@@ -11,7 +11,9 @@ use Sitchco\Parent\Modules\Animation\AnimationModule;
  *
  * Its controls are the option names the animation fixtures override — color, opacity, speed and
  * reverse — so those overrides are checked against real controls, as live config is. `speed` is a
- * select rather than a number because the fixtures restrict it with `allowed`.
+ * select rather than a number because the fixtures restrict it with `allowed`. Opacity's option
+ * values are integers, as an author may well write them, so every check against them covers the
+ * cast to the strings config and the editor compare.
  */
 class AnimationTester extends AnimationModule
 {
@@ -29,7 +31,7 @@ class AnimationTester extends AnimationModule
                 'options' => self::options('', 'purple', 'green', 'red'),
             ]),
             AnimationControl::select('opacity', 'Opacity', [
-                'options' => self::options('', '10', '30', '50'),
+                'options' => self::options('', 10, 30, 50),
             ]),
             AnimationControl::select('speed', 'Speed', [
                 'options' => self::options('25', '50'),
@@ -40,8 +42,8 @@ class AnimationTester extends AnimationModule
     }
 
     /** Option pairs labelled by their own value; the label is never what a test reads. */
-    private static function options(string ...$values): array
+    private static function options(string|int ...$values): array
     {
-        return array_map(fn(string $value) => ['label' => $value, 'value' => $value], $values);
+        return array_map(fn(string|int $value) => ['label' => (string) $value, 'value' => $value], $values);
     }
 }

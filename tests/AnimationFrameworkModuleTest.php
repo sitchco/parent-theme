@@ -805,6 +805,14 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertArrayNotHasKey('options', $serialized['second-tester'][2]);
     }
 
+    public function testTheEditorReceivesStaticOptionValuesAsStrings(): void
+    {
+        $serialized = $this->frameworkFor(AnimationTester::class)->getAnimationControls();
+
+        // Declared as integers; the editor matches values with ===, against the strings config is checked as.
+        $this->assertSame(['', '10', '30', '50'], array_column($serialized['animation-tester'][1]['options'], 'value'));
+    }
+
     public function testAnAnimationWithoutControlsSendsNone(): void
     {
         $this->assertSame([], $this->frameworkFor(DuplicateAnimationTester::class)->getAnimationControls());
