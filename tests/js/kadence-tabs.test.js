@@ -28,6 +28,7 @@ describe('resolveKadenceTab', () => {
 
         expect(resolveKadenceTab('kadence/spacer', 'style')).toBe('general');
         expect(resolveKadenceTab('kadence/table-row', 'advanced')).toBe('general');
+        expect(resolveKadenceTab('kadence/testimonial', 'style')).toBe('general');
     });
 
     it('warns once per block and tab, naming both', () => {

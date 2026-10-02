@@ -9,8 +9,10 @@
  * The prop lives in each block's edit component and is not exposed through any store or block
  * metadata, so the list below is copied from the plugin's source: every `allowedTabs` in
  * wp-content/plugins/kadence-blocks/src/blocks/*\/edit.js that is not all three tabs, plus the
- * child blocks that render no tab bar. Like
- * DYNAMIC_BLOCKS in extend-block.jsx it is maintained by hand. A Kadence block missing from it is
+ * child blocks that render no tab bar. Checked against Kadence Blocks 1003.7.2.0; after an update,
+ * re-run `rg -n 'allowedTabs=' wp-content/plugins/kadence-blocks/src/blocks` and compare every
+ * result that isn't all three tabs with the list below. Like DYNAMIC_BLOCKS in extend-block.jsx
+ * it is maintained by hand. A Kadence block missing from it is
  * treated as having all three tabs, which is today's behavior — so a missed entry can only
  * reproduce the old failure, never introduce a new one.
  *
@@ -25,9 +27,11 @@ const RESTRICTED_TABS = {
     'kadence/single-icon': ['general', 'advanced'],
     'kadence/spacer': ['general', 'advanced'],
     'kadence/tab': ['general', 'advanced'],
+    'kadence/testimonial': ['general', 'advanced'],
     'kadence/table-data': ['general'],
     'kadence/table-row': ['general'],
-    'kadence/vector': ['general', 'advanced', 'transform'],
+    // Kadence passes 'transform' too, but InspectorControlTabs draws no tab for it without a `tabs` prop.
+    'kadence/vector': ['general', 'advanced'],
     'kadence/advanced-form-accept': ['general', 'advanced'],
     'kadence/advanced-form-checkbox': ['general', 'advanced'],
     'kadence/advanced-form-date': ['general', 'advanced'],
