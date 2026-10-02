@@ -11,12 +11,18 @@
  *
  * What a generator author has to know:
  *
+ * - Only `data-*` and `aria-*` attributes are emitted. Anything else is dropped, with a one-time
+ *   console warning per name. The channel is for markup JS and attribute selectors read, and
+ *   WordPress applies these props to the saved element with cloneElement, so an open channel
+ *   would let `children` replace the block's content, `dangerouslySetInnerHTML` print unescaped,
+ *   or a string `on*` value serialize as an inline handler. `class`, `className` and `style`
+ *   fall outside it too; classes belong to the class channel.
  * - Return `undefined` (or `null`) for unset. Those are dropped; `''`, `0` and `false` are not,
- *   and WordPress serializes them — `''` as `data-x=""`, `false` on a `data-`/`aria-` attribute
- *   as `"false"`. The select and text fields default to `''` and the toggle to `false`, so the
+ *   and WordPress serializes them — `''` as `data-x=""`, `0` as `data-x="0"`, `false` as
+ *   `"false"`. The select and text fields default to `''` and the toggle to `false`, so the
  *   obvious `(v) => ({ 'data-x': v })` adds markup to every untouched block and breaks
- *   validation. Write `(v) => ({ 'data-x': v || undefined })`.
- * - `class`, `className` and `style` are dropped; they belong to the class channel.
+ *   validation. Map each unset value to `undefined` explicitly; `v || undefined` is right for a
+ *   select or text field, but would also drop a `0` or `false` that means something.
  * - In the editor canvas, core sets `id`, `role`, `aria-label`, `data-block`, `data-type` and
  *   `data-title` after `wrapperProps`, so core wins those keys there.
  * - Dynamic blocks get these attributes in the editor canvas only, until S7. Their front end is
@@ -32,15 +38,36 @@
  */
 
 /**
- * Prop names the attribute channel never emits.
+ * The names the attribute channel emits: `data-*` and `aria-*`, nothing else.
  *
- * `class`, `className` and `style` belong to the class channel, which runs alongside this one
- * and writes `className` last. Letting a generator return one of them would either be silently
- * overwritten or silently clobber the classes, depending on whether any class happened to be
- * generated — so they are dropped here, at the one point every attribute passes through,
- * rather than guarded for at each call site.
+ * An allowlist rather than a list of reserved names, because the keys that do harm on a saved
+ * element (`children`, `dangerouslySetInnerHTML`, `on*`, a mis-cased `Class`) are open-ended,
+ * while everything the animation framework plans to emit is `data-*`. Enforced here, at the one
+ * point every attribute passes through, rather than guarded for at each call site.
  */
-const RESERVED = ['class', 'className', 'style'];
+const ALLOWED_NAME = /^(data|aria)-/;
+
+const warned = new Set();
+
+function warnDropped(name) {
+    if (warned.has(name)) {
+        return;
+    }
+
+    warned.add(name);
+    console.warn(
+        `[extendBlock] Dropped the '${name}' attribute: extensions can only emit data-* and aria-* attributes.`
+    );
+}
+
+function isPlainObject(value) {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+
+    const proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+}
 
 /**
  * Merges attribute objects left to right, dropping what must not be emitted.
@@ -49,6 +76,9 @@ const RESERVED = ['class', 'className', 'style'];
  * selected" add nothing at all: a generator returns `{ 'data-animation': undefined }` and the
  * result is an empty object, so the caller leaves serialized output untouched.
  *
+ * A source that isn't a plain object is skipped whole: a string would otherwise spread into
+ * numeric keys, and a generator returning `null` for "nothing" is the common case.
+ *
  * @param {...(Object|null|undefined)} sources
  * @returns {Object}
  */
@@ -56,12 +86,16 @@ export function mergeAttributes(...sources) {
     const merged = {};
 
     for (const source of sources) {
-        if (!source) {
+        if (!isPlainObject(source)) {
             continue;
         }
 
         for (const [name, value] of Object.entries(source)) {
-            if (RESERVED.includes(name) || value === undefined || value === null) {
+            if (value === undefined || value === null) {
+                continue;
+            }
+            if (!ALLOWED_NAME.test(name)) {
+                warnDropped(name);
                 continue;
             }
 

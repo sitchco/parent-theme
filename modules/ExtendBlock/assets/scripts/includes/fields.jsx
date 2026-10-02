@@ -38,10 +38,10 @@ function createField(type, defaults) {
  * Use `className` for anything a stylesheet matches and `attributes` for anything JS reads.
  *
  * Rules for the attribute channel (the full list is at the top of utils/attributes.js):
- * - Return `undefined` for unset — `value || undefined`. `''`, `0` and `false` all serialize,
- *   and they are exactly the select, text and toggle defaults, so a generator that passes the
- *   value straight through adds markup to every untouched block.
- * - `class`, `className` and `style` are dropped; those belong to the other channel.
+ * - Only `data-*` and `aria-*` names are emitted; anything else is dropped with a warning.
+ * - Return `undefined` for unset. `''`, `0` and `false` are kept and serialize on a `data-*` or
+ *   `aria-*` attribute, and `''` and `false` are exactly the select, text and toggle defaults, so
+ *   a generator that passes the value straight through adds markup to every untouched block.
  * - In the canvas, core's own wrapper keys (`id`, `role`, `aria-label`, `data-block`,
  *   `data-type`, `data-title`) win over anything emitted here.
  *

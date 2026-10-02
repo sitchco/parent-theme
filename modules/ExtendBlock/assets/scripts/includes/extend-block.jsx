@@ -351,10 +351,11 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
  *   (attributes, { blockName }) => string[]. Only takes effect alongside fields or an
  *   attributeGenerator; for classes alone, use extendBlockClasses().
  * @param {Function} [config.attributeGenerator] - Override default attribute generation:
- *   (attributes, { blockName }) => Object. Returned props are merged onto a static block's saved
- *   wrapper and, in the editor canvas, onto wrapperProps. A dynamic block's front end does not
- *   get them until S7 — only classes are synced to it. Return `undefined` for anything unset:
- *   `''`, `0` and `false` all serialize. See the rules at the top of utils/attributes.js.
+ *   (attributes, { blockName }) => Object of `data-*` / `aria-*` attributes; any other name is
+ *   dropped. They are merged onto a static block's saved wrapper and, in the editor canvas, onto
+ *   wrapperProps. A dynamic block's front end does not get them until S7 — only classes are
+ *   synced to it. Return `undefined` for anything unset: `''`, `0` and `false` are kept and
+ *   serialize. See the rules at the top of utils/attributes.js.
  *
  * `condition`, `className`, `attributes` and both generators receive `{ blockName }` in every
  * phase — save, inspector and canvas alike — so none of them can make the editor preview and the

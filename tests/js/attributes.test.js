@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     generateFieldAttributes,
     mergeAttributes,
@@ -14,6 +14,14 @@ function attributeField(name, attributeName, extra = {}) {
 }
 
 describe('mergeAttributes', () => {
+    beforeEach(() => {
+        vi.spyOn(globalThis.console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('merges left to right, with later sources winning', () => {
         expect(
             mergeAttributes(
@@ -52,7 +60,7 @@ describe('mergeAttributes', () => {
         });
     });
 
-    it('drops the reserved names the class channel owns', () => {
+    it('drops the names the class channel owns', () => {
         expect(
             mergeAttributes({
                 class: 'a',
@@ -63,6 +71,43 @@ describe('mergeAttributes', () => {
         ).toEqual({
             'data-keep': 'd',
         });
+    });
+
+    /* The channel is applied to the saved element with cloneElement, so an open one would let a
+       generator replace the content, print raw HTML, or serialize an inline handler. */
+    it('emits only data- and aria- attributes', () => {
+        expect(
+            mergeAttributes({
+                children: 'replaced',
+                dangerouslySetInnerHTML: { __html: '<b>raw</b>' },
+                onClick: 'alert(1)',
+                Class: 'second-class',
+                id: 'x',
+                'data-x': '1',
+                'aria-x': '2',
+            })
+        ).toEqual({
+            'data-x': '1',
+            'aria-x': '2',
+        });
+    });
+
+    it('warns once per dropped name', () => {
+        mergeAttributes({ 'once-only': '1' });
+        mergeAttributes({ 'once-only': '2' });
+
+        expect(globalThis.console.warn).toHaveBeenCalledTimes(1);
+        expect(globalThis.console.warn.mock.calls[0][0]).toContain("'once-only'");
+    });
+
+    it('drops an unset disallowed name without warning', () => {
+        mergeAttributes({ 'never-set': undefined });
+
+        expect(globalThis.console.warn).not.toHaveBeenCalled();
+    });
+
+    it('skips a source that is not a plain object', () => {
+        expect(mergeAttributes('data-x', ['data-y'], 7, { 'data-a': '1' })).toEqual({ 'data-a': '1' });
     });
 
     it('ignores null and undefined sources', () => {

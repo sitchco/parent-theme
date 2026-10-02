@@ -42,7 +42,7 @@ export function createSavePropsFilter(targetBlocks, allFields, { classGenerator,
 
         // className is assigned after the attribute spread simply because the two channels write
         // the same object. Keeping them from colliding is mergeAttributes' job, not this one's:
-        // it drops `class`, `className` and `style` before they ever get here.
+        // it emits only `data-*` and `aria-*` names, so `className` never gets here.
         const nextProps = {
             ...props,
             ...newAttributes,
