@@ -51,8 +51,9 @@ function createField(type, defaults) {
  *
  * `default` may be a function of the output context, `({ blockName }) => value`, when one
  * registration serves blocks whose defaults differ. The attribute is then registered without a
- * default and the value is resolved on every read, so an untouched block follows the default and
- * a picked value is stored for good. Not supported inside responsive(). See utils/field-value.js.
+ * default and the value is resolved on every read. A dynamic block follows the default until an
+ * author picks a value; a static block stores the default once the field applies, so its saved
+ * markup cannot go stale. Not supported inside responsive(). See utils/field-value.js.
  */
 export const fields = {
     /**

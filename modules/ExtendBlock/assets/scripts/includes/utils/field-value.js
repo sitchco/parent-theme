@@ -18,8 +18,15 @@
  * decides what the block emits, so it must resolve the same way in save as in the editor.
  *
  * What that means for content, stated because it is easy to miss:
- * - A block nobody has touched stores nothing, so it follows the default wherever it currently
- *   points. Changing a theme-level default re-renders every untouched block with the new value.
+ * - On a dynamic block, a field nobody has touched stores nothing, so it follows the default
+ *   wherever it currently points. Changing a theme-level default re-renders every such block with
+ *   the new value.
+ * - On a static block, the editor stores the default as soon as the field applies (no condition,
+ *   or its condition passes); see contextualDefaultsToStore() below. A static block's saved markup
+ *   is checked against what save() produces from its stored attributes on every editor load, so
+ *   save() must not depend on a default that can move: markup saved under one default would fail
+ *   validation once the default changed. Stored, the value stays put, and a later change to the
+ *   default reaches only blocks that have not stored one yet.
  * - A value an author picks is stored, even when it happens to equal the default, and from then
  *   on it stays put whatever the default does.
  *
@@ -57,4 +64,45 @@ export function readFieldValue(field, attributes, context = {}) {
         return stored;
     }
     return field.default(context);
+}
+
+/**
+ * The function defaults a static block should store now, as an attributes object; null if none.
+ *
+ * Covers each field with a function default that has no stored value and applies to the block —
+ * no condition, or one that passes — so a field gated on another (an animation's controls on the
+ * animation) is stored only once it takes effect, and a block never fills up with values for
+ * fields that emit nothing. Conditions see the defaults stored alongside them, so a field gated on
+ * another function-default field is caught in the same pass.
+ *
+ * @param {Object[]} fields     - Field definitions
+ * @param {Object}   attributes - Block attributes
+ * @param {Object}   [context]  - Output context, `{ blockName }`
+ * @returns {Object|null}
+ */
+export function contextualDefaultsToStore(fields, attributes, context = {}) {
+    const pending = {};
+    let found = false;
+
+    for (const field of fields) {
+        if (!hasContextualDefault(field) || attributes[field.name] !== undefined) {
+            continue;
+        }
+        if (
+            field.condition &&
+            !field.condition(
+                {
+                    ...attributes,
+                    ...pending,
+                },
+                context
+            )
+        ) {
+            continue;
+        }
+
+        pending[field.name] = field.default(context);
+        found = true;
+    }
+    return found ? pending : null;
 }

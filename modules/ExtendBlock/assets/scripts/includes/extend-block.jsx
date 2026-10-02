@@ -1,9 +1,9 @@
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
-import { InspectorControls } from '@wordpress/block-editor';
+import { InspectorControls, store as blockEditorStore } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
 import { useEffect, useMemo } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, toClassList } from './utils/class-names';
 import { createSavePropsFilter } from './utils/save-props';
@@ -11,7 +11,7 @@ import { createEditorPropsBuilder } from './utils/editor-props';
 import { nextExtendBlockClasses } from './utils/extend-block-classes';
 import { useKadenceActiveTab, isKadenceBlock } from './hooks/use-kadence-active-tab';
 import { resolveKadenceTab } from './utils/kadence-tabs';
-import { readFieldValue } from './utils/field-value';
+import { contextualDefaultsToStore, readFieldValue } from './utils/field-value';
 
 /**
  * Dynamic blocks that render server-side and need PHP filter treatment.
@@ -182,6 +182,22 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
                     setAttributes({ extendBlockClasses: nextClasses });
                 }
             }, [classString, isDynamic, namespace, setAttributes, attributes.extendBlockClasses]);
+
+            // A static block stores its function defaults once they apply, so its saved markup
+            // never depends on a default that can change later. See utils/field-value.js.
+            const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch(blockEditorStore);
+            const defaultsToStore = isDynamic ? null : contextualDefaultsToStore(allFields, attributes, outputContext);
+            const defaultsKey = defaultsToStore ? JSON.stringify(defaultsToStore) : '';
+            useEffect(() => {
+                if (!defaultsToStore) {
+                    return;
+                }
+
+                // Folded into the change that made the field apply, so undo cannot step back to a
+                // state this effect would immediately fill in again.
+                markNotPersistent();
+                setAttributes(defaultsToStore);
+            }, [defaultsKey]);
 
             // Auto-detect Kadence tab if enabled and this is a Kadence block
             const isKadence = kadenceTabAware && isKadenceBlock(props.name);

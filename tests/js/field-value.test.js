@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    contextualDefaultsToStore,
     hasContextualDefault,
     readFieldValue,
 } from '../../modules/ExtendBlock/assets/scripts/includes/utils/field-value';
@@ -82,5 +83,78 @@ describe('readFieldValue', () => {
         );
 
         expect(seen).toEqual([{ blockName: 'core/group' }]);
+    });
+});
+
+describe('contextualDefaultsToStore', () => {
+    const context = { blockName: 'core/group' };
+    const animation = {
+        name: 'animation',
+        default: '',
+    };
+    const speed = {
+        name: 'speed',
+        default: speedFor,
+        condition: (attributes) => attributes.animation === 'fade-up',
+    };
+
+    it('resolves each applicable, unstored function default for the block', () => {
+        expect(contextualDefaultsToStore([animation, speed], { animation: 'fade-up' }, context)).toEqual({
+            speed: 25,
+        });
+    });
+
+    it('leaves out a field whose condition fails, so nothing is stored for fields that emit nothing', () => {
+        expect(contextualDefaultsToStore([animation, speed], { animation: '' }, context)).toBeNull();
+    });
+
+    it('leaves out a stored value, falsy ones included', () => {
+        const reverse = {
+            name: 'reverse',
+            default: () => true,
+        };
+
+        expect(
+            contextualDefaultsToStore(
+                [speed, reverse],
+                {
+                    animation: 'fade-up',
+                    speed: 40,
+                    reverse: false,
+                },
+                context
+            )
+        ).toBeNull();
+    });
+
+    it('stores a field with no condition', () => {
+        expect(
+            contextualDefaultsToStore(
+                [
+                    {
+                        name: 'speed',
+                        default: speedFor,
+                    },
+                ],
+                {},
+                context
+            )
+        ).toEqual({ speed: 25 });
+    });
+
+    it('checks conditions against the defaults stored alongside them', () => {
+        const mode = {
+            name: 'mode',
+            default: () => 'fade-up',
+        };
+        const gated = {
+            ...speed,
+            condition: (attributes) => attributes.mode === 'fade-up',
+        };
+
+        expect(contextualDefaultsToStore([mode, gated], {}, context)).toEqual({
+            mode: 'fade-up',
+            speed: 25,
+        });
     });
 });
