@@ -1,18 +1,31 @@
 /**
+ * Turns whatever a class callback returned into a list of non-empty class names.
+ *
+ * Every consumer of a `className` callback or a `classGenerator` goes through this, so "nothing
+ * to add" is always an empty array. That is what keeps the save filter a strict no-op on an
+ * untouched block: a callback like `(v) => [v && 'x-' + v]` returns `['']` there, which is not
+ * empty until it's normalized. A bare string is split into its classes (not its characters),
+ * and `undefined` reads as nothing rather than throwing.
+ *
+ * @param {*} output - string, (nested) array of strings, or anything falsy
+ * @returns {string[]}
+ */
+export function toClassList(output) {
+    return [output]
+        .flat(Infinity)
+        .filter((c) => typeof c === 'string')
+        .flatMap((c) => c.split(/\s+/))
+        .filter(Boolean);
+}
+
+/**
  * Merges class names, filtering out falsy values.
  *
  * @param {...(string|string[]|null|undefined|false)} classes
  * @returns {string}
  */
 export function classNames(...classes) {
-    return [
-        ...new Set(
-            classes
-                .flat()
-                .filter(Boolean)
-                .flatMap((c) => c.split(/\s+/))
-        ),
-    ].join(' ');
+    return [...new Set(toClassList(classes))].join(' ');
 }
 
 /**
@@ -39,14 +52,7 @@ export function generateFieldClasses(fields, attributes, context = {}) {
         }
 
         const value = attributes[field.name];
-        const result = field.className(value, context);
-        if (result) {
-            if (Array.isArray(result)) {
-                classes.push(...result);
-            } else {
-                classes.push(result);
-            }
-        }
+        classes.push(...toClassList(field.className(value, context)));
     }
     return classes;
 }
@@ -99,25 +105,11 @@ export function generateEditorFieldClasses(fields, attributes, context = {}, dev
                 value = desktopValue;
             }
 
-            const result = originalClassName(value, context);
-            if (result) {
-                if (Array.isArray(result)) {
-                    classes.push(...result);
-                } else {
-                    classes.push(result);
-                }
-            }
+            classes.push(...toClassList(originalClassName(value, context)));
         } else {
             // Non-responsive field — unchanged behavior
             const value = attributes[field.name];
-            const result = field.className(value, context);
-            if (result) {
-                if (Array.isArray(result)) {
-                    classes.push(...result);
-                } else {
-                    classes.push(result);
-                }
-            }
+            classes.push(...toClassList(field.className(value, context)));
         }
     }
     return classes;

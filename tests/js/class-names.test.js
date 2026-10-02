@@ -3,6 +3,7 @@ import {
     generateEditorFieldClasses,
     generateFieldClasses,
     prefixClassName,
+    toClassList,
 } from '../../modules/ExtendBlock/assets/scripts/includes/utils/class-names';
 
 /**
@@ -201,5 +202,24 @@ describe('generateEditorFieldClasses', () => {
         generateEditorFieldClasses(fields, { theme: 'dark' }, { blockName: 'core/group' }, 'Mobile');
 
         expect(seen).toEqual([{ blockName: 'core/group' }]);
+    });
+});
+
+describe('toClassList', () => {
+    it.each([
+        [undefined, []],
+        [null, []],
+        [false, []],
+        ['', []],
+        [[''], []],
+        [[null, false, ''], []],
+        ['a  b', ['a', 'b']],
+        [
+            ['a', ['b c']],
+            ['a', 'b', 'c'],
+        ],
+        [7, []],
+    ])('normalizes %j to %j', (output, expected) => {
+        expect(toClassList(output)).toEqual(expected);
     });
 });

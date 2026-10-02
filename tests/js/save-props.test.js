@@ -73,4 +73,37 @@ describe('createSavePropsFilter', () => {
 
         expect(seen).toEqual([{ blockName: 'core/group' }, { blockName: 'core/group' }]);
     });
+
+    /* The no-op above only holds if "nothing" always arrives as an empty list. These are the
+       shapes a natural callback returns on an untouched block. */
+    it.each([[['']], [[null]], [[false]], [''], [null]])(
+        'hands the same props back when a field className returns %j',
+        (output) => {
+            const filter = createSavePropsFilter(
+                ['core/group'],
+                [
+                    {
+                        name: 'animation',
+                        className: () => output,
+                    },
+                ]
+            );
+            const props = {};
+
+            expect(filter(props, GROUP, { animation: '' })).toBe(props);
+        }
+    );
+
+    it('hands the same props back when a classGenerator returns undefined', () => {
+        const filter = createSavePropsFilter(['core/group'], [], { classGenerator: () => undefined });
+        const props = {};
+
+        expect(filter(props, GROUP, {})).toBe(props);
+    });
+
+    it('splits a classGenerator string into classes, not characters', () => {
+        const filter = createSavePropsFilter(['core/group'], [], { classGenerator: () => 'a b' });
+
+        expect(filter({}, GROUP, {})).toEqual({ className: 'a b' });
+    });
 });

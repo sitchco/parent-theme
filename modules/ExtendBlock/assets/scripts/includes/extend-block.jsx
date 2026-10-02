@@ -5,7 +5,7 @@ import { PanelBody } from '@wordpress/components';
 import { useEffect, useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
-import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames } from './utils/class-names';
+import { generateFieldClasses, generateEditorFieldClasses, mergeClassNames, toClassList } from './utils/class-names';
 import { generateFieldAttributes, mergeAttributes } from './utils/attributes';
 import { createSavePropsFilter } from './utils/save-props';
 import { nextExtendBlockClasses } from './utils/extend-block-classes';
@@ -162,7 +162,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             // Memoize the class string based only on relevant field values
             const classString = useMemo(() => {
                 const newClasses = classGenerator
-                    ? classGenerator(attributes, outputContext)
+                    ? toClassList(classGenerator(attributes, outputContext))
                     : generateFieldClasses(allFields, attributes, outputContext);
                 return newClasses.join(' ');
             }, fieldValues);
@@ -294,7 +294,7 @@ function createEditorPropsFilter(targetBlocks, allFields, { classGenerator, attr
             // cascade needs it, and that takes it as its own argument.
             const context = { blockName: props.name };
             const newClasses = classGenerator
-                ? classGenerator(props.attributes, context)
+                ? toClassList(classGenerator(props.attributes, context))
                 : hasResponsiveFields
                   ? generateEditorFieldClasses(allFields, props.attributes, context, deviceType)
                   : generateFieldClasses(allFields, props.attributes, context);

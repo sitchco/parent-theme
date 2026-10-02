@@ -1,4 +1,4 @@
-import { generateFieldClasses, mergeClassNames } from './class-names';
+import { generateFieldClasses, mergeClassNames, toClassList } from './class-names';
 import { generateFieldAttributes, mergeAttributes } from './attributes';
 
 /**
@@ -27,7 +27,7 @@ export function createSavePropsFilter(targetBlocks, allFields, { classGenerator,
 
         const context = { blockName: blockType.name };
         const newClasses = classGenerator
-            ? classGenerator(attributes, context)
+            ? toClassList(classGenerator(attributes, context))
             : generateFieldClasses(allFields, attributes, context);
         const newAttributes = attributeGenerator
             ? mergeAttributes(attributeGenerator(attributes, context))
