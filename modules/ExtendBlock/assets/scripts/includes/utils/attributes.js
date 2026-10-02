@@ -23,8 +23,9 @@
  *   obvious `(v) => ({ 'data-x': v })` adds markup to every untouched block and breaks
  *   validation. Map each unset value to `undefined` explicitly; `v || undefined` is right for a
  *   select or text field, but would also drop a `0` or `false` that means something.
- * - In the editor canvas, core sets `id`, `role`, `aria-label`, `data-block`, `data-type` and
- *   `data-title` after `wrapperProps`, so core wins those keys there.
+ * - A key the block or core also sets (`aria-label`, `data-block`, `data-align`, …) resolves
+ *   differently by phase: the extension wins on save, the block wins in the canvas. Don't emit
+ *   keys your target block sets itself. See the precedence note in utils/editor-props.js.
  * - Dynamic blocks get these attributes in the editor canvas only, until S7. Their front end is
  *   rendered by PHP, and only classes are synced to it (through `extendBlockClasses`).
  *

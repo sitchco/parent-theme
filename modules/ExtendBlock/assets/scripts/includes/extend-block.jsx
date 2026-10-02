@@ -260,9 +260,9 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
  *
  * Note the asymmetry with the save path: `editor.BlockListBlock` forwards only `className` and
  * `wrapperProps` to the DOM, so arbitrary props passed at the top level are dropped silently.
- * Attributes therefore go through `wrapperProps`. Core still has the last word on its own
- * wrapper keys — it sets `id`, `role`, `aria-label` and `data-block`/`data-type`/`data-title`
- * after spreading `wrapperProps` — so those cannot be overridden from here.
+ * Attributes therefore go through `wrapperProps`. Core and the block apply their own wrapper
+ * props after ours, so on any key they also set they win in the canvas, while the extension
+ * wins on save. See the precedence note in utils/editor-props.js.
  *
  * @param {string[]} targetBlocks - Block names to target
  * @param {Object[]} allFields - All field definitions
