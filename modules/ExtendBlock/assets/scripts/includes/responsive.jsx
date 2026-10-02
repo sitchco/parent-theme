@@ -1,5 +1,7 @@
 import { useSelect, useDispatch } from '@wordpress/data';
 import { Dashicon, Button, ButtonGroup } from '@wordpress/components';
+import { resolveResponsiveOptions } from './utils/options';
+import { prefixClassName } from './utils/class-names';
 
 const BREAKPOINTS = [
     {
@@ -26,25 +28,6 @@ const BREAKPOINTS = [
 ];
 
 /**
- * Wraps a className callback to prefix its output with a breakpoint prefix.
- */
-function prefixClassName(classNameFn, prefix) {
-    if (!classNameFn || !prefix) {
-        return classNameFn;
-    }
-    return (value) => {
-        const result = classNameFn(value);
-        if (!result) {
-            return result;
-        }
-        if (Array.isArray(result)) {
-            return result.map((c) => `${prefix}${c}`);
-        }
-        return `${prefix}${result}`;
-    };
-}
-
-/**
  * Wraps a field definition to add responsive (desktop/tablet/mobile) support.
  *
  * Returns an array of 3 field definitions — one per breakpoint. The desktop field
@@ -53,6 +36,9 @@ function prefixClassName(classNameFn, prefix) {
  *
  * @param {Object} fieldDef - A field definition from fields.select(), fields.toggle(), etc.
  * @returns {Object[]} Array of 3 field definitions
+ *
+ * An `options` function on a wrapped field is called `(deviceType, context)` — the breakpoint
+ * string first, for backward compatibility, then the same context every other field gets.
  *
  * @example
  * responsive(fields.select({
@@ -85,7 +71,7 @@ export function responsive(fieldDef) {
  * Renders a field with Kadence-style device toggle buttons (Desktop/Tablet/Mobile).
  * Reads and writes breakpoint-specific attributes based on the active preview device.
  */
-function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, setAttributes }) {
+function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, setAttributes, context }) {
     const deviceType = useSelect((select) => select('core/editor')?.getDeviceType?.() || 'Desktop', []);
 
     const { __experimentalSetPreviewDeviceType: setPreviewDeviceType } = useDispatch('core/edit-post');
@@ -96,11 +82,23 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
     const currentValue = attributes[attrName];
     const handleChange = (newValue) => setAttributes({ [attrName]: newValue });
 
-    const resolvedOptions = typeof field.options === 'function' ? field.options(deviceType) : field.options;
+    const responsiveContext = {
+        ...context,
+        deviceType,
+    };
 
+    /* Called `(deviceType, context)`, not `(context)`, so the breakpoint stays the first argument
+       for the consuming themes that already pass `(breakpoint) => …`. See the note on
+       resolveResponsiveOptions for what has to happen before that can be tidied up. */
+    const resolvedOptions = resolveResponsiveOptions(field, responsiveContext);
+
+    /* `name` is the breakpoint's attribute, not the Desktop one the field was spread from, so a
+       custom render writing `setAttributes({ [field.name]: v })` edits the breakpoint on screen.
+       `field.responsive.baseName` still carries the unsuffixed name. */
     const renderField = resolvedOptions
         ? {
               ...field,
+              name: attrName,
               label: undefined,
               options: [
                   {
@@ -112,6 +110,7 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
           }
         : {
               ...field,
+              name: attrName,
               label: undefined,
           };
     return (
@@ -137,6 +136,9 @@ function ResponsiveFieldWrapper({ field, originalRender, baseName, attributes, s
                     field: renderField,
                     value: currentValue,
                     onChange: handleChange,
+                    attributes,
+                    setAttributes,
+                    context: responsiveContext,
                 })}
             </div>
         </div>

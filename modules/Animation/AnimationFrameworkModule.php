@@ -4,7 +4,10 @@ namespace Sitchco\Parent\Modules\Animation;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
+use Sitchco\Framework\ModuleAssets;
 use Sitchco\Framework\ModuleRegistry;
+use Sitchco\Modules\UIFramework\UIFramework;
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
 use Sitchco\Utils\Logger;
 
 /**
@@ -95,12 +98,16 @@ use Sitchco\Utils\Logger;
  * config edit — including one that fixes a warning logged from here — needs ConfigRegistry::clearCache()
  * or a cache flush before it takes effect.
  *
- * At this stage the coordinator discovers and resolves. Building the editor controls and emitting the
- * data attributes arrive with the stories that need them.
+ * The coordinator discovers, resolves, and hands the resolved map to the editor, where one
+ * ExtendBlock registration turns it into an Animation select per configured block. Emitting the
+ * data attributes and injecting per-animation markup arrive with the stories that need them.
  */
 class AnimationFrameworkModule extends Module
 {
     public const HOOK_SUFFIX = 'animation-framework';
+
+    /** The editor control is an ExtendBlock registration, so the library has to be present. */
+    public const DEPENDENCIES = [ExtendBlockModule::class];
 
     /** Top-level config section mapping block names to the animations allowed on them. */
     public const CONFIG_KEY = 'animations';
@@ -130,14 +137,41 @@ class AnimationFrameworkModule extends Module
     public function __construct(protected ModuleRegistry $moduleRegistry, protected ConfigRegistry $configRegistry) {}
 
     /**
-     * Opens memoization, and nothing else.
+     * Opens memoization and registers the editor control.
      *
      * ModuleRegistry runs every init() only after the registration pass has finished, so this is the
      * earliest moment at which the active-module list is whole and an answer is safe to keep.
+     *
+     * Nothing is resolved here. The enqueue callback runs on enqueue_block_editor_assets, long after
+     * every module has initialized, which is both what the timing rule above requires and what keeps
+     * a front-end request from resolving config it will never use.
      */
     public function init(): void
     {
         $this->initialized = true;
+
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
+            $blockAnimations = $this->getBlockAnimations();
+
+            /* No configured block means no control, and no reason to ship the script that would
+               build one. Same shape as BlockConfig::postTypeBlockVisibility(), which is the
+               established way to hand a resolved config section to the editor. */
+            if (!$blockAnimations) {
+                return;
+            }
+
+            $assets->enqueueScript(static::hookName('editor-ui'), 'editor-ui.js', [
+                'wp-block-editor',
+                'wp-components',
+                'wp-compose',
+                'wp-data',
+                'wp-element',
+                'wp-hooks',
+                UIFramework::hookName('editor'),
+                ExtendBlockModule::hookName(),
+            ]);
+            $assets->inlineScriptData(static::hookName('editor-ui'), 'animations', $blockAnimations);
+        });
     }
 
     /**

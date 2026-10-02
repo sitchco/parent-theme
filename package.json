@@ -10,7 +10,8 @@
         "lint": "sitchco lint",
         "format": "sitchco format",
         "clean": "sitchco clean",
-        "prepare": "sitchco prepare"
+        "prepare": "sitchco prepare",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",
@@ -20,6 +21,7 @@
     },
     "devDependencies": {
         "@sitchco/cli": "^2.1.11",
-        "@sitchco/eslint-config": "^2.1.2"
+        "@sitchco/eslint-config": "^2.1.2",
+        "vitest": "^3.2.4"
     }
 }

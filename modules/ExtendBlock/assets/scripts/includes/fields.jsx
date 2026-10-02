@@ -4,6 +4,7 @@ import {
     TextControl,
     __experimentalNumberControl as NumberControl,
 } from '@wordpress/components';
+import { resolveOptions, withStaleValue } from './utils/options';
 
 /**
  * Creates a field definition with the given type and defaults.
@@ -27,6 +28,25 @@ function createField(type, defaults) {
  * - attributeType: The Gutenberg attribute type
  * - default: Default value for the attribute
  * - render: React component for the inspector control
+ *
+ * A field emits through two independent, optional channels, both gated by `condition`:
+ * - className:  (value, context) => string | string[] | null — merged into the wrapper's class
+ * - attributes: (value, context) => Object | null          — merged onto the wrapper as props: the
+ *   saved markup of a static block, and the editor canvas of any block. A dynamic block's
+ *   front end does not get them until S7; only classes are synced there.
+ *
+ * Use `className` for anything a stylesheet matches and `attributes` for anything JS reads.
+ *
+ * Rules for the attribute channel (the full list is at the top of utils/attributes.js):
+ * - Only `data-*` and `aria-*` names are emitted; anything else is dropped with a warning.
+ * - Return `undefined` for unset. `''`, `0` and `false` are kept and serialize on a `data-*` or
+ *   `aria-*` attribute, and `''` and `false` are exactly the select, text and toggle defaults, so
+ *   a generator that passes the value straight through adds markup to every untouched block.
+ * - Don't emit a key the target block or core sets itself: the extension wins it on save and
+ *   the block wins it in the canvas. See the precedence note in utils/editor-props.js.
+ *
+ * `condition`, `className` and `attributes` receive the output context, `{ blockName }`, in
+ * every phase. `render` and `options` receive the richer render context.
  */
 export const fields = {
     /**
@@ -35,19 +55,25 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {Array<{label: string, value: string}>} config.options - Dropdown options
+     * @param {Array<{label: string, value: string}>|Function} config.options - Dropdown options,
+     *   or a function of the render context — `({ blockName, clientId }) => options` — when one
+     *   registration serves blocks whose choices differ. Inside responsive() it is called
+     *   `(deviceType, context)` instead; see resolveResponsiveOptions in utils/options.js.
+     *   A saved value no option offers is shown as a disabled "(unavailable)" entry, so it stays
+     *   visible and choosing another option clears it
      * @param {string} [config.default=''] - Default value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     select: createField('select', {
         attributeType: 'string',
         default: '',
-        render: ({ field, value, onChange }) => (
+        render: ({ field, value, onChange, context }) => (
             <SelectControl
                 label={field.label}
                 value={value}
-                options={field.options}
+                options={withStaleValue(resolveOptions(field, context), value)}
                 onChange={onChange}
                 help={field.help}
             />
@@ -61,7 +87,8 @@ export const fields = {
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
      * @param {boolean} [config.default=false] - Default value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     toggle: createField('toggle', {
@@ -79,7 +106,8 @@ export const fields = {
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
      * @param {string} [config.default=''] - Default value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     text: createField('text', {
@@ -99,7 +127,8 @@ export const fields = {
      * @param {number} [config.default=0] - Default value
      * @param {number} [config.min] - Minimum value
      * @param {number} [config.max] - Maximum value
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
      */
     number: createField('number', {
@@ -124,8 +153,13 @@ export const fields = {
      * @param {string} config.name - Attribute name
      * @param {string} config.attributeType - Gutenberg attribute type
      * @param {*} config.default - Default value
-     * @param {Function} config.render - Render function ({ field, value, onChange }) => JSX
-     * @param {Function} [config.className] - Class generator (value) => string|string[]|null
+     * @param {Function} config.render - Render function
+     *   ({ field, value, onChange, attributes, setAttributes, context }) => JSX. Inside
+     *   responsive(), `field.name` is the active breakpoint's attribute name (`fooTablet`, …) and
+     *   `field.responsive.baseName` the unsuffixed one, so `setAttributes({ [field.name]: v })`
+     *   writes the breakpoint being edited.
+     * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
+     * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      */
     custom: (config) => ({
         type: 'custom',

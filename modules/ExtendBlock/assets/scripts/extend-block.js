@@ -25,10 +25,12 @@
  * });
  */
 
-import { extendBlock, extendBlockClasses } from './includes/extend-block.jsx';
+import { extendBlock, extendBlockClasses, extendBlockAttributes } from './includes/extend-block.jsx';
 import { fields, fieldsToAttributes } from './includes/fields.jsx';
 import { responsive } from './includes/responsive.jsx';
 import { classNames, generateFieldClasses, mergeClassNames } from './includes/utils/class-names';
+import { generateFieldAttributes, mergeAttributes } from './includes/utils/attributes';
+import { resolveOptions } from './includes/utils/options';
 import { useKadenceActiveTab, isKadenceBlock } from './includes/hooks/use-kadence-active-tab';
 
 window.sitchco = window.sitchco || {};
@@ -36,12 +38,16 @@ window.sitchco = window.sitchco || {};
 window.sitchco.extendBlock = {
     extendBlock,
     extendBlockClasses,
+    extendBlockAttributes,
     fields,
     responsive,
     fieldsToAttributes,
     classNames,
     generateFieldClasses,
+    generateFieldAttributes,
     mergeClassNames,
+    mergeAttributes,
+    resolveOptions,
     useKadenceActiveTab,
     isKadenceBlock,
 };
