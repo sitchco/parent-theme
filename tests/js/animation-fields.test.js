@@ -4,8 +4,11 @@ import {
     EMPTY_OPTION_LABEL,
     restrictOptions,
 } from '../../modules/Animation/assets/scripts/editor-ui/animation-fields';
-import { resolveOptions } from '../../modules/ExtendBlock/assets/scripts/includes/utils/options';
-import { readFieldValue } from '../../modules/ExtendBlock/assets/scripts/includes/utils/field-value';
+import { resolveOptions, withStaleValue } from '../../modules/ExtendBlock/assets/scripts/includes/utils/options';
+import {
+    contextualDefaultsToStore,
+    readFieldValue,
+} from '../../modules/ExtendBlock/assets/scripts/includes/utils/field-value';
 import { generateFieldClasses } from '../../modules/ExtendBlock/assets/scripts/includes/utils/class-names';
 import { generateFieldAttributes } from '../../modules/ExtendBlock/assets/scripts/includes/utils/attributes';
 
@@ -230,6 +233,35 @@ describe('buildAnimationFields', () => {
             expect(PALETTE[0].label).toBe('Default');
         });
 
+        it('shows a config default its allowed list excludes as unavailable, beside the animation default', () => {
+            const blockName = 'core/group';
+            const { letterAnimationColor } = build({
+                [blockName]: {
+                    letter: entry('letter', {
+                        allowed: { color: ['green'] },
+                        defaults: { color: 'purple' },
+                    }),
+                },
+            });
+            const value = readFieldValue(letterAnimationColor, {}, { blockName });
+
+            expect(withStaleValue(resolveOptions(letterAnimationColor, { blockName }), value)).toEqual([
+                {
+                    label: EMPTY_OPTION_LABEL,
+                    value: '',
+                },
+                {
+                    label: 'green',
+                    value: 'green',
+                },
+                {
+                    label: 'purple (unavailable)',
+                    value: 'purple',
+                    disabled: true,
+                },
+            ]);
+        });
+
         it('gives non-select controls no options', () => {
             expect(build().fadeUpAnimationSpeed.options).toBeUndefined();
         });
@@ -260,6 +292,29 @@ describe('buildAnimationFields', () => {
             expect(readFieldValue(fadeUpAnimationReverse, {}, { blockName: 'core/group' })).toBe(false);
         });
 
+        it('gives each control type its own block’s default', () => {
+            const built = build({
+                'core/cover': {
+                    'fade-up': entry('fade-up', {
+                        defaults: {
+                            speed: 0.75,
+                            reverse: true,
+                            caption: 'Hi',
+                        },
+                    }),
+                },
+                'core/group': { 'fade-up': entry('fade-up') },
+            });
+            const defaultsOn = (blockName) =>
+                ['fadeUpAnimationSpeed', 'fadeUpAnimationReverse', 'fadeUpAnimationCaption'].map((name) =>
+                    readFieldValue(built[name], {}, { blockName })
+                );
+
+            expect(defaultsOn('core/cover')).toEqual([0.75, true, 'Hi']);
+
+            expect(defaultsOn('core/group')).toEqual([50, false, '']);
+        });
+
         it('copes with the empty defaults PHP serializes as a list', () => {
             const { fadeUpAnimationSpeed } = build({
                 'core/group': {
@@ -271,6 +326,27 @@ describe('buildAnimationFields', () => {
             });
 
             expect(readFieldValue(fadeUpAnimationSpeed, {}, { blockName: 'core/group' })).toBe(50);
+        });
+    });
+
+    describe('stored defaults', () => {
+        it('stores the selected animation’s defaults on a static block, and nothing for the others', () => {
+            const built = Object.values(build());
+
+            expect(
+                contextualDefaultsToStore(built, { animation: 'fade-up' }, { blockName: 'kadence/rowlayout' })
+            ).toEqual({
+                fadeUpAnimationSpeed: 25,
+                fadeUpAnimationReverse: false,
+                fadeUpAnimationCaption: '',
+            });
+        });
+
+        it('stores nothing with no animation, or one the block does not allow', () => {
+            const built = Object.values(build());
+
+            expect(contextualDefaultsToStore(built, { animation: '' }, { blockName: 'kadence/rowlayout' })).toBeNull();
+            expect(contextualDefaultsToStore(built, { animation: 'letter' }, { blockName: 'core/group' })).toBeNull();
         });
     });
 
