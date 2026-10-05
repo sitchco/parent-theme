@@ -5,7 +5,7 @@
  * controls — see AnimationTester::controls() and SecondAnimationTester::controls().
  *
  * Kept apart from the parent fixture, whose problem count is pinned, and used alone, never layered.
- * Eleven problems in all, pinned by testEveryControlMismatchIsFlaggedWithItsFallback; the two entries
+ * Thirteen problems in all, pinned by testEveryControlMismatchIsFlaggedWithItsFallback; the two entries
  * marked valid must stay silent.
  */
 
@@ -18,6 +18,9 @@ return [
 
         // One problem: teal is not among the color select's options. Purple survives.
         'test/value-not-offered' => ['animation-tester' => ['allowed' => ['color' => ['purple', 'teal']]]],
+
+        // Two problems, as the list form would give: teal is not offered, and so nothing is permitted.
+        'test/scalar-not-offered' => ['animation-tester' => ['allowed' => ['color' => 'teal']]],
 
         // Valid: tint's options come from a JS hook, so its permitted values cannot be checked here.
         'test/filtered-options' => ['second-tester' => ['allowed' => ['tint' => ['anything']]]],

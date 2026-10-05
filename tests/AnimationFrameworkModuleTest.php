@@ -901,6 +901,16 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['color' => ['purple']], $blocks['test/value-not-offered']['animation-tester']['allowed']);
 
         $this->assertContains(
+            "test/scalar-not-offered / animation-tester / allowed / color / teal: is not one of the control's options. Dropping the value.",
+            $problems,
+        );
+        $this->assertContains(
+            'test/scalar-not-offered / animation-tester / allowed / color: permits no values at all, so its control will offer no choices.',
+            $problems,
+        );
+        $this->assertSame(['color' => []], $blocks['test/scalar-not-offered']['animation-tester']['allowed']);
+
+        $this->assertContains(
             'test/default-wrong-type / animation-tester / defaults / reverse: has a string default, which a toggle control cannot take. Dropping it.',
             $problems,
         );
@@ -944,7 +954,7 @@ class AnimationFrameworkModuleTest extends TestCase
 
         // Counted as well as named, so the two valid entries are proven silent and the restricted
         // teal is reported once.
-        $this->assertCount(11, $problems);
+        $this->assertCount(13, $problems);
     }
 
     public function testAnOptionsFilterSelectTakesItsPermittedValuesAsWritten(): void

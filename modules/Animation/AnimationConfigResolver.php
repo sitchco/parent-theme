@@ -354,50 +354,20 @@ class AnimationConfigResolver
             }
 
             if (is_string($values) || is_int($values) || is_float($values)) {
-                $resolved[$option] = $this->offeredValues($context, $option, [(string) $values], $control);
-                continue;
-            }
-
-            if (!is_array($values)) {
+                $permitted = [(string) $values];
+            } elseif (!is_array($values)) {
                 $this->flagProblem(
                     "{$context} / allowed / {$option}",
                     'is not a list of permitted values. Leaving the option unrestricted.',
                 );
                 continue;
-            }
-
-            /* Normalization rewrote the authored list into `value => true`, which is also what lets a
-               child theme drop one value with `value => false`. Recovering the list therefore means
-               reading back the keys — and PHP casts a numeric-string key to an int on the way in, so
-               an authored ['10', '30'] would come back as ints. Cast back: these are option values,
-               matched against an editor control's own string values.
-               Note the asymmetry with defaults, whose values keep the type they were authored with
-               because normalization leaves a string key's scalar value alone. */
-            $permitted = [];
-
-            foreach ($values as $value => $marker) {
-                if ($marker === false || $marker === null) {
-                    continue;
-                }
-
-                /* Anything but `true` would otherwise read as permission, and the two ways of
-                   getting one are both worth a word: a forgotten nesting level, where
-                   ['brand' => ['purple', 'green']] permits the literal "brand" and loses the
-                   palette; and a value marked with something that is not a marker, where
-                   ['purple' => 0] permits purple all the same. */
-                if ($marker !== true) {
-                    $this->flagProblem(
-                        "{$context} / allowed / {$option} / {$value}",
-                        'is marked with neither `true` nor `false`, so it is not a permitted value as written. Dropping the value.',
-                    );
-                    continue;
-                }
-
-                $permitted[] = (string) $value;
+            } else {
+                $permitted = $this->markedValues($context, $option, $values);
             }
 
             $resolved[$option] = $this->offeredValues($context, $option, $permitted, $control);
 
+            // Either form can end up here, a scalar whose one value is not offered included.
             if ($resolved[$option] === []) {
                 $this->flagProblem(
                     "{$context} / allowed / {$option}",
@@ -407,6 +377,46 @@ class AnimationConfigResolver
         }
 
         return $resolved;
+    }
+
+    /**
+     * The permitted values of an `allowed` list, read back from its normalized `value => true` form.
+     *
+     * @return list<string>
+     */
+    private function markedValues(string $context, string $option, array $values): array
+    {
+        /* Normalization rewrote the authored list into `value => true`, which is also what lets a
+           child theme drop one value with `value => false`. Recovering the list therefore means
+           reading back the keys — and PHP casts a numeric-string key to an int on the way in, so
+           an authored ['10', '30'] would come back as ints. Cast back: these are option values,
+           matched against an editor control's own string values.
+           Note the asymmetry with defaults, whose values keep the type they were authored with
+           because normalization leaves a string key's scalar value alone. */
+        $permitted = [];
+
+        foreach ($values as $value => $marker) {
+            if ($marker === false || $marker === null) {
+                continue;
+            }
+
+            /* Anything but `true` would otherwise read as permission, and the two ways of
+               getting one are both worth a word: a forgotten nesting level, where
+               ['brand' => ['purple', 'green']] permits the literal "brand" and loses the
+               palette; and a value marked with something that is not a marker, where
+               ['purple' => 0] permits purple all the same. */
+            if ($marker !== true) {
+                $this->flagProblem(
+                    "{$context} / allowed / {$option} / {$value}",
+                    'is marked with neither `true` nor `false`, so it is not a permitted value as written. Dropping the value.',
+                );
+                continue;
+            }
+
+            $permitted[] = (string) $value;
+        }
+
+        return $permitted;
     }
 
     /**
