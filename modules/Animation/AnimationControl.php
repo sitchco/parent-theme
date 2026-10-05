@@ -127,6 +127,26 @@ readonly class AnimationControl implements \JsonSerializable
     }
 
     /**
+     * Whether a number lies within this control's `min` and `max`, either of which may be unset.
+     */
+    public function inRange(int|float $value): bool
+    {
+        return ($this->min === null || $value >= $this->min) && ($this->max === null || $value <= $this->max);
+    }
+
+    /**
+     * The range inRange() checks, for a problem message: "0 to 100", "at least 0", "at most 100".
+     */
+    public function describeRange(): string
+    {
+        return match (true) {
+            $this->min !== null && $this->max !== null => "{$this->min} to {$this->max}",
+            $this->min !== null => "at least {$this->min}",
+            default => "at most {$this->max}",
+        };
+    }
+
+    /**
      * The static options with each value cast to a string, so `30` and `'30'` are one value
      * everywhere. Any other keys are kept as declared.
      *

@@ -297,6 +297,12 @@ class AnimationConfigResolver
                 continue;
             }
 
+            // A default the select does not offer at all was flagged by resolveDefaults() already.
+            $offered = $controls[$option]->optionValues();
+            if ($offered !== null && !in_array($value, $offered, true)) {
+                continue;
+            }
+
             $this->flagProblem(
                 $fromConfig ? "{$context} / defaults / {$option}" : "{$context} / allowed / {$option}",
                 sprintf(
@@ -490,6 +496,24 @@ class AnimationConfigResolver
                     ),
                 );
                 continue;
+            }
+
+            /* Kept, as a default its own `allowed` list excludes is: the editor shows the value as
+             "(unavailable)" rather than losing it, and the problem says where to look. */
+            $offered = $control->optionValues();
+            if ($offered !== null && !in_array($typed, $offered, true)) {
+                $this->flagProblem(
+                    "{$context} / defaults / {$option}",
+                    sprintf(
+                        'defaults to "%s", which is not one of the control\'s options. The control will not offer it.',
+                        $typed,
+                    ),
+                );
+            } elseif ($control->type === 'number' && !$control->inRange($typed)) {
+                $this->flagProblem(
+                    "{$context} / defaults / {$option}",
+                    sprintf('defaults to %s, outside the control\'s range (%s).', $typed, $control->describeRange()),
+                );
             }
 
             $resolved[$option] = $typed;

@@ -848,6 +848,8 @@ class AnimationFrameworkModuleTest extends TestCase
                 "secondTester / arrayValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.",
                 "secondTester / numberLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.",
                 "secondTester / emptyLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.",
+                'secondTester / unofferedDefault: its default "" is not one of its options. Dropping it.',
+                'secondTester / outOfRange: its default 5 is outside its range (at most 3). Dropping it.',
                 'secondTester / speed: its attribute "secondTesterAnimationSpeed" is already used by second-tester / speed. Dropping it.',
                 'secondTester / ok: is declared twice. Keeping the first.',
             ],
@@ -909,8 +911,25 @@ class AnimationFrameworkModuleTest extends TestCase
             $problems,
         );
 
-        // Counted as well as named, so the two valid entries are proven silent.
-        $this->assertCount(7, $problems);
+        $this->assertContains(
+            'test/default-not-offered / animation-tester / defaults / color: defaults to "teal", which is not one of the control\'s options. The control will not offer it.',
+            $problems,
+        );
+        $this->assertContains(
+            'test/default-not-offered-restricted / animation-tester / defaults / color: defaults to "teal", which is not one of the control\'s options. The control will not offer it.',
+            $problems,
+        );
+        $this->assertSame(['color' => 'teal'], $blocks['test/default-not-offered']['animation-tester']['defaults']);
+
+        $this->assertContains(
+            'test/default-out-of-range / second-tester / defaults / speed: defaults to 150, outside the control\'s range (0 to 100).',
+            $problems,
+        );
+        $this->assertSame(['speed' => 150], $blocks['test/default-out-of-range']['second-tester']['defaults']);
+
+        // Counted as well as named, so the two valid entries are proven silent and the restricted
+        // teal is reported once.
+        $this->assertCount(10, $problems);
     }
 
     public function testAnOptionsFilterSelectTakesItsPermittedValuesAsWritten(): void

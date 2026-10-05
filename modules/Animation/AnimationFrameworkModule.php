@@ -349,6 +349,20 @@ class AnimationFrameworkModule extends Module
                         $problems[] = "{$context}: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.";
                         continue;
                     }
+
+                    /* The editor cannot start on a value the select does not offer. An unoffered
+                       `''` is the worst of it: the select shows its first option as chosen, so
+                       choosing that option fires no change and it can never be stored. */
+                    $offered = $control->optionValues();
+                    if ($offered !== null && !in_array($control->default, $offered, true)) {
+                        $problems[] = "{$context}: its default \"{$control->default}\" is not one of its options. Dropping it.";
+                        continue;
+                    }
+                }
+
+                if ($control->type === 'number' && !$control->inRange($control->default)) {
+                    $problems[] = "{$context}: its default {$control->default} is outside its range ({$control->describeRange()}). Dropping it.";
+                    continue;
                 }
 
                 /* Distinct keys can still meet in one attribute name — `second-tester` and

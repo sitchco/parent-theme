@@ -5,7 +5,7 @@
  * controls — see AnimationTester::controls() and SecondAnimationTester::controls().
  *
  * Kept apart from the parent fixture, whose problem count is pinned, and used alone, never layered.
- * Seven problems in all, pinned by testEveryControlMismatchIsFlaggedWithItsFallback; the two entries
+ * Ten problems in all, pinned by testEveryControlMismatchIsFlaggedWithItsFallback; the two entries
  * marked valid must stay silent.
  */
 
@@ -33,5 +33,17 @@ return [
 
         // One problem: narrowing direction to `down` excludes the control's own default, `up`.
         'test/own-default-excluded' => ['second-tester' => ['allowed' => ['direction' => ['down']]]],
+
+        // One problem: teal is not among the color select's options, with no `allowed` in play.
+        'test/default-not-offered' => ['animation-tester' => ['defaults' => ['color' => 'teal']]],
+
+        // One problem, not two: teal is not offered at all, which says more than that `allowed`
+        // excludes it.
+        'test/default-not-offered-restricted' => [
+            'animation-tester' => ['allowed' => ['color' => ['purple']], 'defaults' => ['color' => 'teal']],
+        ],
+
+        // One problem: 150 is past the speed control's max of 100.
+        'test/default-out-of-range' => ['second-tester' => ['defaults' => ['speed' => 150]]],
     ],
 ];
