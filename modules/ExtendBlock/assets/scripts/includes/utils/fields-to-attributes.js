@@ -22,7 +22,8 @@ export function fieldsToAttributes(fields) {
         }
 
         // A function default is supplied at read time, so the attribute is registered without one
-        // and stays undefined until an author picks something. See utils/field-value.js.
+        // and stays undefined until stored: by an author's pick, or on a static block by the editor
+        // once the field applies. See utils/field-value.js.
         attributes[field.name] = hasContextualDefault(field)
             ? { type: field.attributeType }
             : {

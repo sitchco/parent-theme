@@ -36,6 +36,12 @@
  *   save() must not depend on a default that can move: markup saved under one default would fail
  *   validation once the default changed. Stored, the value stays put, and a later change to the
  *   default reaches only blocks that have not stored one yet.
+ *   That store needs the block mounted in the editor. A static block parsed without ever being
+ *   mounted — a pattern registered in PHP, a REST or programmatic insert, content saved before the
+ *   field existed — still has nothing stored, so save() falls back to the current default, and
+ *   block validation runs at parse time, before any store. Harmless while no function-default
+ *   field emits output; S6, which gives the animation controls output, is to make save() read
+ *   stored values only, leaving the fallback to the editor.
  * - A value an author picks is stored, even when it happens to equal the default, and from then
  *   on it stays put whatever the default does.
  *

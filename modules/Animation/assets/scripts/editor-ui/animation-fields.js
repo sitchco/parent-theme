@@ -12,7 +12,8 @@
  * - **Options.** A select offers its own options, or whatever its `optionsFilter` hook returns,
  *   narrowed to the block's `allowed` list. The empty "no override" option always survives.
  * - **Defaults.** The block's config default, falling back to the control's own, through
- *   ExtendBlock's function `default`. A block nobody touched follows it; a picked value stays.
+ *   ExtendBlock's function `default`. A dynamic block nobody touched follows it; a static block
+ *   stores it once its animation is chosen; a picked value stays. See utils/field-value.js.
  *
  * No `className` or `attributes` yet: the controls write attributes and emit nothing, so saved
  * markup is unchanged. Routing values into the DOM is S6.
