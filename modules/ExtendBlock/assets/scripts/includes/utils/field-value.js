@@ -81,8 +81,9 @@ export function readFieldValue(field, attributes, context = {}) {
  * Covers each field with a function default that has no stored value and applies to the block —
  * no condition, or one that passes — so a field gated on another (an animation's controls on the
  * animation) is stored only once it takes effect, and a block never fills up with values for
- * fields that emit nothing. Conditions see the defaults stored alongside them, so a field gated on
- * another function-default field is caught in the same pass.
+ * fields that emit nothing. Conditions see the defaults found alongside them, and the pass repeats
+ * until it finds nothing new, so a field gated on another function-default field is caught in one
+ * call whichever order the two are declared in. The editor then stores them in one dispatch.
  *
  * @param {Object[]} fields     - Field definitions
  * @param {Object}   attributes - Block attributes
@@ -91,27 +92,32 @@ export function readFieldValue(field, attributes, context = {}) {
  */
 export function contextualDefaultsToStore(fields, attributes, context = {}) {
     const pending = {};
-    let found = false;
+    let added = true;
 
-    for (const field of fields) {
-        if (!hasContextualDefault(field) || attributes[field.name] !== undefined) {
-            continue;
-        }
-        if (
-            field.condition &&
-            !field.condition(
-                {
-                    ...attributes,
-                    ...pending,
-                },
-                context
-            )
-        ) {
-            continue;
-        }
+    // Each pass that continues adds at least one field, so this runs at most fields.length + 1 times.
+    while (added) {
+        added = false;
 
-        pending[field.name] = field.default(context);
-        found = true;
+        for (const field of fields) {
+            if (!hasContextualDefault(field) || attributes[field.name] !== undefined || field.name in pending) {
+                continue;
+            }
+            if (
+                field.condition &&
+                !field.condition(
+                    {
+                        ...attributes,
+                        ...pending,
+                    },
+                    context
+                )
+            ) {
+                continue;
+            }
+
+            pending[field.name] = field.default(context);
+            added = true;
+        }
     }
-    return found ? pending : null;
+    return Object.keys(pending).length ? pending : null;
 }

@@ -157,4 +157,20 @@ describe('contextualDefaultsToStore', () => {
             speed: 25,
         });
     });
+
+    it('catches a gated field declared before the field it is gated on', () => {
+        const mode = {
+            name: 'mode',
+            default: () => 'fade-up',
+        };
+        const gated = {
+            ...speed,
+            condition: (attributes) => attributes.mode === 'fade-up',
+        };
+
+        expect(contextualDefaultsToStore([gated, mode], {}, context)).toEqual({
+            mode: 'fade-up',
+            speed: 25,
+        });
+    });
 });
