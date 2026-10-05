@@ -394,6 +394,32 @@ class AnimationFrameworkModuleTest extends TestCase
         );
     }
 
+    public function testResolutionBeforeInitReportsBrokenControlsOnce(): void
+    {
+        /* Before init() nothing is memoized, and the controls fixture has many override entries, each
+           of which asks for its animation's controls. Logger keeps only its last entry, so the
+           error_log output is what gets counted. */
+        $framework = new AnimationFrameworkModule(
+            $this->registryFor(
+                AnimationTester::class,
+                SecondAnimationTester::class,
+                MalformedControlsAnimationTester::class,
+            ),
+            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/controls'),
+        );
+        $log = tempnam(sys_get_temp_dir(), 'animation-log');
+        $previous = ini_set('error_log', $log);
+
+        try {
+            $framework->getBlockAnimations();
+        } finally {
+            ini_set('error_log', $previous);
+        }
+
+        $this->assertSame(1, substr_count(file_get_contents($log), 'Animation control problems.'));
+        unlink($log);
+    }
+
     public function testChildThemeAddsABlockTheParentNeverMentioned(): void
     {
         $entries = $this->frameworkForFixtures('parent', 'child')->getAnimationsForBlock('test/child-adds-block');

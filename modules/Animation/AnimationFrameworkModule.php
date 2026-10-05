@@ -287,10 +287,13 @@ class AnimationFrameworkModule extends Module
      */
     private function resolveBlockAnimations(): array
     {
+        /* Read once and closed over: before init() getControls() does not memoize, and the resolver
+         asks once per override entry, so each ask would re-run validation and log its problems again. */
+        $controls = $this->getControls();
         $resolver = new AnimationConfigResolver(
             $this->configRegistry->load(static::CONFIG_KEY),
             fn(string $key) => $this->getAnimation($key),
-            fn(string $key) => $this->getControls()[$key] ?? [],
+            fn(string $key) => $controls[$key] ?? [],
         );
         ['blocks' => $blocks, 'problems' => $problems] = $resolver->resolve();
 
