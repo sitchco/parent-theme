@@ -5,7 +5,9 @@ import {
     __experimentalNumberControl as NumberControl,
 } from '@wordpress/components';
 import { resolveOptions, withStaleValue } from './utils/options';
-import { hasContextualDefault } from './utils/field-value';
+
+// Kept importable from here, where it always lived; it moved out so it can be unit tested.
+export { fieldsToAttributes } from './utils/fields-to-attributes';
 
 /**
  * Creates a field definition with the given type and defaults.
@@ -173,29 +175,3 @@ export const fields = {
         ...config,
     }),
 };
-
-/**
- * Converts field definitions to Gutenberg attribute definitions.
- *
- * @param {Array} fields - Array of field definitions
- * @returns {Object} Gutenberg attributes object
- */
-export function fieldsToAttributes(fields) {
-    const attributes = {};
-
-    for (const field of fields) {
-        if (!field.name) {
-            throw new Error('Field is missing required "name" property');
-        }
-
-        // A function default is supplied at read time, so the attribute is registered without one
-        // and stays undefined until an author picks something. See utils/field-value.js.
-        attributes[field.name] = hasContextualDefault(field)
-            ? { type: field.attributeType }
-            : {
-                  type: field.attributeType,
-                  default: field.default,
-              };
-    }
-    return attributes;
-}

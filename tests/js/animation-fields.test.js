@@ -65,6 +65,14 @@ const CONTROLS = {
             attribute: 'fadeUpAnimationReverse',
             label: 'Reverse',
             default: false,
+            help: 'Play the animation backwards.',
+        },
+        {
+            type: 'text',
+            name: 'caption',
+            attribute: 'fadeUpAnimationCaption',
+            label: 'Caption',
+            default: '',
         },
     ],
 };
@@ -125,6 +133,7 @@ describe('buildAnimationFields', () => {
             'letterAnimationOpacity',
             'fadeUpAnimationSpeed',
             'fadeUpAnimationReverse',
+            'fadeUpAnimationCaption',
         ]);
 
         expect(built.fadeUpAnimationSpeed).toMatchObject({
@@ -135,7 +144,19 @@ describe('buildAnimationFields', () => {
             max: 100,
         });
 
-        expect(built.fadeUpAnimationReverse.type).toBe('toggle');
+        expect(built.fadeUpAnimationReverse).toMatchObject({
+            type: 'toggle',
+            help: 'Play the animation backwards.',
+        });
+
+        expect(built.fadeUpAnimationCaption).toMatchObject({
+            type: 'text',
+            attributeType: 'string',
+            label: 'Caption',
+        });
+
+        // Settings a control does not have are left off the field, not set to undefined.
+        expect(Object.hasOwn(built.fadeUpAnimationCaption, 'help')).toBe(false);
     });
 
     it('builds nothing when no animation has controls', () => {
