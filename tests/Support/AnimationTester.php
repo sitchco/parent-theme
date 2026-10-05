@@ -41,9 +41,15 @@ class AnimationTester extends AnimationModule
         ];
     }
 
-    /** Option pairs labelled by their own value; the label is never what a test reads. */
+    /**
+     * Option pairs labelled by their own value, or "Default" for the empty one, since a label may not
+     * be empty; the label is never what a test reads.
+     */
     private static function options(string|int ...$values): array
     {
-        return array_map(fn(string|int $value) => ['label' => (string) $value, 'value' => $value], $values);
+        return array_map(
+            fn(string|int $value) => ['label' => $value === '' ? 'Default' : (string) $value, 'value' => $value],
+            $values,
+        );
     }
 }

@@ -338,13 +338,15 @@ class AnimationFrameworkModule extends Module
                 }
 
                 if ($control->type === 'select') {
-                    if (($control->options === null) === ($control->optionsFilter === null)) {
+                    // An empty filter name is no source: applyFilters('') resolves nothing.
+                    $hasFilter = $control->optionsFilter !== null && $control->optionsFilter !== '';
+                    if (($control->options !== null) === $hasFilter) {
                         $problems[] = "{$context}: a select needs exactly one of `options` or `optionsFilter`. Dropping it.";
                         continue;
                     }
 
                     if ($control->options !== null && !$this->isOptionList($control->options)) {
-                        $problems[] = "{$context}: `options` must be a list of ['label' => …, 'value' => …] pairs. Dropping it.";
+                        $problems[] = "{$context}: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.";
                         continue;
                     }
                 }
@@ -371,15 +373,30 @@ class AnimationFrameworkModule extends Module
         return $valid;
     }
 
+    /**
+     * A non-empty list of pairs, each with a non-empty string label and a scalar value. The value
+     * is sent to the editor as a string (AnimationControl::optionValues()), so a null would pose as
+     * the empty option and an array would arrive as "Array".
+     */
     private function isOptionList(array $options): bool
     {
+        if ($options === [] || !array_is_list($options)) {
+            return false;
+        }
+
         foreach ($options as $option) {
-            if (!is_array($option) || !array_key_exists('label', $option) || !array_key_exists('value', $option)) {
+            if (!is_array($option)) {
+                return false;
+            }
+
+            $label = $option['label'] ?? null;
+            $value = $option['value'] ?? null;
+            if (!is_string($label) || $label === '' || !(is_string($value) || is_int($value) || is_float($value))) {
                 return false;
             }
         }
 
-        return array_is_list($options);
+        return true;
     }
 
     /**
