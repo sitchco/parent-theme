@@ -362,7 +362,7 @@ class AnimationFrameworkModule extends Module
                     }
 
                     if ($control->options !== null && !$this->isOptionList($control->options)) {
-                        $problems[] = "{$context}: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.";
+                        $problems[] = "{$context}: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.";
                         continue;
                     }
 
@@ -428,15 +428,21 @@ class AnimationFrameworkModule extends Module
     }
 
     /**
-     * A non-empty list of pairs, each with a non-empty string label and a scalar value. The value
-     * is sent to the editor as a string (AnimationControl::optionValues()), so a null would pose as
-     * the empty option and an array would arrive as "Array".
+     * A non-empty list of pairs, each with a non-empty string label and a string or finite number
+     * value, no two values alike once cast to strings. The value is sent to the editor as a string
+     * (AnimationControl::optionValues()), so a null would pose as the empty option, an array would
+     * arrive as "Array", and `30` beside `'30'` would be two options the select cannot tell apart.
+     *
+     * Other keys are sent as declared, so each must hold something json_encode() can write: a
+     * string, a bool or a finite number. An INF anywhere in the payload empties it entirely.
      */
     private function isOptionList(array $options): bool
     {
         if ($options === [] || !array_is_list($options)) {
             return false;
         }
+
+        $seen = [];
 
         foreach ($options as $option) {
             if (!is_array($option)) {
@@ -445,9 +451,20 @@ class AnimationFrameworkModule extends Module
 
             $label = $option['label'] ?? null;
             $value = $option['value'] ?? null;
-            if (!is_string($label) || $label === '' || !(is_string($value) || is_int($value) || is_float($value))) {
+            if (!is_string($label) || $label === '' || !(is_string($value) || $this->isFiniteNumber($value))) {
                 return false;
             }
+
+            foreach (array_diff_key($option, ['label' => true, 'value' => true]) as $extra) {
+                if (!is_string($extra) && !is_bool($extra) && !$this->isFiniteNumber($extra)) {
+                    return false;
+                }
+            }
+
+            if (isset($seen[(string) $value])) {
+                return false;
+            }
+            $seen[(string) $value] = true;
         }
 
         return true;

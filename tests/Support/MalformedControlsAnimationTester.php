@@ -44,6 +44,15 @@ class MalformedControlsAnimationTester extends AnimationModule
             AnimationControl::select('arrayValue', 'Array value', ['options' => [['label' => 'A', 'value' => ['a']]]]),
             AnimationControl::select('numberLabel', 'Number label', ['options' => [['label' => 1, 'value' => 'a']]]),
             AnimationControl::select('emptyLabel', 'Empty label', ['options' => [['label' => '', 'value' => 'a']]]),
+            AnimationControl::select('extraInfinite', 'Extra infinite', [
+                'options' => [['label' => 'A', 'value' => 'a', 'meta' => INF]],
+            ]),
+            AnimationControl::select('infiniteValue', 'Infinite value', [
+                'options' => [['label' => 'A', 'value' => INF]],
+            ]),
+            AnimationControl::select('castDuplicate', 'Cast duplicate', [
+                'options' => [['label' => '30', 'value' => 30], ['label' => 'Thirty', 'value' => '30']],
+            ]),
             AnimationControl::select('unofferedDefault', 'Unoffered default', [
                 'options' => [['label' => 'Red', 'value' => 'red']],
             ]),
