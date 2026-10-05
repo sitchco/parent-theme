@@ -310,6 +310,10 @@ class AnimationFrameworkModule extends Module
      * visited in registration order and controls in declaration order, so which one is kept is
      * stable across requests.
      *
+     * Strictly, the first *valid* definition wins. A definition dropped for another problem is
+     * reported for that problem and never claims the name, so a later valid one of the same name
+     * is kept rather than discarded with it: there is no reason to lose a control that works.
+     *
      * @return array<string, array<string, AnimationControl>>
      */
     private function validateControls(): array
@@ -336,7 +340,7 @@ class AnimationFrameworkModule extends Module
                 }
 
                 if (isset($valid[$key][$control->name])) {
-                    $problems[] = "{$context}: is declared twice. Keeping the first.";
+                    $problems[] = "{$context}: is declared twice. Keeping the first valid one.";
                     continue;
                 }
 

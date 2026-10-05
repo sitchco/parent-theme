@@ -36,6 +36,7 @@ class SecondAnimationTester extends AnimationModule
                 'default' => 'up',
             ]),
             AnimationControl::select('tint', 'Tint', ['optionsFilter' => 'test.tint-options']),
+            AnimationControl::text('caption', 'Caption', ['default' => 'hello']),
         ];
     }
 }

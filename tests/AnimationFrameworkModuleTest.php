@@ -572,6 +572,8 @@ class AnimationFrameworkModuleTest extends TestCase
             ['color' => 'purple', 'opacity' => '30'],
             $blocks['test/clean-overrides']['animation-tester']['defaults'],
         );
+        // A text default takes its control's type: an authored 42 arrives as '42'.
+        $this->assertSame(['caption' => '42'], $blocks['test/clean-overrides']['second-tester']['defaults']);
         $this->assertNull($entry);
     }
 
@@ -818,7 +820,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $controls = $this->frameworkFor(AnimationTester::class, SecondAnimationTester::class)->getControls();
 
         $this->assertSame(['color', 'opacity', 'speed', 'reverse'], array_keys($controls['animation-tester']));
-        $this->assertSame(['speed', 'direction', 'tint'], array_keys($controls['second-tester']));
+        $this->assertSame(['speed', 'direction', 'tint', 'caption'], array_keys($controls['second-tester']));
     }
 
     public function testTheEditorReceivesEachControlWithItsAttribute(): void
@@ -840,6 +842,16 @@ class AnimationFrameworkModuleTest extends TestCase
         );
         $this->assertSame('test.tint-options', $serialized['second-tester'][2]['optionsFilter']);
         $this->assertArrayNotHasKey('options', $serialized['second-tester'][2]);
+        $this->assertSame(
+            [
+                'type' => 'text',
+                'name' => 'caption',
+                'label' => 'Caption',
+                'default' => 'hello',
+                'attribute' => 'secondTesterAnimationCaption',
+            ],
+            $serialized['second-tester'][3],
+        );
     }
 
     public function testTheEditorReceivesStaticOptionValuesAsStrings(): void
@@ -866,9 +878,11 @@ class AnimationFrameworkModuleTest extends TestCase
 
         // SecondAnimationTester registered first, so it keeps secondTesterAnimationSpeed; of the two `ok`
         // toggles, the first declared is kept.
-        $this->assertSame(['speed', 'direction', 'tint'], array_keys($controls['second-tester']));
-        $this->assertSame(['defaultTypo', 'ok'], array_keys($controls['secondTester']));
+        $this->assertSame(['speed', 'direction', 'tint', 'caption'], array_keys($controls['second-tester']));
+        $this->assertSame(['defaultTypo', 'twice', 'ok'], array_keys($controls['secondTester']));
         $this->assertSame('Kept', $controls['secondTester']['ok']->label);
+        // The first valid definition wins: a malformed first one never claims the name.
+        $this->assertSame('Valid second', $controls['secondTester']['twice']->label);
         // A misspelled option is reported, but the control it was meant for is kept without it.
         $this->assertFalse($controls['secondTester']['defaultTypo']->default);
 
@@ -899,7 +913,9 @@ class AnimationFrameworkModuleTest extends TestCase
                 'secondTester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 'secondTester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',
                 'secondTester / speed: its attribute "secondTesterAnimationSpeed" is already used by second-tester / speed. Dropping it.',
-                'secondTester / ok: is declared twice. Keeping the first.',
+                // Only the malformed first `twice` is reported: the valid second is not a duplicate of it.
+                'secondTester / twice: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                'secondTester / ok: is declared twice. Keeping the first valid one.',
             ],
             $entry['value']['problems'],
         );

@@ -20,6 +20,7 @@ return [
                 'allowed' => ['color' => ['purple', 'green']],
                 'defaults' => ['color' => 'purple', 'opacity' => '30'],
             ],
+            'second-tester' => ['defaults' => ['caption' => 42]],
         ],
     ],
 ];

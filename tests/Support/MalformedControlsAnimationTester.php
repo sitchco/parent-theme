@@ -63,6 +63,9 @@ class MalformedControlsAnimationTester extends AnimationModule
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
             AnimationControl::number('speed', 'Collides'),
+            // Dropped for its missing source; the toggle of the same name after it is kept.
+            AnimationControl::select('twice', 'Malformed first'),
+            AnimationControl::toggle('twice', 'Valid second'),
             AnimationControl::toggle('ok', 'Kept'),
             AnimationControl::toggle('ok', 'Declared twice'),
         ];
