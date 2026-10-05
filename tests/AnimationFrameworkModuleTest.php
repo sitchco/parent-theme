@@ -578,6 +578,17 @@ class AnimationFrameworkModuleTest extends TestCase
             ],
             json_decode($matches[1], true),
         );
+
+        /* Decoding to arrays loses list-versus-object and string-versus-number, which is exactly what
+           the editor reads, so the encoded shape is pinned too: an unrestricted entry is a JSON list
+           (asMap() reads it as an empty map), a restricted one maps each option to a list of strings,
+           and every option value is a string, the form `allowed` and stored values are compared in. */
+        $json = $matches[1];
+        $this->assertStringContainsString('"allowed":[],"defaults":[]', $json);
+        $this->assertStringContainsString('"allowed":{"color":["purple","green"]}', $json);
+        $this->assertStringContainsString('"defaults":{"color":"purple","opacity":"30"}', $json);
+        $this->assertStringContainsString('"value":"30"', $json);
+        $this->assertSame(0, preg_match('/"value":[^"]/', $json));
     }
 
     public function testNoConfiguredBlockMeansNoEditorScriptAtAll(): void

@@ -20,17 +20,29 @@ import { buildAnimationFields } from './animation-fields';
  *     {
  *         blocks: {
  *             'core/group': {
- *                 parallax: { key: 'parallax', label: 'Parallax', allowed: {}, defaults: { speed: 25 } },
+ *                 parallax: { key: 'parallax', label: 'Parallax', allowed: [], defaults: { speed: 25 } },
+ *                 letter: { key: 'letter', label: 'Letter', allowed: { opacity: ['30', '50'] }, defaults: { opacity: '30' } },
  *             },
  *         },
  *         controls: {
  *             parallax: [{ type: 'number', name: 'speed', attribute: 'parallaxAnimationSpeed', label: 'Speed', default: 50 }],
+ *             letter: [{
+ *                 type: 'select', name: 'opacity', attribute: 'letterAnimationOpacity', label: 'Opacity', default: '',
+ *                 options: [{ label: 'Default', value: '' }, { label: '30%', value: '30' }, { label: '50%', value: '50' }],
+ *             }],
  *         },
  *     }
  *
  * `blocks` decides which animations each block offers, and narrows their controls per block
  * through `allowed` and `defaults`. `controls` holds each animation's own control definitions,
  * which buildAnimationFields() turns into the fields below the select.
+ *
+ * What PHP's encoding means for the reader:
+ * - An empty `allowed` or `defaults` arrives as a list, `[]`, not `{}`. asMap() reads it as an
+ *   empty map.
+ * - `allowed[option]` is always a list of strings, and a select's option values and defaults are
+ *   strings too, even when declared as numbers. That is the form the editor compares with `===`.
+ * - Unset settings (`help`, `min`, `max`, …) are left out rather than sent as null.
  *
  * @param {Object}   api                 - window.sitchco.extendBlock
  * @param {Object}   blob                - The resolved map from PHP
