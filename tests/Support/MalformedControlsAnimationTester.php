@@ -31,6 +31,7 @@ class MalformedControlsAnimationTester extends AnimationModule
         return [
             'not a control',
             AnimationControl::text('Bad-Name', 'Bad name'),
+            AnimationControl::text("trailingNewline\n", 'Trailing newline'),
             AnimationControl::select('noOptions', 'No options'),
             AnimationControl::select('bothOptions', 'Both', [
                 'options' => [['label' => 'A', 'value' => 'a']],

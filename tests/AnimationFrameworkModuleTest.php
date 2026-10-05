@@ -838,6 +838,7 @@ class AnimationFrameworkModuleTest extends TestCase
             [
                 'secondTester / #0: is not an AnimationControl. Dropping it.',
                 'secondTester / Bad-Name: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.',
+                "secondTester / trailingNewline\n: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.",
                 'secondTester / noOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 'secondTester / bothOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 "secondTester / looseOptions: `options` must be a list of ['label' => …, 'value' => …] pairs. Dropping it.",

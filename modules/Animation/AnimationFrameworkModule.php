@@ -325,8 +325,9 @@ class AnimationFrameworkModule extends Module
                 $context = "{$key} / {$control->name}";
 
                 /* The name becomes the tail of a block attribute name and a key in config, so it is
-                 held to something that is safe as both. */
-                if (!preg_match('/^[a-z][a-zA-Z0-9]*$/', $control->name)) {
+                 held to something that is safe as both. `D`, because a bare `$` also matches before a
+                 trailing newline. */
+                if (!preg_match('/^[a-z][a-zA-Z0-9]*$/D', $control->name)) {
                     $problems[] = "{$context}: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.";
                     continue;
                 }
