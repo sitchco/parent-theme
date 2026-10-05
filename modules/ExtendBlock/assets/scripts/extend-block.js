@@ -31,6 +31,7 @@ import { responsive } from './includes/responsive.jsx';
 import { classNames, generateFieldClasses, mergeClassNames } from './includes/utils/class-names';
 import { generateFieldAttributes, mergeAttributes } from './includes/utils/attributes';
 import { resolveOptions } from './includes/utils/options';
+import { hasContextualDefault, readFieldValue } from './includes/utils/field-value';
 import { useKadenceActiveTab, isKadenceBlock } from './includes/hooks/use-kadence-active-tab';
 
 window.sitchco = window.sitchco || {};
@@ -48,6 +49,8 @@ window.sitchco.extendBlock = {
     mergeClassNames,
     mergeAttributes,
     resolveOptions,
+    readFieldValue,
+    hasContextualDefault,
     useKadenceActiveTab,
     isKadenceBlock,
 };

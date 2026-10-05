@@ -68,7 +68,7 @@ export const fields = {
      *   `(deviceType, context)` instead; see resolveResponsiveOptions in utils/options.js.
      *   A saved value no option offers is shown as a disabled "(unavailable)" entry, so it stays
      *   visible and choosing another option clears it
-     * @param {string} [config.default=''] - Default value
+     * @param {string|Function} [config.default=''] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -93,7 +93,7 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {boolean} [config.default=false] - Default value
+     * @param {boolean|Function} [config.default=false] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -112,7 +112,7 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {string} [config.default=''] - Default value
+     * @param {string|Function} [config.default=''] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -131,7 +131,7 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {number} [config.default=0] - Default value
+     * @param {number|Function} [config.default=0] - Default value, or a function of the output context
      * @param {number} [config.min] - Minimum value
      * @param {number} [config.max] - Maximum value
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null

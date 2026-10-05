@@ -12,15 +12,24 @@
  *     fields.select({ name: 'fadeUpAnimationSpeed', default: ({ blockName }) => speedFor(blockName), … })
  *
  * The attribute is then registered with no default at all, so it stays `undefined` until an author
- * picks something, and every read — the inspector's value, the class and attribute channels, the
- * dynamic-block class sync — goes through readFieldValue() below, which supplies the default in its
- * place. The function gets the output context, `{ blockName }`, and nothing richer: a default
- * decides what the block emits, so it must resolve the same way in save as in the editor.
+ * picks something. The framework's own reads of the field's value — the inspector's value, the
+ * value passed to the field's `className` and `attributes` callbacks, the dynamic-block class
+ * sync — go through readFieldValue() below, which supplies the default in its place. The function
+ * gets the output context, `{ blockName }`, and nothing richer: a default decides what the block
+ * emits, so it must resolve the same way in save as in the editor.
+ *
+ * Callbacks handed the whole attributes object see it raw, function-default fields `undefined`
+ * until stored: a field's `condition`, the `classGenerator` and `attributeGenerator` overrides,
+ * and a custom `render`'s `attributes` prop. One that needs a field's effective value can call
+ * readFieldValue() itself; it is on `window.sitchco.extendBlock`.
  *
  * What that means for content, stated because it is easy to miss:
- * - On a dynamic block, a field nobody has touched stores nothing, so it follows the default
- *   wherever it currently points. Changing a theme-level default re-renders every such block with
- *   the new value.
+ * - On a dynamic block, a field nobody has touched stores nothing, so the inspector follows the
+ *   default wherever it currently points. Output does not, for a field that emits a class: the
+ *   front end reads classes from `extendBlockClasses`, which the editor writes as soon as the
+ *   class string changes, the first time the block is opened included. So the class follows a
+ *   changed default only once the post is opened and saved again, and until then keeps the class
+ *   it was saved with.
  * - On a static block, the editor stores the default as soon as the field applies (no condition,
  *   or its condition passes); see contextualDefaultsToStore() below. A static block's saved markup
  *   is checked against what save() produces from its stored attributes on every editor load, so
