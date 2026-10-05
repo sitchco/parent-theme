@@ -36,6 +36,35 @@ export function restrictOptions(options, permitted) {
 }
 
 /**
+ * The label every animation select gives its empty option, whatever the options called it.
+ *
+ * `''` means "no override": the block emits nothing for the control, and the animation's own
+ * stylesheet default applies. On a block whose config sets a default, that is not the config
+ * default — choosing it stores `''`, and the block stops following the config default. A shared
+ * palette's "Default" would read as the block's default, so the framework, which owns what `''`
+ * means here, names it. The shared `theme.color-options` palette is left as it is for every
+ * other control that uses it.
+ */
+export const EMPTY_OPTION_LABEL = 'Animation default';
+
+/**
+ * Options with the empty one relabelled; see EMPTY_OPTION_LABEL.
+ *
+ * @param {Array<{label: string, value: string}>} options
+ * @returns {Array<{label: string, value: string}>}
+ */
+export function labelEmptyOption(options) {
+    return options.map((option) =>
+        option.value === ''
+            ? {
+                  ...option,
+                  label: EMPTY_OPTION_LABEL,
+              }
+            : option
+    );
+}
+
+/**
  * A map from the blob, or an empty one. PHP serializes an empty map as a JSON list, and a list
  * answers to `length` — so `[]` is read as `{}` rather than probed.
  *
@@ -83,9 +112,11 @@ export function buildAnimationFields(fields, { blocks = {}, controls = {} }, app
                 /* Resolved per render: the same registration serves every block, and a hook's
                    options exist only once editorInit has run. */
                 field.options = ({ blockName } = {}) =>
-                    restrictOptions(
-                        control.options ?? applyFilters(control.optionsFilter, []),
-                        asMap(entryFor(blockName)?.allowed)[control.name]
+                    labelEmptyOption(
+                        restrictOptions(
+                            control.options ?? applyFilters(control.optionsFilter, []),
+                            asMap(entryFor(blockName)?.allowed)[control.name]
+                        )
                     );
             }
             return fields[control.type](field);

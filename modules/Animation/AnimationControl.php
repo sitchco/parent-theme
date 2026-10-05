@@ -35,7 +35,9 @@ namespace Sitchco\Parent\Modules\Animation;
  *   so `allowed` is applied but not checked.
  *
  * A select's empty value, `''`, means "no override": the animation's own stylesheet default.
- * Config `allowed` never removes it.
+ * Config `allowed` never removes it. It is not the block's config default: on a block whose config
+ * sets one, choosing `''` stores `''`, so the editor labels it "Animation default" whatever the
+ * options call it (EMPTY_OPTION_LABEL in editor-ui/animation-fields.js).
  *
  * Validation is the coordinator's, not this class's: a malformed control is logged and dropped
  * there, alongside every other definition problem, rather than thrown from a module's controls().

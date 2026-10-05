@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     buildAnimationFields,
+    EMPTY_OPTION_LABEL,
     restrictOptions,
 } from '../../modules/Animation/assets/scripts/editor-ui/animation-fields';
 import { resolveOptions } from '../../modules/ExtendBlock/assets/scripts/includes/utils/options';
@@ -192,9 +193,20 @@ describe('buildAnimationFields', () => {
         it('offers a static select in full where nothing restricts it', () => {
             const { letterAnimationOpacity } = build();
 
-            expect(resolveOptions(letterAnimationOpacity, { blockName: 'kadence/rowlayout' })).toEqual(
-                CONTROLS.letter[1].options
-            );
+            expect(
+                resolveOptions(letterAnimationOpacity, { blockName: 'kadence/rowlayout' }).map((o) => o.value)
+            ).toEqual(CONTROLS.letter[1].options.map((o) => o.value));
+        });
+
+        it('names the empty option for what it means, on hook and static selects alike', () => {
+            const { letterAnimationColor, letterAnimationOpacity } = build();
+            const emptyLabel = (field) =>
+                resolveOptions(field, { blockName: 'core/group' }).find((o) => o.value === '').label;
+
+            expect(emptyLabel(letterAnimationColor)).toBe(EMPTY_OPTION_LABEL);
+            expect(emptyLabel(letterAnimationOpacity)).toBe(EMPTY_OPTION_LABEL);
+            // The shared palette itself is untouched.
+            expect(PALETTE[0].label).toBe('Default');
         });
 
         it('gives non-select controls no options', () => {
