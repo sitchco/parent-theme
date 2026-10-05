@@ -11,6 +11,7 @@ use Sitchco\Parent\Tests\Support\AnimationTester;
 use Sitchco\Parent\Tests\Support\ConfigRegistryTester;
 use Sitchco\Parent\Tests\Support\DuplicateAnimationTester;
 use Sitchco\Parent\Tests\Support\EmptyKeyAnimationTester;
+use Sitchco\Parent\Tests\Support\MalformedControlsAnimationTester;
 use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Parent\Tests\Support\SecondAnimationTester;
 use Sitchco\Tests\TestCase;
@@ -318,12 +319,14 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['color' => ['purple', 'green', 'red']], $entry['allowed']);
     }
 
-    public function testDefaultsKeepTheTypesTheyWereAuthoredWith(): void
+    public function testDefaultsTakeTheirControlsTypes(): void
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent'), 'test/overrides');
 
-        // Note `reverse`: a literal false default, not the removal idiom, which applies one level up.
-        $this->assertSame(['opacity' => '30', 'speed' => 25, 'reverse' => false], $entry['defaults']);
+        /* `speed` is a select, whose values are strings the editor matches strictly, so the authored
+           25 arrives as '25'. Note `reverse`: a literal false default on a toggle, not the removal
+           idiom, which applies one level up. */
+        $this->assertSame(['opacity' => '30', 'speed' => '25', 'reverse' => false], $entry['defaults']);
     }
 
     public function testNumericAllowedValuesSurviveNormalizationAsStrings(): void
@@ -391,6 +394,32 @@ class AnimationFrameworkModuleTest extends TestCase
         );
     }
 
+    public function testResolutionBeforeInitReportsBrokenControlsOnce(): void
+    {
+        /* Before init() nothing is memoized, and the controls fixture has many override entries, each
+           of which asks for its animation's controls. Logger keeps only its last entry, so the
+           error_log output is what gets counted. */
+        $framework = new AnimationFrameworkModule(
+            $this->registryFor(
+                AnimationTester::class,
+                SecondAnimationTester::class,
+                MalformedControlsAnimationTester::class,
+            ),
+            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/controls'),
+        );
+        $log = tempnam(sys_get_temp_dir(), 'animation-log');
+        $previous = ini_set('error_log', $log);
+
+        try {
+            $framework->getBlockAnimations();
+        } finally {
+            ini_set('error_log', $previous);
+        }
+
+        $this->assertSame(1, substr_count(file_get_contents($log), 'Animation control problems.'));
+        unlink($log);
+    }
+
     public function testChildThemeAddsABlockTheParentNeverMentioned(): void
     {
         $entries = $this->frameworkForFixtures('parent', 'child')->getAnimationsForBlock('test/child-adds-block');
@@ -425,7 +454,7 @@ class AnimationFrameworkModuleTest extends TestCase
     {
         $entry = $this->entryFor($this->frameworkForFixtures('parent', 'child'), 'test/child-overrides-default');
 
-        $this->assertSame(['opacity' => '50', 'speed' => 25], $entry['defaults']);
+        $this->assertSame(['opacity' => '50', 'speed' => '25'], $entry['defaults']);
     }
 
     /**
@@ -523,7 +552,7 @@ class AnimationFrameworkModuleTest extends TestCase
 
     public function testAValidConfigResolvesToAMapAndSaysNothing(): void
     {
-        /* The counterweight to every other fixture case. Seven of the parent fixture's entries are
+        /* The counterweight to every other fixture case. Eight of the parent fixture's entries are
          malformed and every test reading it resolves with the aggregated warning, so without a
          layer where nothing is wrong, nothing would notice the resolver starting to flag valid
          entries. */
@@ -543,6 +572,8 @@ class AnimationFrameworkModuleTest extends TestCase
             ['color' => 'purple', 'opacity' => '30'],
             $blocks['test/clean-overrides']['animation-tester']['defaults'],
         );
+        // A text default takes its control's type: an authored 42 arrives as '42'.
+        $this->assertSame(['caption' => '42'], $blocks['test/clean-overrides']['second-tester']['defaults']);
         $this->assertNull($entry);
     }
 
@@ -568,7 +599,24 @@ class AnimationFrameworkModuleTest extends TestCase
         $inline = implode('', array_filter((array) ($registered->extra['before'] ?? []), 'is_string'));
         $this->assertStringContainsString('window.sitchco.animations', $inline);
         $this->assertSame(1, preg_match('/window\\.sitchco\\.animations = (.+);$/', $inline, $matches));
-        $this->assertSame($framework->getBlockAnimations(), json_decode($matches[1], true));
+        $this->assertSame(
+            [
+                'blocks' => $framework->getBlockAnimations(),
+                'controls' => $framework->getAnimationControls(),
+            ],
+            json_decode($matches[1], true),
+        );
+
+        /* Decoding to arrays loses list-versus-object and string-versus-number, which is exactly what
+           the editor reads, so the encoded shape is pinned too: an unrestricted entry is a JSON list
+           (asMap() reads it as an empty map), a restricted one maps each option to a list of strings,
+           and every option value is a string, the form `allowed` and stored values are compared in. */
+        $json = $matches[1];
+        $this->assertStringContainsString('"allowed":[],"defaults":[]', $json);
+        $this->assertStringContainsString('"allowed":{"color":["purple","green"]}', $json);
+        $this->assertStringContainsString('"defaults":{"color":"purple","opacity":"30"}', $json);
+        $this->assertStringContainsString('"value":"30"', $json);
+        $this->assertSame(0, preg_match('/"value":[^"]/', $json));
     }
 
     public function testNoConfiguredBlockMeansNoEditorScriptAtAll(): void
@@ -616,20 +664,20 @@ class AnimationFrameworkModuleTest extends TestCase
 
         /* The whole chain counted, not just the one problem filtered for above: every other entry
            the child adds is a removal idiom or an additive merge, and none of them may start
-           warning. The parent's seven plus this one. */
-        $this->assertCount(8, $entry['value']['problems']);
+           warning. The parent's eight plus this one. */
+        $this->assertCount(9, $entry['value']['problems']);
     }
 
     public function testAPermittedDefaultOfAnotherTypeIsNotFlagged(): void
     {
-        // `allowed` values are strings by the time they arrive; a default keeps the type it was
-        // authored with, so an int 25 must still match the permitted '25'.
+        // `allowed` values are strings by the time they arrive, and so is a select's default once
+        // cast, so an authored int 25 must still match the permitted '25'.
         $framework = $this->frameworkForFixtures('parent');
 
         $entry = $this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations());
 
         $this->assertStringNotContainsString('test/typed-default', $entry['message']);
-        $this->assertSame(['speed' => 25], $this->entryFor($framework, 'test/typed-default')['defaults']);
+        $this->assertSame(['speed' => '25'], $this->entryFor($framework, 'test/typed-default')['defaults']);
     }
 
     public function testAChildStatingAnAllowedListWidensTheInheritedOneRatherThanReplacingIt(): void
@@ -748,6 +796,7 @@ class AnimationFrameworkModuleTest extends TestCase
                 'test/stray-key',
                 'test/mangled-default',
                 'test/allowed-empty',
+                'test/bool-default',
             ]
             as $offender
         ) {
@@ -756,6 +805,246 @@ class AnimationFrameworkModuleTest extends TestCase
 
         /* Counted as well as named: substrings alone would not notice the resolver growing a
          false positive on one of the fixture's many valid entries. */
-        $this->assertCount(7, $entry['value']['problems']);
+        $this->assertCount(8, $entry['value']['problems']);
+    }
+
+    public function testAttributeNamesJoinTheCamelCaseKeyAnimationAndTheControlName(): void
+    {
+        $this->assertSame('letterAnimationColor', AnimationFrameworkModule::attributeName('letter', 'color'));
+        $this->assertSame('fadeUpAnimationSpeed', AnimationFrameworkModule::attributeName('fade-up', 'speed'));
+        $this->assertSame('fadeUpAnimationStartAt', AnimationFrameworkModule::attributeName('fade-up', 'startAt'));
+    }
+
+    public function testControlsAreKeyedByAnimationAndName(): void
+    {
+        $controls = $this->frameworkFor(AnimationTester::class, SecondAnimationTester::class)->getControls();
+
+        $this->assertSame(['color', 'opacity', 'speed', 'reverse'], array_keys($controls['animation-tester']));
+        $this->assertSame(['speed', 'direction', 'tint', 'caption'], array_keys($controls['second-tester']));
+    }
+
+    public function testTheEditorReceivesEachControlWithItsAttribute(): void
+    {
+        $serialized = $this->frameworkFor(SecondAnimationTester::class)->getAnimationControls();
+
+        // Unset settings are left out rather than sent as null.
+        $this->assertSame(
+            [
+                'type' => 'number',
+                'name' => 'speed',
+                'label' => 'Speed',
+                'default' => 50,
+                'min' => 0,
+                'max' => 100,
+                'attribute' => 'secondTesterAnimationSpeed',
+            ],
+            $serialized['second-tester'][0],
+        );
+        $this->assertSame('test.tint-options', $serialized['second-tester'][2]['optionsFilter']);
+        $this->assertArrayNotHasKey('options', $serialized['second-tester'][2]);
+        $this->assertSame(
+            [
+                'type' => 'text',
+                'name' => 'caption',
+                'label' => 'Caption',
+                'default' => 'hello',
+                'attribute' => 'secondTesterAnimationCaption',
+            ],
+            $serialized['second-tester'][3],
+        );
+    }
+
+    public function testTheEditorReceivesStaticOptionValuesAsStrings(): void
+    {
+        $serialized = $this->frameworkFor(AnimationTester::class)->getAnimationControls();
+
+        // Declared as integers; the editor matches values with ===, against the strings config is checked as.
+        $this->assertSame(['', '10', '30', '50'], array_column($serialized['animation-tester'][1]['options'], 'value'));
+    }
+
+    public function testAnAnimationWithoutControlsSendsNone(): void
+    {
+        $this->assertSame([], $this->frameworkFor(DuplicateAnimationTester::class)->getAnimationControls());
+    }
+
+    public function testEveryBrokenControlIsDroppedInOneErrorAndTheFirstDefinitionWins(): void
+    {
+        $framework = $this->frameworkFor(SecondAnimationTester::class, MalformedControlsAnimationTester::class);
+        $controls = null;
+
+        $entry = $this->captureLogs(function () use ($framework, &$controls) {
+            $controls = $framework->getControls();
+        });
+
+        // SecondAnimationTester registered first, so it keeps secondTesterAnimationSpeed; of the two `ok`
+        // toggles, the first declared is kept.
+        $this->assertSame(['speed', 'direction', 'tint', 'caption'], array_keys($controls['second-tester']));
+        $this->assertSame(['defaultTypo', 'twice', 'ok'], array_keys($controls['secondTester']));
+        $this->assertSame('Kept', $controls['secondTester']['ok']->label);
+        // The first valid definition wins: a malformed first one never claims the name.
+        $this->assertSame('Valid second', $controls['secondTester']['twice']->label);
+        // A misspelled option is reported, but the control it was meant for is kept without it.
+        $this->assertFalse($controls['secondTester']['defaultTypo']->default);
+
+        $this->assertSame(LogLevel::ERROR, $entry['level']);
+        $this->assertSame(
+            [
+                'secondTester / #0: is not an AnimationControl. Dropping it.',
+                'secondTester / Bad-Name: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.',
+                "secondTester / trailingNewline\n: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.",
+                'secondTester / noOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                'secondTester / bothOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                "secondTester / looseOptions: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                'secondTester / emptyFilter: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                "secondTester / emptyOptions: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / nullValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / arrayValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / numberLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / emptyLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / extraInfinite: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / infiniteValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                "secondTester / castDuplicate: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
+                'secondTester / unofferedDefault: its default "" is not one of its options. Dropping it.',
+                'secondTester / outOfRange: its default 5 is outside its range (at most 3). Dropping it.',
+                'secondTester / infinite: its default must be a finite number. Dropping it.',
+                'secondTester / notANumber: its default must be a finite number. Dropping it.',
+                'secondTester / nanMax: its min and max must be finite numbers. Dropping it.',
+                'secondTester / filterTypo: does not know the option `optionFilter`. Ignoring it.',
+                'secondTester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                'secondTester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',
+                'secondTester / speed: its attribute "secondTesterAnimationSpeed" is already used by second-tester / speed. Dropping it.',
+                // Only the malformed first `twice` is reported: the valid second is not a duplicate of it.
+                'secondTester / twice: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                'secondTester / ok: is declared twice. Keeping the first valid one.',
+            ],
+            $entry['value']['problems'],
+        );
+    }
+
+    public function testControlValidationIsMemoized(): void
+    {
+        $framework = $this->frameworkFor(MalformedControlsAnimationTester::class);
+
+        $this->assertNotNull($this->captureLogs(fn() => $framework->getControls()));
+        $this->assertNull($this->captureLogs(fn() => $framework->getControls()));
+    }
+
+    public function testEveryControlMismatchIsFlaggedWithItsFallback(): void
+    {
+        $framework = $this->frameworkForFixtures('controls');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+        $problems = $entry['value']['problems'];
+
+        $this->assertContains(
+            'test/unknown-control / animation-tester / allowed / glyph: names no control this animation has. Ignoring it.',
+            $problems,
+        );
+        $this->assertContains(
+            'test/unknown-control / animation-tester / defaults / glyph: names no control this animation has. Ignoring it.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/unknown-control']['animation-tester']['allowed']);
+        $this->assertSame([], $blocks['test/unknown-control']['animation-tester']['defaults']);
+
+        $this->assertContains(
+            "test/value-not-offered / animation-tester / allowed / color / teal: is not one of the control's options. Dropping the value.",
+            $problems,
+        );
+        $this->assertSame(['color' => ['purple']], $blocks['test/value-not-offered']['animation-tester']['allowed']);
+
+        $this->assertContains(
+            "test/scalar-not-offered / animation-tester / allowed / color / teal: is not one of the control's options. Dropping the value.",
+            $problems,
+        );
+        $this->assertContains(
+            'test/scalar-not-offered / animation-tester / allowed / color: permits no values, so its control offers only the animation default.',
+            $problems,
+        );
+        $this->assertSame(['color' => []], $blocks['test/scalar-not-offered']['animation-tester']['allowed']);
+
+        $this->assertContains(
+            'test/allowed-empty-string / animation-tester / allowed / color: permits no values, so its control offers only the animation default.',
+            $problems,
+        );
+        $this->assertSame(['color' => []], $blocks['test/allowed-empty-string']['animation-tester']['allowed']);
+
+        $this->assertContains(
+            'test/default-wrong-type / animation-tester / defaults / reverse: has a string default, which a toggle control cannot take. Dropping it.',
+            $problems,
+        );
+        $this->assertContains(
+            'test/default-wrong-type / animation-tester / defaults / color: has a bool default, which a select control cannot take. Dropping it.',
+            $problems,
+        );
+        $this->assertContains(
+            'test/default-wrong-type / second-tester / defaults / speed: has a string default, which a number control cannot take. Dropping it.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/default-wrong-type']['animation-tester']['defaults']);
+
+        $this->assertContains(
+            'test/own-default-excluded / second-tester / allowed / direction: excludes the control\'s own default "up" (permits down). The control will start on a value it does not offer — permit it, or set a default here.',
+            $problems,
+        );
+
+        $this->assertContains(
+            'test/default-not-offered / animation-tester / defaults / color: defaults to "teal", which is not one of the control\'s options. The control will not offer it.',
+            $problems,
+        );
+        $this->assertContains(
+            'test/default-not-offered-restricted / animation-tester / defaults / color: defaults to "teal", which is not one of the control\'s options. The control will not offer it.',
+            $problems,
+        );
+        $this->assertSame(['color' => 'teal'], $blocks['test/default-not-offered']['animation-tester']['defaults']);
+
+        $this->assertContains(
+            'test/default-out-of-range / second-tester / defaults / speed: defaults to 150, outside the control\'s range (0 to 100). Keeping it.',
+            $problems,
+        );
+        $this->assertSame(['speed' => 150], $blocks['test/default-out-of-range']['second-tester']['defaults']);
+
+        $this->assertContains(
+            'test/default-infinite / second-tester / defaults / speed: defaults to 1e999, which is not a finite number. Dropping it.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/default-infinite']['second-tester']['defaults']);
+        $this->assertNotFalse(wp_json_encode($blocks));
+
+        // Counted as well as named, so the two valid entries are proven silent and the restricted
+        // teal is reported once.
+        $this->assertCount(14, $problems);
+    }
+
+    public function testAnOptionsFilterSelectTakesItsPermittedValuesAsWritten(): void
+    {
+        $entry = $this->entryFor($this->frameworkForFixtures('controls'), 'test/filtered-options', 'second-tester');
+
+        $this->assertSame(['tint' => ['anything']], $entry['allowed']);
+    }
+
+    public function testANumericStringDefaultIsCastForANumberControl(): void
+    {
+        $entry = $this->entryFor($this->frameworkForFixtures('controls'), 'test/number-default-cast', 'second-tester');
+
+        $this->assertSame(['speed' => 25], $entry['defaults']);
+    }
+
+    public function testAllowedOnAToggleIsIgnoredAndItsDefaultSurvives(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, fn() => $framework->getBlockAnimations());
+
+        $this->assertContains(
+            'test/bool-default / animation-tester / allowed / reverse: only applies to a select, and this is a toggle control. Ignoring it.',
+            $entry['value']['problems'],
+        );
+        $bool = $this->entryFor($framework, 'test/bool-default');
+        $this->assertSame([], $bool['allowed']);
+        $this->assertSame(['reverse' => false], $bool['defaults']);
     }
 }

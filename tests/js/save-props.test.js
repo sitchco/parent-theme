@@ -101,6 +101,18 @@ describe('createSavePropsFilter', () => {
         expect(filter(props, GROUP, {})).toBe(props);
     });
 
+    it('emits nothing for an untouched block whose function default emits nothing', () => {
+        const field = {
+            name: 'speed',
+            default: () => '',
+            attributes: (value) => ({ 'data-speed': value || undefined }),
+        };
+        const filter = createSavePropsFilter(['core/group'], [field]);
+        const props = {};
+
+        expect(filter(props, GROUP, {})).toBe(props);
+    });
+
     it('splits a classGenerator string into classes, not characters', () => {
         const filter = createSavePropsFilter(['core/group'], [], { classGenerator: () => 'a b' });
 
@@ -127,5 +139,17 @@ describe('createSavePropsFilter', () => {
             'data-x': 'second',
             'data-first': '1',
         });
+    });
+
+    it('applies a function default to an untouched block, and a stored value over it', () => {
+        const field = {
+            name: 'speed',
+            default: ({ blockName }) => (blockName === 'core/group' ? '25' : '40'),
+            attributes: (value) => ({ 'data-speed': value || undefined }),
+        };
+        const filter = createSavePropsFilter(['core/group'], [field]);
+
+        expect(filter({}, GROUP, {})).toEqual({ 'data-speed': '25' });
+        expect(filter({}, GROUP, { speed: '10' })).toEqual({ 'data-speed': '10' });
     });
 });

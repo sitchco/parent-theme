@@ -10,8 +10,8 @@
  *
  * The animation keys are the test animations' own: `animation-tester` and `second-tester`.
  *
- * Seven of the entries below are deliberately malformed. Resolving this file therefore always
- * produces the aggregated config warning, with exactly seven problems in it — a count
+ * Eight of the entries below are deliberately malformed. Resolving this file therefore always
+ * produces the aggregated config warning, with exactly eight problems in it — a count
  * testEveryConfigProblemIsReportedInASingleWarning pins, so an entry added here must either be
  * valid or move that number deliberately. Tests that need a clean, silent resolution use the
  * `clean` layer instead.
@@ -73,10 +73,8 @@ return [
             'animation-tester' => ['allowed' => ['speed' => ['25', '50']], 'defaults' => ['speed' => 25]],
         ],
 
-        /* A bool default on an option that does have an `allowed` list, pinning
-           flagUnpermittedDefaults()' type skip. A literal setting has nothing to match against;
-           without the skip, (string) false is '' and would be flagged. `reverse => false` on
-           test/overrides pins nothing, because it has no `allowed` entry and skips on isset first. */
+        /* `allowed` on a toggle, which only a select can take — one problem, and the restriction is
+         ignored. The bool default beside it is legal for a toggle and must survive. */
         'test/bool-default' => [
             'animation-tester' => ['allowed' => ['reverse' => ['on', 'off']], 'defaults' => ['reverse' => false]],
         ],

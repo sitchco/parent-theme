@@ -1,5 +1,8 @@
+import { buildAnimationFields } from './animation-fields';
+
 /**
- * The Animation select, on every block the `animations` config section names.
+ * The Animation select, on every block the `animations` config section names, followed by the
+ * selected animation's own controls.
  *
  * One extendBlock() registration covers every configured block rather than one per group of
  * blocks sharing an animation set. Two reasons: each registration adds an editor.BlockEdit
@@ -12,21 +15,42 @@
  * label and never learns which blocks offer it. The narrowing is entirely the config's doing,
  * resolved in AnimationFrameworkModule and handed over as the map below.
  *
- * Shape of blockAnimations, keyed by block name then animation key:
+ * Shape of the blob, as AnimationFrameworkModule serializes it:
  *
  *     {
- *         'core/group': {
- *             parallax: { key: 'parallax', label: 'Parallax', allowed: {}, defaults: {} },
+ *         blocks: {
+ *             'core/group': {
+ *                 parallax: { key: 'parallax', label: 'Parallax', allowed: [], defaults: { speed: 25 } },
+ *                 letter: { key: 'letter', label: 'Letter', allowed: { opacity: ['30', '50'] }, defaults: { opacity: '30' } },
+ *             },
+ *         },
+ *         controls: {
+ *             parallax: [{ type: 'number', name: 'speed', attribute: 'parallaxAnimationSpeed', label: 'Speed', default: 50 }],
+ *             letter: [{
+ *                 type: 'select', name: 'opacity', attribute: 'letterAnimationOpacity', label: 'Opacity', default: '',
+ *                 options: [{ label: 'Default', value: '' }, { label: '30%', value: '30' }, { label: '50%', value: '50' }],
+ *             }],
  *         },
  *     }
  *
- * `allowed` and `defaults` are per-animation option overrides. Nothing reads them yet — they
- * belong to the per-animation controls, and arrive with them.
+ * `blocks` decides which animations each block offers, and narrows their controls per block
+ * through `allowed` and `defaults`. `controls` holds each animation's own control definitions,
+ * which buildAnimationFields() turns into the fields below the select.
  *
- * @param {Object} api             - window.sitchco.extendBlock
- * @param {Object} blockAnimations - Resolved block => animations map from PHP
+ * What PHP's encoding means for the reader:
+ * - An empty `allowed` or `defaults` arrives as a list, `[]`, not `{}`. asMap() reads it as an
+ *   empty map.
+ * - `allowed[option]` is always a list of strings, and a select's option values and defaults are
+ *   strings too, even when declared as numbers. That is the form the editor compares with `===`.
+ * - Unset settings (`help`, `min`, `max`, …) are left out rather than sent as null.
+ *
+ * @param {Object}   api                 - window.sitchco.extendBlock
+ * @param {Object}   blob                - The resolved map from PHP
+ * @param {Object}   blob.blocks         - Block name => animation key => entry
+ * @param {Object}   [blob.controls]     - Animation key => serialized controls
+ * @param {Function} [applyFilters]      - sitchco.hooks.applyFilters, for options from a JS hook
  */
-export default function ({ extendBlock, fields }, blockAnimations) {
+export default function ({ extendBlock, fields }, { blocks: blockAnimations = {}, controls = {} }, applyFilters) {
     const blocks = Object.keys(blockAnimations);
     /* PHP already skips the enqueue when the map is empty, so this only catches a blob that
        failed to land. Registering over an empty block list would add filters that can never
@@ -67,6 +91,14 @@ export default function ({ extendBlock, fields }, blockAnimations) {
                     })),
                 ],
             }),
+            ...buildAnimationFields(
+                fields,
+                {
+                    blocks: blockAnimations,
+                    controls,
+                },
+                applyFilters
+            ),
         ],
     });
 }

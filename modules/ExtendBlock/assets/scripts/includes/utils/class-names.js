@@ -1,3 +1,5 @@
+import { readFieldValue } from './field-value';
+
 /**
  * Turns whatever a class callback returned into a list of non-empty class names.
  *
@@ -51,7 +53,7 @@ export function generateFieldClasses(fields, attributes, context = {}) {
             continue;
         }
 
-        const value = attributes[field.name];
+        const value = readFieldValue(field, attributes, context);
         classes.push(...toClassList(field.className(value, context)));
     }
     return classes;
@@ -108,7 +110,7 @@ export function generateEditorFieldClasses(fields, attributes, context = {}, dev
             classes.push(...toClassList(originalClassName(value, context)));
         } else {
             // Non-responsive field — unchanged behavior
-            const value = attributes[field.name];
+            const value = readFieldValue(field, attributes, context);
             classes.push(...toClassList(field.className(value, context)));
         }
     }

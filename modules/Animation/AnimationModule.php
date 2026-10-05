@@ -21,6 +21,8 @@ use Sitchco\Framework\Module;
  *         public function label(): string { return 'Letter Animation'; }
  *     }
  *
+ * Settings of its own are optional, declared through controls() — see AnimationControl.
+ *
  * HOOK_SUFFIX is deliberately left empty here so that every subclass declares its own — a module
  * with an empty suffix is skipped by ModuleRegistry::addModules() with a logged warning. The
  * animation key defaults to it, so one declaration covers both; see key() for when to override.
@@ -86,4 +88,22 @@ abstract class AnimationModule extends Module
      * Human-readable name, shown in the editor's Animation select.
      */
     abstract public function label(): string;
+
+    /**
+     * The settings this animation offers in the editor, shown only while it is the selected one.
+     *
+     * None by default: an animation driven purely by its own stylesheet needs no controls.
+     *
+     * Names are local — `color`, not `letterAnimationColor`. The framework builds each block attribute from
+     * key() and the name (AnimationFrameworkModule::attributeName()), which is what keeps two
+     * animations' controls from colliding. That makes a control's name content in the same way the
+     * key is: saved blocks store their values under it, so renaming a control on an animation that
+     * has shipped orphans every value already chosen with it, silently.
+     *
+     * @return list<AnimationControl>
+     */
+    public function controls(): array
+    {
+        return [];
+    }
 }

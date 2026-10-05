@@ -6,6 +6,9 @@ import {
 } from '@wordpress/components';
 import { resolveOptions, withStaleValue } from './utils/options';
 
+// Kept importable from here, where it always lived; it moved out so it can be unit tested.
+export { fieldsToAttributes } from './utils/fields-to-attributes';
+
 /**
  * Creates a field definition with the given type and defaults.
  *
@@ -47,6 +50,12 @@ function createField(type, defaults) {
  *
  * `condition`, `className` and `attributes` receive the output context, `{ blockName }`, in
  * every phase. `render` and `options` receive the richer render context.
+ *
+ * `default` may be a function of the output context, `({ blockName }) => value`, when one
+ * registration serves blocks whose defaults differ. The attribute is then registered without a
+ * default and the value is resolved on every read. A dynamic block follows the default until an
+ * author picks a value; a static block stores the default once the field applies, so its saved
+ * markup cannot go stale. Not supported inside responsive(). See utils/field-value.js.
  */
 export const fields = {
     /**
@@ -61,7 +70,7 @@ export const fields = {
      *   `(deviceType, context)` instead; see resolveResponsiveOptions in utils/options.js.
      *   A saved value no option offers is shown as a disabled "(unavailable)" entry, so it stays
      *   visible and choosing another option clears it
-     * @param {string} [config.default=''] - Default value
+     * @param {string|Function} [config.default=''] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -86,7 +95,7 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {boolean} [config.default=false] - Default value
+     * @param {boolean|Function} [config.default=false] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -105,7 +114,7 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {string} [config.default=''] - Default value
+     * @param {string|Function} [config.default=''] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -124,7 +133,7 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {number} [config.default=0] - Default value
+     * @param {number|Function} [config.default=0] - Default value, or a function of the output context
      * @param {number} [config.min] - Minimum value
      * @param {number} [config.max] - Maximum value
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
@@ -166,25 +175,3 @@ export const fields = {
         ...config,
     }),
 };
-
-/**
- * Converts field definitions to Gutenberg attribute definitions.
- *
- * @param {Array} fields - Array of field definitions
- * @returns {Object} Gutenberg attributes object
- */
-export function fieldsToAttributes(fields) {
-    const attributes = {};
-
-    for (const field of fields) {
-        if (!field.name) {
-            throw new Error('Field is missing required "name" property');
-        }
-
-        attributes[field.name] = {
-            type: field.attributeType,
-            default: field.default,
-        };
-    }
-    return attributes;
-}

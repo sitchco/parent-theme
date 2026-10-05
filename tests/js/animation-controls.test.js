@@ -19,6 +19,12 @@ function api() {
                 default: '',
                 ...config,
             }),
+            toggle: (config) => ({
+                type: 'toggle',
+                attributeType: 'boolean',
+                default: false,
+                ...config,
+            }),
         },
     };
 }
@@ -32,7 +38,7 @@ function entry(key, label) {
     };
 }
 
-/** The shape AnimationFrameworkModule::getBlockAnimations() serializes to. */
+/** The `blocks` half of the blob: what AnimationFrameworkModule::getBlockAnimations() serializes to. */
 const MAP = {
     'core/paragraph': { 'fade-up': entry('fade-up', 'Fade Up') },
     'core/heading': {
@@ -50,7 +56,7 @@ describe('animation controls', () => {
     });
 
     it('registers nothing when no block is configured', () => {
-        extendAnimation(sitchco, {});
+        extendAnimation(sitchco, { blocks: {} });
 
         expect(sitchco.calls).toEqual([]);
     });
@@ -59,7 +65,7 @@ describe('animation controls', () => {
        call adds an editor.BlockEdit HOC that wraps every block in the editor, and the namespace
        becomes a key persisted into dynamic-block content later, so it has to stay stable. */
     it('registers exactly once, over every configured block, under a fixed namespace', () => {
-        extendAnimation(sitchco, MAP);
+        extendAnimation(sitchco, { blocks: MAP });
 
         expect(sitchco.calls).toHaveLength(1);
         expect(sitchco.calls[0].blocks).toEqual(['core/paragraph', 'core/heading', 'kadence/accordion']);
@@ -68,7 +74,7 @@ describe('animation controls', () => {
     });
 
     it('puts the panel on Kadence’s Style tab without claiming the native Styles slot', () => {
-        extendAnimation(sitchco, MAP);
+        extendAnimation(sitchco, { blocks: MAP });
 
         // group: 'styles' would fill WP's own slot and push a second native tab bar above Kadence's.
         expect(sitchco.calls[0].panel).toMatchObject({
@@ -78,7 +84,7 @@ describe('animation controls', () => {
     });
 
     it('declares a single select writing the animation attribute', () => {
-        extendAnimation(sitchco, MAP);
+        extendAnimation(sitchco, { blocks: MAP });
         const [field] = sitchco.calls[0].fields;
 
         expect(sitchco.calls[0].fields).toHaveLength(1);
@@ -100,7 +106,7 @@ describe('animation controls', () => {
     /* The heart of the design: one registration still offers a different list per block, because
        options resolve from the render context rather than once at registration time. */
     it('offers each block only the animations its own config entry allows', () => {
-        extendAnimation(sitchco, MAP);
+        extendAnimation(sitchco, { blocks: MAP });
         const [field] = sitchco.calls[0].fields;
         const optionsFor = (blockName) => resolveOptions(field, { blockName });
 
@@ -143,7 +149,7 @@ describe('animation controls', () => {
     });
 
     it('offers None alone for a block the map does not describe', () => {
-        extendAnimation(sitchco, MAP);
+        extendAnimation(sitchco, { blocks: MAP });
         const [field] = sitchco.calls[0].fields;
 
         expect(resolveOptions(field, { blockName: 'core/list' })).toEqual([
@@ -156,9 +162,11 @@ describe('animation controls', () => {
 
     it('keeps the config order of a block’s animations', () => {
         extendAnimation(sitchco, {
-            'core/group': {
-                parallax: entry('parallax', 'Parallax'),
-                'fade-up': entry('fade-up', 'Fade Up'),
+            blocks: {
+                'core/group': {
+                    parallax: entry('parallax', 'Parallax'),
+                    'fade-up': entry('fade-up', 'Fade Up'),
+                },
             },
         });
 
@@ -169,5 +177,25 @@ describe('animation controls', () => {
             'parallax',
             'fade-up',
         ]);
+    });
+
+    it('follows the select with each animation’s own controls, in the same panel', () => {
+        extendAnimation(sitchco, {
+            blocks: MAP,
+            controls: {
+                parallax: [
+                    {
+                        type: 'toggle',
+                        name: 'reverse',
+                        attribute: 'parallaxAnimationReverse',
+                        label: 'Reverse',
+                        default: false,
+                    },
+                ],
+            },
+        });
+
+        expect(sitchco.calls).toHaveLength(1);
+        expect(sitchco.calls[0].fields.map((f) => f.name)).toEqual(['animation', 'parallaxAnimationReverse']);
     });
 });
