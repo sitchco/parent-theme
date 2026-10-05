@@ -830,8 +830,10 @@ class AnimationFrameworkModuleTest extends TestCase
         // SecondAnimationTester registered first, so it keeps secondTesterAnimationSpeed; of the two `ok`
         // toggles, the first declared is kept.
         $this->assertSame(['speed', 'direction', 'tint'], array_keys($controls['second-tester']));
-        $this->assertSame(['ok'], array_keys($controls['secondTester']));
+        $this->assertSame(['defaultTypo', 'ok'], array_keys($controls['secondTester']));
         $this->assertSame('Kept', $controls['secondTester']['ok']->label);
+        // A misspelled option is reported, but the control it was meant for is kept without it.
+        $this->assertFalse($controls['secondTester']['defaultTypo']->default);
 
         $this->assertSame(LogLevel::ERROR, $entry['level']);
         $this->assertSame(
@@ -850,6 +852,12 @@ class AnimationFrameworkModuleTest extends TestCase
                 "secondTester / emptyLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string and each value a string or number. Dropping it.",
                 'secondTester / unofferedDefault: its default "" is not one of its options. Dropping it.',
                 'secondTester / outOfRange: its default 5 is outside its range (at most 3). Dropping it.',
+                'secondTester / infinite: its default must be a finite number. Dropping it.',
+                'secondTester / notANumber: its default must be a finite number. Dropping it.',
+                'secondTester / nanMax: its min and max must be finite numbers. Dropping it.',
+                'secondTester / filterTypo: does not know the option `optionFilter`. Ignoring it.',
+                'secondTester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
+                'secondTester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',
                 'secondTester / speed: its attribute "secondTesterAnimationSpeed" is already used by second-tester / speed. Dropping it.',
                 'secondTester / ok: is declared twice. Keeping the first.',
             ],
@@ -927,9 +935,16 @@ class AnimationFrameworkModuleTest extends TestCase
         );
         $this->assertSame(['speed' => 150], $blocks['test/default-out-of-range']['second-tester']['defaults']);
 
+        $this->assertContains(
+            'test/default-infinite / second-tester / defaults / speed: defaults to 1e999, which is not a finite number. Dropping it.',
+            $problems,
+        );
+        $this->assertSame([], $blocks['test/default-infinite']['second-tester']['defaults']);
+        $this->assertNotFalse(wp_json_encode($blocks));
+
         // Counted as well as named, so the two valid entries are proven silent and the restricted
         // teal is reported once.
-        $this->assertCount(10, $problems);
+        $this->assertCount(11, $problems);
     }
 
     public function testAnOptionsFilterSelectTakesItsPermittedValuesAsWritten(): void

@@ -489,11 +489,13 @@ class AnimationConfigResolver
             if ($typed === null) {
                 $this->flagProblem(
                     "{$context} / defaults / {$option}",
-                    sprintf(
-                        'has a %s default, which a %s control cannot take. Dropping it.',
-                        get_debug_type($value),
-                        $control->type,
-                    ),
+                    $control->type === 'number' && is_numeric($value)
+                        ? sprintf('defaults to %s, which is not a finite number. Dropping it.', $value)
+                        : sprintf(
+                            'has a %s default, which a %s control cannot take. Dropping it.',
+                            get_debug_type($value),
+                            $control->type,
+                        ),
                 );
                 continue;
             }
@@ -534,13 +536,23 @@ class AnimationConfigResolver
         return match ($control->type) {
             'select', 'text' => is_string($value) || is_int($value) || is_float($value) ? (string) $value : null,
             'toggle' => is_bool($value) ? $value : null,
-            'number' => is_int($value) || is_float($value)
-                ? $value
-                : (is_string($value) && is_numeric($value)
-                    ? $value + 0
-                    : null),
+            'number' => $this->finiteNumber($value),
             default => null,
         };
+    }
+
+    /**
+     * A number, or a numeric string as one; null when neither, or when not finite. `'1e999'` is
+     * numeric yet casts to INF, which json_encode() cannot write: the whole editor payload would be
+     * lost with it, not only this default.
+     */
+    private function finiteNumber(mixed $value): int|float|null
+    {
+        if (is_string($value) && is_numeric($value)) {
+            $value += 0;
+        }
+
+        return is_int($value) || (is_float($value) && is_finite($value)) ? $value : null;
     }
 
     private function flagProblem(string $context, string $problem): void

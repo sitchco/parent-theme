@@ -337,6 +337,19 @@ class AnimationFrameworkModule extends Module
                     continue;
                 }
 
+                /* A typo, not a broken control: on its own the control works, only without the setting
+                   meant. Reported before the checks below, so a misspelled `optionFilter` is named
+                   rather than seen only as a missing source. */
+                if ($control->unknownOptions) {
+                    $problems[] = sprintf(
+                        '%s: does not know the option%s %s. Ignoring %s.',
+                        $context,
+                        count($control->unknownOptions) > 1 ? 's' : '',
+                        implode(', ', array_map(fn($key) => "`{$key}`", $control->unknownOptions)),
+                        count($control->unknownOptions) > 1 ? 'them' : 'it',
+                    );
+                }
+
                 if ($control->type === 'select') {
                     // An empty filter name is no source: applyFilters('') resolves nothing.
                     $hasFilter = $control->optionsFilter !== null && $control->optionsFilter !== '';
@@ -356,6 +369,25 @@ class AnimationFrameworkModule extends Module
                     $offered = $control->optionValues();
                     if ($offered !== null && !in_array($control->default, $offered, true)) {
                         $problems[] = "{$context}: its default \"{$control->default}\" is not one of its options. Dropping it.";
+                        continue;
+                    }
+                }
+
+                if ($control->type === 'number') {
+                    /* json_encode() cannot write INF or NAN: it returns false, the inline script is
+                       left as `window.sitchco.animations = ;`, and the Animation panel disappears
+                       from every block. number() also takes its default as given, so a string can
+                       arrive here too. */
+                    if (!$this->isFiniteNumber($control->default)) {
+                        $problems[] = "{$context}: its default must be a finite number. Dropping it.";
+                        continue;
+                    }
+
+                    if (
+                        ($control->min !== null && !$this->isFiniteNumber($control->min)) ||
+                        ($control->max !== null && !$this->isFiniteNumber($control->max))
+                    ) {
+                        $problems[] = "{$context}: its min and max must be finite numbers. Dropping it.";
                         continue;
                     }
                 }
@@ -385,6 +417,11 @@ class AnimationFrameworkModule extends Module
         }
 
         return $valid;
+    }
+
+    private function isFiniteNumber(mixed $value): bool
+    {
+        return is_int($value) || (is_float($value) && is_finite($value));
     }
 
     /**

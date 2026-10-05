@@ -5,7 +5,7 @@
  * controls — see AnimationTester::controls() and SecondAnimationTester::controls().
  *
  * Kept apart from the parent fixture, whose problem count is pinned, and used alone, never layered.
- * Ten problems in all, pinned by testEveryControlMismatchIsFlaggedWithItsFallback; the two entries
+ * Eleven problems in all, pinned by testEveryControlMismatchIsFlaggedWithItsFallback; the two entries
  * marked valid must stay silent.
  */
 
@@ -45,5 +45,8 @@ return [
 
         // One problem: 150 is past the speed control's max of 100.
         'test/default-out-of-range' => ['second-tester' => ['defaults' => ['speed' => 150]]],
+
+        // One problem: numeric, but it casts to INF, which json_encode() cannot write.
+        'test/default-infinite' => ['second-tester' => ['defaults' => ['speed' => '1e999']]],
     ],
 ];

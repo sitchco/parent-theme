@@ -39,6 +39,10 @@ namespace Sitchco\Parent\Modules\Animation;
  *
  * Validation is the coordinator's, not this class's: a malformed control is logged and dropped
  * there, alongside every other definition problem, rather than thrown from a module's controls().
+ * An option key a factory does not know (a misspelled `defualt`) is recorded in `unknownOptions`
+ * for the coordinator to report. The one exception is a value of the wrong PHP type for a typed
+ * property — `'options' => 'red'`, `'min' => 'low'` — which throws a TypeError here, as any
+ * mistyped constructor argument would.
  */
 readonly class AnimationControl implements \JsonSerializable
 {
@@ -55,6 +59,8 @@ readonly class AnimationControl implements \JsonSerializable
         public ?string $optionsFilter = null,
         public int|float|null $min = null,
         public int|float|null $max = null,
+        /** @var list<string> Option keys the factory did not recognize, reported by the coordinator. */
+        public array $unknownOptions = [],
     ) {}
 
     /**
@@ -62,7 +68,10 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function select(string $name, string $label, array $options = []): self
     {
-        $options = array_merge(['options' => null, 'optionsFilter' => null, 'default' => '', 'help' => null], $options);
+        [$options, $unknown] = self::withDefaults(
+            ['options' => null, 'optionsFilter' => null, 'default' => '', 'help' => null],
+            $options,
+        );
 
         return new self(
             type: 'select',
@@ -72,6 +81,7 @@ readonly class AnimationControl implements \JsonSerializable
             help: $options['help'],
             options: $options['options'],
             optionsFilter: $options['optionsFilter'],
+            unknownOptions: $unknown,
         );
     }
 
@@ -80,9 +90,16 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function toggle(string $name, string $label, array $options = []): self
     {
-        $options = array_merge(['default' => false, 'help' => null], $options);
+        [$options, $unknown] = self::withDefaults(['default' => false, 'help' => null], $options);
 
-        return new self('toggle', $name, $label, (bool) $options['default'], $options['help']);
+        return new self(
+            type: 'toggle',
+            name: $name,
+            label: $label,
+            default: (bool) $options['default'],
+            help: $options['help'],
+            unknownOptions: $unknown,
+        );
     }
 
     /**
@@ -90,7 +107,10 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function number(string $name, string $label, array $options = []): self
     {
-        $options = array_merge(['default' => 0, 'min' => null, 'max' => null, 'help' => null], $options);
+        [$options, $unknown] = self::withDefaults(
+            ['default' => 0, 'min' => null, 'max' => null, 'help' => null],
+            $options,
+        );
 
         return new self(
             type: 'number',
@@ -100,6 +120,7 @@ readonly class AnimationControl implements \JsonSerializable
             help: $options['help'],
             min: $options['min'],
             max: $options['max'],
+            unknownOptions: $unknown,
         );
     }
 
@@ -108,9 +129,26 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function text(string $name, string $label, array $options = []): self
     {
-        $options = array_merge(['default' => '', 'help' => null], $options);
+        [$options, $unknown] = self::withDefaults(['default' => '', 'help' => null], $options);
 
-        return new self('text', $name, $label, (string) $options['default'], $options['help']);
+        return new self(
+            type: 'text',
+            name: $name,
+            label: $label,
+            default: (string) $options['default'],
+            help: $options['help'],
+            unknownOptions: $unknown,
+        );
+    }
+
+    /**
+     * A factory's options merged over its defaults, and the keys among them it does not know.
+     *
+     * @return array{0: array<string, mixed>, 1: list<string>}
+     */
+    private static function withDefaults(array $defaults, array $options): array
+    {
+        return [array_merge($defaults, $options), array_map('strval', array_keys(array_diff_key($options, $defaults)))];
     }
 
     /**
