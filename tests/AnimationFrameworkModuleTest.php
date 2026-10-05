@@ -916,10 +916,16 @@ class AnimationFrameworkModuleTest extends TestCase
             $problems,
         );
         $this->assertContains(
-            'test/scalar-not-offered / animation-tester / allowed / color: permits no values at all, so its control will offer no choices.',
+            'test/scalar-not-offered / animation-tester / allowed / color: permits no values, so its control offers only the animation default.',
             $problems,
         );
         $this->assertSame(['color' => []], $blocks['test/scalar-not-offered']['animation-tester']['allowed']);
+
+        $this->assertContains(
+            'test/allowed-empty-string / animation-tester / allowed / color: permits no values, so its control offers only the animation default.',
+            $problems,
+        );
+        $this->assertSame(['color' => []], $blocks['test/allowed-empty-string']['animation-tester']['allowed']);
 
         $this->assertContains(
             'test/default-wrong-type / animation-tester / defaults / reverse: has a string default, which a toggle control cannot take. Dropping it.',
@@ -951,7 +957,7 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['color' => 'teal'], $blocks['test/default-not-offered']['animation-tester']['defaults']);
 
         $this->assertContains(
-            'test/default-out-of-range / second-tester / defaults / speed: defaults to 150, outside the control\'s range (0 to 100).',
+            'test/default-out-of-range / second-tester / defaults / speed: defaults to 150, outside the control\'s range (0 to 100). Keeping it.',
             $problems,
         );
         $this->assertSame(['speed' => 150], $blocks['test/default-out-of-range']['second-tester']['defaults']);
@@ -965,7 +971,7 @@ class AnimationFrameworkModuleTest extends TestCase
 
         // Counted as well as named, so the two valid entries are proven silent and the restricted
         // teal is reported once.
-        $this->assertCount(13, $problems);
+        $this->assertCount(14, $problems);
     }
 
     public function testAnOptionsFilterSelectTakesItsPermittedValuesAsWritten(): void

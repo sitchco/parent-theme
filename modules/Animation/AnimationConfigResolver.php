@@ -365,13 +365,18 @@ class AnimationConfigResolver
                 $permitted = $this->markedValues($context, $option, $values);
             }
 
+            /* The empty "no override" option is always offered, so permitting it restricts nothing;
+               left in, `'color' => ''` would resolve to [''] and pass as a restriction while the
+               editor offered only the animation default. */
+            $permitted = array_values(array_filter($permitted, fn(string $value) => $value !== ''));
+
             $resolved[$option] = $this->offeredValues($context, $option, $permitted, $control);
 
-            // Either form can end up here, a scalar whose one value is not offered included.
+            // Either form can end up here: a scalar whose one value is not offered, or only ''.
             if ($resolved[$option] === []) {
                 $this->flagProblem(
                     "{$context} / allowed / {$option}",
-                    'permits no values at all, so its control will offer no choices.',
+                    'permits no values, so its control offers only the animation default.',
                 );
             }
         }
@@ -524,7 +529,11 @@ class AnimationConfigResolver
             } elseif ($control->type === 'number' && !$control->inRange($typed)) {
                 $this->flagProblem(
                     "{$context} / defaults / {$option}",
-                    sprintf('defaults to %s, outside the control\'s range (%s).', $typed, $control->describeRange()),
+                    sprintf(
+                        'defaults to %s, outside the control\'s range (%s). Keeping it.',
+                        $typed,
+                        $control->describeRange(),
+                    ),
                 );
             }
 
