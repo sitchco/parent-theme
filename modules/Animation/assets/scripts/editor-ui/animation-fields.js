@@ -9,8 +9,9 @@
  * - **Visibility.** A control shows only while its animation is the selected one AND the block
  *   still allows that animation. `condition` gates output as well as visibility, so switching
  *   animations, choosing None, or keeping a stale "(unavailable)" value leaves nothing behind.
- * - **Options.** A select offers its own options, or whatever its `optionsFilter` hook returns,
- *   narrowed to the block's `allowed` list. The empty "no override" option always survives.
+ * - **Options.** A select offers its own options, or whatever its `optionsFilter` hook returns
+ *   (normalized as PHP normalizes static ones; see normalizeHookOptions()), narrowed to the
+ *   block's `allowed` list. The empty "no override" option always survives.
  * - **Defaults.** The block's config default, falling back to the control's own, through
  *   ExtendBlock's function `default`. A dynamic block nobody touched follows it; a static block
  *   stores it once its animation is chosen; a picked value stays. See utils/field-value.js.
@@ -65,6 +66,67 @@ export function labelEmptyOption(options) {
     );
 }
 
+const warnedFilters = new Set();
+
+/**
+ * A hook's options in the form a static select's arrive in from PHP.
+ *
+ * PHP checks a static option list before sending it, but it cannot see what an `optionsFilter` hook
+ * returns, so this does the same normalizing for those:
+ *
+ * - Every value is a string, which is what `allowed` lists and stored values are compared with
+ *   `===` against. A palette entry declared as `30` would otherwise never match `allowed` and show
+ *   a stored `'30'` as "(unavailable)".
+ * - There is exactly one empty option, first if the hook had to have one added. Without it the
+ *   select opens on the hook's first entry with nothing stored, so choosing that entry fires no
+ *   change and it can never be stored. A second `''` would be two options meaning one thing.
+ * - A hook that returns nothing still leaves the empty option, so the control stays on screen and
+ *   says something is missing, with a one-time warning naming the hook, rather than vanishing.
+ *
+ * @param {*}      options    - Whatever applyFilters returned
+ * @param {string} filterName - The hook, for the warning
+ * @returns {Array<{label: string, value: string}>}
+ */
+export function normalizeHookOptions(options, filterName) {
+    const list = Array.isArray(options)
+        ? options.filter((option) => option && typeof option === 'object' && option.value != null)
+        : [];
+    if (!list.length && !warnedFilters.has(filterName)) {
+        warnedFilters.add(filterName);
+        console.warn(
+            `[animation] The '${filterName}' hook returned no options, so its control offers only the animation default.`
+        );
+    }
+
+    let hasEmpty = false;
+    const normalized = [];
+
+    for (const option of list) {
+        const value = String(option.value);
+        if (value === '') {
+            if (hasEmpty) {
+                continue;
+            }
+
+            hasEmpty = true;
+        }
+
+        normalized.push({
+            ...option,
+            value,
+        });
+    }
+    return hasEmpty
+        ? normalized
+        : [
+              {
+                  label: EMPTY_OPTION_LABEL,
+                  value: '',
+              },
+              ...normalized,
+          ];
+}
+
 /**
  * A map from the blob, or an empty one. PHP serializes an empty map as a JSON list, and a list
  * answers to `length` — so `[]` is read as `{}` rather than probed.
@@ -103,7 +165,7 @@ export function buildAnimationFields(fields, { blocks = {}, controls = {} }, app
                 },
             };
 
-            for (const setting of ['help', 'min', 'max']) {
+            for (const setting of ['help', 'min', 'max', 'step']) {
                 if (control[setting] !== undefined) {
                     field[setting] = control[setting];
                 }
@@ -115,7 +177,8 @@ export function buildAnimationFields(fields, { blocks = {}, controls = {} }, app
                 field.options = ({ blockName } = {}) =>
                     labelEmptyOption(
                         restrictOptions(
-                            control.options ?? applyFilters(control.optionsFilter, []),
+                            control.options ??
+                                normalizeHookOptions(applyFilters(control.optionsFilter, []), control.optionsFilter),
                             asMap(entryFor(blockName)?.allowed)[control.name]
                         )
                     );

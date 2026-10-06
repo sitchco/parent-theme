@@ -2,7 +2,7 @@ import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls, store as blockEditorStore } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
-import { useEffect, useMemo } from '@wordpress/element';
+import { useEffect, useMemo, useRef } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { fieldsToAttributes } from './fields';
 import { generateFieldClasses, toClassList } from './utils/class-names';
@@ -188,14 +188,23 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
             const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch(blockEditorStore);
             const defaultsToStore = isDynamic ? null : contextualDefaultsToStore(allFields, attributes, outputContext);
             const defaultsKey = defaultsToStore ? JSON.stringify(defaultsToStore) : '';
+            const isMounting = useRef(true);
             useEffect(() => {
+                const onMount = isMounting.current;
+                isMounting.current = false;
+
                 if (!defaultsToStore) {
                     return;
                 }
 
-                // Folded into the change that made the field apply, so undo cannot step back to a
-                // state this effect would immediately fill in again.
-                markNotPersistent();
+                /* On mount, nobody changed anything: the block was loaded with a field that applies
+                   and has nothing stored (a PHP pattern, content from before the field existed).
+                   'ignore' keeps that store out of undo history entirely, as core does for an
+                   InnerBlocks template, so loading a post neither adds an undo step nor clears the
+                   redo stack. Any later store follows an author's change (choosing an animation),
+                   and is merged into it, so undo cannot step back to a state this effect would
+                   immediately fill in again. */
+                markNotPersistent(onMount ? { history: 'ignore' } : undefined);
                 setAttributes(defaultsToStore);
             }, [defaultsKey]);
 
