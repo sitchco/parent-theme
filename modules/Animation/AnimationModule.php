@@ -78,6 +78,9 @@ abstract class AnimationModule extends Module
      * orphan every block using it. Pin the old value here instead:
      *
      *     public function key(): string { return 'letter'; }
+     *
+     * A key must be lowercase kebab-case with each segment led by a letter — `letter`, `fade-up` —
+     * or the animation is skipped with a logged error (AnimationFrameworkModule::KEY_PATTERN).
      */
     public function key(): string
     {

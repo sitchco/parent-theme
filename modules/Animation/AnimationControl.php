@@ -61,6 +61,7 @@ readonly class AnimationControl implements \JsonSerializable
         public ?string $optionsFilter = null,
         public int|float|null $min = null,
         public int|float|null $max = null,
+        public int|float|null $step = null,
         /** @var list<string> Option keys the factory did not recognize, reported by the coordinator. */
         public array $unknownOptions = [],
     ) {}
@@ -105,12 +106,15 @@ readonly class AnimationControl implements \JsonSerializable
     }
 
     /**
-     * @param array{default?: int|float, min?: int|float, max?: int|float, help?: string} $options
+     * `step` is the increment the control moves in, and also what the editor rounds a typed value
+     * to: without one, a fractional value such as 0.75 is rounded to a whole number.
+     *
+     * @param array{default?: int|float, min?: int|float, max?: int|float, step?: int|float, help?: string} $options
      */
     public static function number(string $name, string $label, array $options = []): self
     {
         [$options, $unknown] = self::withDefaults(
-            ['default' => 0, 'min' => null, 'max' => null, 'help' => null],
+            ['default' => 0, 'min' => null, 'max' => null, 'step' => null, 'help' => null],
             $options,
         );
 
@@ -122,6 +126,7 @@ readonly class AnimationControl implements \JsonSerializable
             help: $options['help'],
             min: $options['min'],
             max: $options['max'],
+            step: $options['step'],
             unknownOptions: $unknown,
         );
     }
@@ -221,6 +226,7 @@ readonly class AnimationControl implements \JsonSerializable
                 'optionsFilter' => $this->optionsFilter,
                 'min' => $this->min,
                 'max' => $this->max,
+                'step' => $this->step,
             ],
             fn($value) => $value !== null,
         );
