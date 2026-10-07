@@ -6,6 +6,7 @@ import {
 } from '@wordpress/components';
 import { resolveOptions, withStaleValue } from './utils/options';
 import { toNumberValue } from './utils/number-value';
+import { hasContextualDefault } from './utils/field-value';
 
 // Kept importable from here, where it always lived; it moved out so it can be unit tested.
 export { fieldsToAttributes } from './utils/fields-to-attributes';
@@ -134,11 +135,13 @@ export const fields = {
      * @param {Object} config
      * @param {string} config.name - Attribute name
      * @param {string} config.label - Control label
-     * @param {number|Function} [config.default=0] - Default value, or a function of the output context
+     * @param {number|Function} [config.default=0] - Default value, or a function of the output
+     *   context. Clearing the input falls back to it (see utils/number-value.js).
      * @param {number} [config.min] - Minimum value
      * @param {number} [config.max] - Maximum value
-     * @param {number} [config.step] - Increment, and what a typed value is rounded to; without
-     *   one, fractions round to whole numbers
+     * @param {number} [config.step] - Increment, and the grid a value is rounded to whenever the
+     *   input commits (on blur or Enter), touched or not; without one, whole numbers. A default
+     *   off that grid is rewritten the first time an author tabs through the field.
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
      * @param {string} [config.help] - Help text
@@ -150,7 +153,9 @@ export const fields = {
             <NumberControl
                 label={field.label}
                 value={value}
-                onChange={(newValue) => onChange(toNumberValue(newValue))}
+                onChange={(newValue) =>
+                    onChange(toNumberValue(newValue, hasContextualDefault(field) ? undefined : field.default))
+                }
                 min={field.min}
                 max={field.max}
                 step={field.step}

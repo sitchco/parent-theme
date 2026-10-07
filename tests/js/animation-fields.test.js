@@ -204,7 +204,7 @@ describe('normalizeHookOptions', () => {
             ]);
 
             expect(warn).toHaveBeenCalledTimes(1);
-            expect(warn.mock.calls[0][0]).toContain('test.empty');
+            expect(warn.mock.calls[0][0]).toContain("'test.empty' hook returned no options");
         } finally {
             warn.mockRestore();
         }
@@ -221,6 +221,108 @@ describe('normalizeHookOptions', () => {
                 value: 'red',
             },
         ]);
+    });
+
+    it('holds hook entries to the rules PHP holds a static list to', () => {
+        expect(
+            normalizeHookOptions(
+                [
+                    {
+                        label: 'A',
+                        value: 30,
+                    },
+                    {
+                        label: 'B',
+                        value: '30',
+                    },
+                    { value: 'red' },
+                    {
+                        label: 'C',
+                        value: true,
+                    },
+                    {
+                        label: '',
+                        value: 'blank',
+                    },
+                    {
+                        label: 'D',
+                        value: NaN,
+                    },
+                    {
+                        label: 'E',
+                        value: { hex: '#f00' },
+                    },
+                ],
+                'test.strict'
+            )
+        ).toEqual([
+            {
+                label: EMPTY_OPTION_LABEL,
+                value: '',
+            },
+            {
+                label: 'A',
+                value: '30',
+            },
+        ]);
+    });
+
+    it('keeps the first of two values alike once cast, as a layered hook can produce', () => {
+        expect(
+            normalizeHookOptions(
+                [
+                    ...options('', 'purple'),
+                    {
+                        label: 'Child purple',
+                        value: 'purple',
+                    },
+                ],
+                'test.layered'
+            )
+        ).toEqual(options('', 'purple'));
+    });
+
+    it('warns once, and says so, when a hook returns only entries it cannot use', () => {
+        const warn = vi.spyOn(globalThis.console, 'warn').mockImplementation(() => {});
+
+        try {
+            expect(
+                normalizeHookOptions(
+                    [
+                        { value: 'red' },
+                        {
+                            label: 'C',
+                            value: true,
+                        },
+                    ],
+                    'test.invalid'
+                )
+            ).toEqual([
+                {
+                    label: EMPTY_OPTION_LABEL,
+                    value: '',
+                },
+            ]);
+
+            normalizeHookOptions([{ value: 'red' }], 'test.invalid');
+
+            expect(warn).toHaveBeenCalledTimes(1);
+            expect(warn.mock.calls[0][0]).toContain("'test.invalid' hook returned 2 options, none with");
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it('does not warn while at least one entry is usable', () => {
+        const warn = vi.spyOn(globalThis.console, 'warn').mockImplementation(() => {});
+
+        try {
+            normalizeHookOptions([{ value: 'red' }, ...options('purple')], 'test.partial');
+
+            expect(warn).not.toHaveBeenCalled();
+        } finally {
+            warn.mockRestore();
+        }
     });
 
     it('lets a numeric hook value meet a narrowed allowed list', () => {

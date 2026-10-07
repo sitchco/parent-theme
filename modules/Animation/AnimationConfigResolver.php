@@ -535,6 +535,15 @@ class AnimationConfigResolver
                         $control->describeRange(),
                     ),
                 );
+            } elseif ($control->type === 'number' && !$control->onStep($typed)) {
+                $this->flagProblem(
+                    "{$context} / defaults / {$option}",
+                    sprintf(
+                        'defaults to %s, off the control\'s step grid (%s). The editor rounds it once the field is used. Keeping it.',
+                        $typed,
+                        $control->describeStep(),
+                    ),
+                );
             }
 
             $resolved[$option] = $typed;

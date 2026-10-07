@@ -154,6 +154,13 @@ class AnimationControlValidator
             return "its default {$control->default} is outside its range ({$control->describeRange()}).";
         }
 
+        /* The editor cannot start on a value it would not keep: NumberControl rounds to its step
+           grid whenever the input commits, so merely tabbing through the inspector would store a
+           value nobody chose. The same rule selectProblem() applies to an unoffered default. */
+        if (!$control->onStep($control->default)) {
+            return "its default {$control->default} is off its step grid ({$control->describeStep()}).";
+        }
+
         return null;
     }
 

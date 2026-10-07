@@ -23,4 +23,22 @@ describe('toNumberValue', () => {
         expect(toNumberValue('fast')).toBeUndefined();
         expect(toNumberValue('Infinity')).toBeUndefined();
     });
+
+    it('stores a literal default for a cleared input, so the session matches a reload', () => {
+        expect(toNumberValue('', 10)).toBe(10);
+        expect(toNumberValue(undefined, 10)).toBe(10);
+    });
+
+    it('stores nothing for a cleared input when the field has a function default', () => {
+        // fields.number passes no fallback for a function default; readFieldValue() resolves it.
+        expect(toNumberValue('', undefined)).toBeUndefined();
+    });
+
+    it('falls back the same way for input that is not a finite number', () => {
+        expect(toNumberValue('fast', 10)).toBe(10);
+    });
+
+    it('keeps a typed value over the fallback, 0 included', () => {
+        expect(toNumberValue('0', 10)).toBe(0);
+    });
 });

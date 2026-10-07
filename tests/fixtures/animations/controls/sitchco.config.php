@@ -52,6 +52,10 @@ return [
         // One problem: 150 is past the speed control's max of 100.
         'test/default-out-of-range' => ['second-tester' => ['defaults' => ['speed' => 150]]],
 
+        // One problem: 52 is within range but off the speed control's step of 5, so the editor
+        // would round it to 50 the first time the field commits.
+        'test/default-off-step' => ['second-tester' => ['defaults' => ['speed' => 52]]],
+
         // One problem: numeric, but it casts to INF, which json_encode() cannot write.
         'test/default-infinite' => ['second-tester' => ['defaults' => ['speed' => '1e999']]],
     ],
