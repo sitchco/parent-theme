@@ -41,6 +41,9 @@ class AnimationFrameworkModule extends Module
     /** Top-level config section mapping block names to the animations allowed on them. */
     public const CONFIG_KEY = 'animations';
 
+    /** The form every animation key must take: lowercase kebab, each segment led by a letter. */
+    public const KEY_PATTERN = '/^[a-z][a-z0-9]*(-[a-z][a-z0-9]*)*$/D';
+
     /**
      * Memoized result of discoverAnimations(); null until first asked.
      * @var array<string, AnimationModule>|null
@@ -62,7 +65,11 @@ class AnimationFrameworkModule extends Module
     /** Whether init() has run; until it has, nothing below memoizes. See getAnimations(). */
     private bool $initialized = false;
 
-    public function __construct(protected ModuleRegistry $moduleRegistry, protected ConfigRegistry $configRegistry) {}
+    public function __construct(
+        protected ModuleRegistry $moduleRegistry,
+        protected ConfigRegistry $configRegistry,
+        protected AnimationControlValidator $controlValidator,
+    ) {}
 
     /**
      * Opens memoization and registers the editor control.
@@ -264,6 +271,17 @@ class AnimationFrameworkModule extends Module
                 continue;
             }
 
+            /* The key is content: saved blocks store it, it is emitted as data-animation and
+               matched by CSS, and it is the stem of every control's attribute name. So it is held
+               to one form from the start, lowercase kebab with each segment led by a letter,
+               because a key cannot be changed once content uses it. */
+            if (!preg_match(static::KEY_PATTERN, $key)) {
+                Logger::error(
+                    "Animation {$classname} has the key \"{$key}\", which is not lowercase kebab-case (e.g. \"fade-up\"). Skipping.",
+                );
+                continue;
+            }
+
             /* First registered wins. Modules are instantiated in dependency order, so the winner is
                stable across requests rather than whichever happened to land last — and the loser is
                logged, because two animations claiming one key is the kind of mistake that otherwise
@@ -303,175 +321,20 @@ class AnimationFrameworkModule extends Module
     }
 
     /**
-     * Drops every control that cannot work, reporting them all in one error.
-     *
-     * These are mistakes in an animation's code rather than in config, so they log as errors, as a
-     * duplicate animation key does — and, as there, the first definition wins: animations are
-     * visited in registration order and controls in declaration order, so which one is kept is
-     * stable across requests.
-     *
-     * Strictly, the first *valid* definition wins. A definition dropped for another problem is
-     * reported for that problem and never claims the name, so a later valid one of the same name
-     * is kept rather than discarded with it: there is no reason to lose a control that works.
+     * Drops every control that cannot work, reporting them all in one error. The rules are
+     * AnimationControlValidator's; see there for which definition wins.
      *
      * @return array<string, array<string, AnimationControl>>
      */
     private function validateControls(): array
     {
-        $valid = [];
-        $attributeOwners = [];
-        $problems = [];
-
-        foreach ($this->getAnimations() as $key => $animation) {
-            foreach ($animation->controls() as $index => $control) {
-                if (!($control instanceof AnimationControl)) {
-                    $problems[] = "{$key} / #{$index}: is not an AnimationControl. Dropping it.";
-                    continue;
-                }
-
-                $context = "{$key} / {$control->name}";
-
-                /* The name becomes the tail of a block attribute name and a key in config, so it is
-                 held to something that is safe as both. `D`, because a bare `$` also matches before a
-                 trailing newline. */
-                if (!preg_match('/^[a-z][a-zA-Z0-9]*$/D', $control->name)) {
-                    $problems[] = "{$context}: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.";
-                    continue;
-                }
-
-                if (isset($valid[$key][$control->name])) {
-                    $problems[] = "{$context}: is declared twice. Keeping the first valid one.";
-                    continue;
-                }
-
-                /* A typo, not a broken control: on its own the control works, only without the setting
-                   meant. Reported before the checks below, so a misspelled `optionFilter` is named
-                   rather than seen only as a missing source. */
-                if ($control->unknownOptions) {
-                    $problems[] = sprintf(
-                        '%s: does not know the option%s %s. Ignoring %s.',
-                        $context,
-                        count($control->unknownOptions) > 1 ? 's' : '',
-                        implode(', ', array_map(fn($key) => "`{$key}`", $control->unknownOptions)),
-                        count($control->unknownOptions) > 1 ? 'them' : 'it',
-                    );
-                }
-
-                if ($control->type === 'select') {
-                    // An empty filter name is no source: applyFilters('') resolves nothing.
-                    $hasFilter = $control->optionsFilter !== null && $control->optionsFilter !== '';
-                    if (($control->options !== null) === $hasFilter) {
-                        $problems[] = "{$context}: a select needs exactly one of `options` or `optionsFilter`. Dropping it.";
-                        continue;
-                    }
-
-                    if ($control->options !== null && !$this->isOptionList($control->options)) {
-                        $problems[] = "{$context}: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.";
-                        continue;
-                    }
-
-                    /* The editor cannot start on a value the select does not offer. An unoffered
-                       `''` is the worst of it: the select shows its first option as chosen, so
-                       choosing that option fires no change and it can never be stored. */
-                    $offered = $control->optionValues();
-                    if ($offered !== null && !in_array($control->default, $offered, true)) {
-                        $problems[] = "{$context}: its default \"{$control->default}\" is not one of its options. Dropping it.";
-                        continue;
-                    }
-                }
-
-                if ($control->type === 'number') {
-                    /* json_encode() cannot write INF or NAN: it returns false, the inline script is
-                       left as `window.sitchco.animations = ;`, and the Animation panel disappears
-                       from every block. number() also takes its default as given, so a string can
-                       arrive here too. */
-                    if (!$this->isFiniteNumber($control->default)) {
-                        $problems[] = "{$context}: its default must be a finite number. Dropping it.";
-                        continue;
-                    }
-
-                    if (
-                        ($control->min !== null && !$this->isFiniteNumber($control->min)) ||
-                        ($control->max !== null && !$this->isFiniteNumber($control->max))
-                    ) {
-                        $problems[] = "{$context}: its min and max must be finite numbers. Dropping it.";
-                        continue;
-                    }
-                }
-
-                if ($control->type === 'number' && !$control->inRange($control->default)) {
-                    $problems[] = "{$context}: its default {$control->default} is outside its range ({$control->describeRange()}). Dropping it.";
-                    continue;
-                }
-
-                /* Distinct keys can still meet in one attribute name — `second-tester` and
-                   `secondTester` both camelCase to secondTester, so their `speed` controls are both
-                   secondTesterAnimationSpeed — and two controls writing one attribute would
-                   overwrite each other's saved values. */
-                $attribute = static::attributeName($key, $control->name);
-                if (isset($attributeOwners[$attribute])) {
-                    $problems[] = "{$context}: its attribute \"{$attribute}\" is already used by {$attributeOwners[$attribute]}. Dropping it.";
-                    continue;
-                }
-
-                $attributeOwners[$attribute] = $context;
-                $valid[$key][$control->name] = $control;
-            }
-        }
+        ['controls' => $controls, 'problems' => $problems] = $this->controlValidator->validate($this->getAnimations());
 
         if ($problems) {
             Logger::error(['message' => 'Animation control problems.', 'problems' => $problems]);
         }
 
-        return $valid;
-    }
-
-    private function isFiniteNumber(mixed $value): bool
-    {
-        return is_int($value) || (is_float($value) && is_finite($value));
-    }
-
-    /**
-     * A non-empty list of pairs, each with a non-empty string label and a string or finite number
-     * value, no two values alike once cast to strings. The value is sent to the editor as a string
-     * (AnimationControl::optionValues()), so a null would pose as the empty option, an array would
-     * arrive as "Array", and `30` beside `'30'` would be two options the select cannot tell apart.
-     *
-     * Other keys are sent as declared, so each must hold something json_encode() can write: a
-     * string, a bool or a finite number. An INF anywhere in the payload empties it entirely.
-     */
-    private function isOptionList(array $options): bool
-    {
-        if ($options === [] || !array_is_list($options)) {
-            return false;
-        }
-
-        $seen = [];
-
-        foreach ($options as $option) {
-            if (!is_array($option)) {
-                return false;
-            }
-
-            $label = $option['label'] ?? null;
-            $value = $option['value'] ?? null;
-            if (!is_string($label) || $label === '' || !(is_string($value) || $this->isFiniteNumber($value))) {
-                return false;
-            }
-
-            foreach (array_diff_key($option, ['label' => true, 'value' => true]) as $extra) {
-                if (!is_string($extra) && !is_bool($extra) && !$this->isFiniteNumber($extra)) {
-                    return false;
-                }
-            }
-
-            if (isset($seen[(string) $value])) {
-                return false;
-            }
-            $seen[(string) $value] = true;
-        }
-
-        return true;
+        return $controls;
     }
 
     /**

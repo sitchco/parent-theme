@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
     buildAnimationFields,
     EMPTY_OPTION_LABEL,
+    normalizeHookOptions,
     restrictOptions,
 } from '../../modules/Animation/assets/scripts/editor-ui/animation-fields';
 import { resolveOptions, withStaleValue } from '../../modules/ExtendBlock/assets/scripts/includes/utils/options';
@@ -61,6 +62,7 @@ const CONTROLS = {
             default: 50,
             min: 0,
             max: 100,
+            step: 5,
         },
         {
             type: 'toggle',
@@ -127,6 +129,228 @@ describe('restrictOptions', () => {
     });
 });
 
+describe('normalizeHookOptions', () => {
+    it('casts every value to a string, the form allowed and stored values compare against', () => {
+        const normalized = normalizeHookOptions(
+            [
+                {
+                    label: 'Default',
+                    value: '',
+                },
+                {
+                    label: '30%',
+                    value: 30,
+                    extra: true,
+                },
+            ],
+            'test.cast'
+        );
+
+        expect(normalized).toEqual([
+            {
+                label: 'Default',
+                value: '',
+            },
+            {
+                label: '30%',
+                value: '30',
+                extra: true,
+            },
+        ]);
+    });
+
+    it('adds an empty option first when the hook has none', () => {
+        expect(normalizeHookOptions(options('purple'), 'test.add').map((o) => o.value)).toEqual(['', 'purple']);
+    });
+
+    it('keeps only the first of several empty options', () => {
+        const normalized = normalizeHookOptions(
+            [
+                {
+                    label: 'Default',
+                    value: '',
+                },
+                {
+                    label: 'Purple',
+                    value: 'purple',
+                },
+                {
+                    label: 'None',
+                    value: '',
+                },
+            ],
+            'test.dedupe'
+        );
+
+        expect(normalized.map((o) => o.label)).toEqual(['Default', 'Purple']);
+    });
+
+    it('leaves the empty option when a hook returns nothing, and warns once per hook', () => {
+        const warn = vi.spyOn(globalThis.console, 'warn').mockImplementation(() => {});
+
+        try {
+            expect(normalizeHookOptions([], 'test.empty')).toEqual([
+                {
+                    label: EMPTY_OPTION_LABEL,
+                    value: '',
+                },
+            ]);
+
+            expect(normalizeHookOptions(undefined, 'test.empty')).toEqual([
+                {
+                    label: EMPTY_OPTION_LABEL,
+                    value: '',
+                },
+            ]);
+
+            expect(warn).toHaveBeenCalledTimes(1);
+            expect(warn.mock.calls[0][0]).toContain("'test.empty' hook returned no options");
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it('drops entries that are not options', () => {
+        expect(normalizeHookOptions([null, 'red', { label: 'X' }, ...options('red')], 'test.junk')).toEqual([
+            {
+                label: EMPTY_OPTION_LABEL,
+                value: '',
+            },
+            {
+                label: 'red',
+                value: 'red',
+            },
+        ]);
+    });
+
+    it('holds hook entries to the rules PHP holds a static list to', () => {
+        expect(
+            normalizeHookOptions(
+                [
+                    {
+                        label: 'A',
+                        value: 30,
+                    },
+                    {
+                        label: 'B',
+                        value: '30',
+                    },
+                    { value: 'red' },
+                    {
+                        label: 'C',
+                        value: true,
+                    },
+                    {
+                        label: '',
+                        value: 'blank',
+                    },
+                    {
+                        label: 'D',
+                        value: NaN,
+                    },
+                    {
+                        label: 'E',
+                        value: { hex: '#f00' },
+                    },
+                ],
+                'test.strict'
+            )
+        ).toEqual([
+            {
+                label: EMPTY_OPTION_LABEL,
+                value: '',
+            },
+            {
+                label: 'A',
+                value: '30',
+            },
+        ]);
+    });
+
+    it('keeps the first of two values alike once cast, as a layered hook can produce', () => {
+        expect(
+            normalizeHookOptions(
+                [
+                    ...options('', 'purple'),
+                    {
+                        label: 'Child purple',
+                        value: 'purple',
+                    },
+                ],
+                'test.layered'
+            )
+        ).toEqual(options('', 'purple'));
+    });
+
+    it('warns once, and says so, when a hook returns only entries it cannot use', () => {
+        const warn = vi.spyOn(globalThis.console, 'warn').mockImplementation(() => {});
+
+        try {
+            expect(
+                normalizeHookOptions(
+                    [
+                        { value: 'red' },
+                        {
+                            label: 'C',
+                            value: true,
+                        },
+                    ],
+                    'test.invalid'
+                )
+            ).toEqual([
+                {
+                    label: EMPTY_OPTION_LABEL,
+                    value: '',
+                },
+            ]);
+
+            normalizeHookOptions([{ value: 'red' }], 'test.invalid');
+
+            expect(warn).toHaveBeenCalledTimes(1);
+            expect(warn.mock.calls[0][0]).toContain("'test.invalid' hook returned 2 options, none with");
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it('does not warn while at least one entry is usable', () => {
+        const warn = vi.spyOn(globalThis.console, 'warn').mockImplementation(() => {});
+
+        try {
+            normalizeHookOptions([{ value: 'red' }, ...options('purple')], 'test.partial');
+
+            expect(warn).not.toHaveBeenCalled();
+        } finally {
+            warn.mockRestore();
+        }
+    });
+
+    it('lets a numeric hook value meet a narrowed allowed list', () => {
+        const blockName = 'core/group';
+        const numericHook = (name, initial) =>
+            name === 'theme.color-options'
+                ? [
+                      {
+                          label: '30',
+                          value: 30,
+                      },
+                  ]
+                : initial;
+        const { letterAnimationColor } = Object.fromEntries(
+            buildAnimationFields(
+                fields,
+                {
+                    blocks: { [blockName]: { letter: entry('letter', { allowed: { color: ['30'] } }) } },
+                    controls: CONTROLS,
+                },
+                numericHook
+            ).map((f) => [f.name, f])
+        );
+
+        expect(resolveOptions(letterAnimationColor, { blockName }).map((o) => o.value)).toEqual(['', '30']);
+    });
+});
+
 describe('buildAnimationFields', () => {
     it('builds one field per control, stored under the attribute PHP named', () => {
         const built = build();
@@ -145,6 +369,7 @@ describe('buildAnimationFields', () => {
             label: 'Speed',
             min: 0,
             max: 100,
+            step: 5,
         });
 
         expect(built.fadeUpAnimationReverse).toMatchObject({

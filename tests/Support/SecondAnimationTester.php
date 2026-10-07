@@ -30,7 +30,7 @@ class SecondAnimationTester extends AnimationModule
     public function controls(): array
     {
         return [
-            AnimationControl::number('speed', 'Speed', ['default' => 50, 'min' => 0, 'max' => 100]),
+            AnimationControl::number('speed', 'Speed', ['default' => 50, 'min' => 0, 'max' => 100, 'step' => 5]),
             AnimationControl::select('direction', 'Direction', [
                 'options' => [['label' => 'Up', 'value' => 'up'], ['label' => 'Down', 'value' => 'down']],
                 'default' => 'up',

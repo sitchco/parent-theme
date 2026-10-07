@@ -61,6 +61,7 @@ readonly class AnimationControl implements \JsonSerializable
         public ?string $optionsFilter = null,
         public int|float|null $min = null,
         public int|float|null $max = null,
+        public int|float|null $step = null,
         /** @var list<string> Option keys the factory did not recognize, reported by the coordinator. */
         public array $unknownOptions = [],
     ) {}
@@ -105,12 +106,20 @@ readonly class AnimationControl implements \JsonSerializable
     }
 
     /**
-     * @param array{default?: int|float, min?: int|float, max?: int|float, help?: string} $options
+     * `step` is the increment the control moves in, and also the grid the editor rounds a value to
+     * whenever the input commits (on blur or Enter), whether or not anyone typed in it. Without one
+     * the grid is whole numbers, so a fractional value such as 0.75 needs a `step` that reaches it.
+     *
+     * The default must sit on that grid (see onStep()), or tabbing through the inspector would
+     * silently rewrite a value nobody touched. The coordinator drops a control whose default does
+     * not.
+     *
+     * @param array{default?: int|float, min?: int|float, max?: int|float, step?: int|float, help?: string} $options
      */
     public static function number(string $name, string $label, array $options = []): self
     {
         [$options, $unknown] = self::withDefaults(
-            ['default' => 0, 'min' => null, 'max' => null, 'help' => null],
+            ['default' => 0, 'min' => null, 'max' => null, 'step' => null, 'help' => null],
             $options,
         );
 
@@ -122,6 +131,7 @@ readonly class AnimationControl implements \JsonSerializable
             help: $options['help'],
             min: $options['min'],
             max: $options['max'],
+            step: $options['step'],
             unknownOptions: $unknown,
         );
     }
@@ -187,6 +197,43 @@ readonly class AnimationControl implements \JsonSerializable
     }
 
     /**
+     * Whether a number lies on the grid the editor rounds this control's values to.
+     *
+     * The grid is the one NumberControl's ensureValidStep() rounds to on commit: multiples of
+     * `step` (1 when unset), offset by `min` when `min` is not itself a multiple of `step`. The
+     * comparison allows for float error, so 0.3 sits on a grid of 0.1.
+     */
+    public function onStep(int|float $value): bool
+    {
+        $steps = ($value - $this->stepBase()) / ($this->step ?? 1);
+
+        return abs($steps - round($steps)) < 1e-9;
+    }
+
+    /**
+     * The grid onStep() checks, for a problem message: "whole numbers", "steps of 5 from 0".
+     */
+    public function describeStep(): string
+    {
+        $base = $this->stepBase();
+        if ($this->step === null && $base == 0) {
+            return 'whole numbers';
+        }
+
+        return sprintf('steps of %s from %s', $this->step ?? 1, $base);
+    }
+
+    /**
+     * Where the grid starts: `min` when it is off the multiples of `step`, 0 otherwise.
+     */
+    private function stepBase(): int|float
+    {
+        $step = $this->step ?? 1;
+
+        return $this->min !== null && fmod($this->min, $step) != 0 ? $this->min : 0;
+    }
+
+    /**
      * The static options with each value cast to a string, so `30` and `'30'` are one value
      * everywhere. Any other keys are kept as declared.
      *
@@ -221,6 +268,7 @@ readonly class AnimationControl implements \JsonSerializable
                 'optionsFilter' => $this->optionsFilter,
                 'min' => $this->min,
                 'max' => $this->max,
+                'step' => $this->step,
             ],
             fn($value) => $value !== null,
         );

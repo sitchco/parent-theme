@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Tests;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\ModuleRegistry;
+use Sitchco\Parent\Modules\Animation\AnimationControlValidator;
 use Sitchco\Parent\Modules\Animation\AnimationFrameworkModule;
 use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
@@ -14,6 +15,8 @@ use Sitchco\Parent\Tests\Support\EmptyKeyAnimationTester;
 use Sitchco\Parent\Tests\Support\MalformedControlsAnimationTester;
 use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Parent\Tests\Support\SecondAnimationTester;
+use Sitchco\Parent\Tests\Support\CollidingAnimationTester;
+use Sitchco\Parent\Tests\Support\InvalidKeyAnimationTester;
 use Sitchco\Tests\TestCase;
 use Sitchco\Utils\LogLevel;
 use Sitchco\Utils\Logger;
@@ -45,7 +48,7 @@ class AnimationFrameworkModuleTest extends TestCase
         ConfigRegistry $configRegistry,
         string ...$moduleClassnames,
     ): AnimationFrameworkModule {
-        $framework = new AnimationFrameworkModule($this->registryFor(...$moduleClassnames), $configRegistry);
+        $framework = $this->newFramework($this->registryFor(...$moduleClassnames), $configRegistry);
         $framework->init();
 
         return $framework;
@@ -73,6 +76,19 @@ class AnimationFrameworkModuleTest extends TestCase
         string $key = 'animation-tester',
     ): array {
         return $framework->getAnimationsForBlock($blockName)[$key] ?? [];
+    }
+
+    /**
+     * The coordinator over a given registry and config, its stateless services from the container,
+     * as the container would build it.
+     */
+    private function newFramework(ModuleRegistry $registry, ConfigRegistry $configRegistry): AnimationFrameworkModule
+    {
+        return new AnimationFrameworkModule(
+            $registry,
+            $configRegistry,
+            $this->container->get(AnimationControlValidator::class),
+        );
     }
 
     private function registryFor(string ...$moduleClassnames): ModuleRegistry
@@ -174,7 +190,7 @@ class AnimationFrameworkModuleTest extends TestCase
     public function testIgnoresModulesThatAreNotAnimations(): void
     {
         $registry = $this->registryFor(AnimationTester::class, ModuleTester::class);
-        $framework = new AnimationFrameworkModule($registry, new ConfigRegistryTester());
+        $framework = $this->newFramework($registry, new ConfigRegistryTester());
         $framework->init();
         $animations = $framework->getAnimations();
 
@@ -230,6 +246,46 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertStringContainsString(EmptyKeyAnimationTester::class, $entry['value']);
     }
 
+    public function testAKeyThatIsNotKebabCaseIsDroppedWithAnErrorWithoutLosingOtherAnimations(): void
+    {
+        $framework = $this->frameworkFor(InvalidKeyAnimationTester::class, AnimationTester::class);
+        $animations = null;
+
+        $entry = $this->captureLogs(function () use ($framework, &$animations) {
+            $animations = $framework->getAnimations();
+        });
+
+        $this->assertSame(['animation-tester'], array_keys($animations));
+        $this->assertSame(LogLevel::ERROR, $entry['level']);
+        $this->assertStringContainsString(InvalidKeyAnimationTester::class, $entry['value']);
+        $this->assertStringContainsString('"fadeUp"', $entry['value']);
+    }
+
+    /**
+     * @dataProvider keyFormatProvider
+     */
+    public function testTheKeyPatternAcceptsOnlyLowercaseKebabCase(string $key, bool $valid): void
+    {
+        $this->assertSame($valid, (bool) preg_match(AnimationFrameworkModule::KEY_PATTERN, $key));
+    }
+
+    public static function keyFormatProvider(): array
+    {
+        return [
+            'one word' => ['letter', true],
+            'two words' => ['fade-up', true],
+            'digits after a letter' => ['fade-up2', true],
+            'camelCase' => ['fadeUp', false],
+            'uppercase' => ['Letter', false],
+            'underscore' => ['fade_up', false],
+            'leading digit' => ['2up', false],
+            'segment led by a digit' => ['fade-2up', false],
+            'double hyphen' => ['fade--up', false],
+            'trailing hyphen' => ['fade-', false],
+            'trailing newline' => ["fade\n", false],
+        ];
+    }
+
     public function testActivatingAnAnimationPullsInTheFramework(): void
     {
         $active = $this->registryFor(AnimationTester::class)->getActiveModules();
@@ -255,7 +311,7 @@ class AnimationFrameworkModuleTest extends TestCase
     public function testDiscoveryIsMemoized(): void
     {
         $registry = $this->registryFor(AnimationTester::class);
-        $framework = new AnimationFrameworkModule($registry, new ConfigRegistryTester());
+        $framework = $this->newFramework($registry, new ConfigRegistryTester());
         $framework->init();
         $first = $framework->getAnimations();
 
@@ -272,7 +328,7 @@ class AnimationFrameworkModuleTest extends TestCase
            from a constructor sees a list that is still filling. Memoizing that would drop an
            animation for the whole request and say nothing, so nothing is kept until init(). */
         $registry = $this->registryFor(AnimationTester::class);
-        $framework = new AnimationFrameworkModule($registry, new ConfigRegistryTester());
+        $framework = $this->newFramework($registry, new ConfigRegistryTester());
 
         $this->assertSame(['animation-tester'], array_keys($framework->getAnimations()));
 
@@ -378,10 +434,7 @@ class AnimationFrameworkModuleTest extends TestCase
            while that list is still filling is short an animation — and memoizing it would keep
            everyone else short for the rest of the request, silently. */
         $registry = $this->registryFor(AnimationTester::class);
-        $framework = new AnimationFrameworkModule(
-            $registry,
-            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/clean'),
-        );
+        $framework = $this->newFramework($registry, new ConfigRegistryTester(__DIR__ . '/fixtures/animations/clean'));
 
         $this->assertSame(['animation-tester'], array_keys($framework->getAnimationsForBlock('test/clean-bare')));
 
@@ -399,7 +452,7 @@ class AnimationFrameworkModuleTest extends TestCase
         /* Before init() nothing is memoized, and the controls fixture has many override entries, each
            of which asks for its animation's controls. Logger keeps only its last entry, so the
            error_log output is what gets counted. */
-        $framework = new AnimationFrameworkModule(
+        $framework = $this->newFramework(
             $this->registryFor(
                 AnimationTester::class,
                 SecondAnimationTester::class,
@@ -836,6 +889,7 @@ class AnimationFrameworkModuleTest extends TestCase
                 'default' => 50,
                 'min' => 0,
                 'max' => 100,
+                'step' => 5,
                 'attribute' => 'secondTesterAnimationSpeed',
             ],
             $serialized['second-tester'][0],
@@ -867,58 +921,26 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame([], $this->frameworkFor(DuplicateAnimationTester::class)->getAnimationControls());
     }
 
-    public function testEveryBrokenControlIsDroppedInOneErrorAndTheFirstDefinitionWins(): void
+    public function testTheValidatorsVerdictIsLoggedAsOneErrorAndItsControlsAreServed(): void
     {
-        $framework = $this->frameworkFor(SecondAnimationTester::class, MalformedControlsAnimationTester::class);
+        $framework = $this->frameworkFor(
+            SecondAnimationTester::class,
+            MalformedControlsAnimationTester::class,
+            CollidingAnimationTester::class,
+        );
         $controls = null;
 
         $entry = $this->captureLogs(function () use ($framework, &$controls) {
             $controls = $framework->getControls();
         });
 
-        // SecondAnimationTester registered first, so it keeps secondTesterAnimationSpeed; of the two `ok`
-        // toggles, the first declared is kept.
-        $this->assertSame(['speed', 'direction', 'tint', 'caption'], array_keys($controls['second-tester']));
-        $this->assertSame(['defaultTypo', 'twice', 'ok'], array_keys($controls['secondTester']));
-        $this->assertSame('Kept', $controls['secondTester']['ok']->label);
-        // The first valid definition wins: a malformed first one never claims the name.
-        $this->assertSame('Valid second', $controls['secondTester']['twice']->label);
-        // A misspelled option is reported, but the control it was meant for is kept without it.
-        $this->assertFalse($controls['secondTester']['defaultTypo']->default);
-
+        // The rules themselves are AnimationControlValidatorTest's; this is the coordinator's part.
+        $verdict = $this->container->get(AnimationControlValidator::class)->validate($framework->getAnimations());
+        $this->assertNotEmpty($verdict['problems']);
         $this->assertSame(LogLevel::ERROR, $entry['level']);
-        $this->assertSame(
-            [
-                'secondTester / #0: is not an AnimationControl. Dropping it.',
-                'secondTester / Bad-Name: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.',
-                "secondTester / trailingNewline\n: the name must be camelCase letters and digits, starting with a lowercase letter. Dropping it.",
-                'secondTester / noOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                'secondTester / bothOptions: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                "secondTester / looseOptions: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                'secondTester / emptyFilter: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                "secondTester / emptyOptions: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / nullValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / arrayValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / numberLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / emptyLabel: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / extraInfinite: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / infiniteValue: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                "secondTester / castDuplicate: `options` must be a non-empty list of ['label' => …, 'value' => …] pairs, each label a non-empty string, each value a distinct string or finite number, and any other key a string, bool or finite number. Dropping it.",
-                'secondTester / unofferedDefault: its default "" is not one of its options. Dropping it.',
-                'secondTester / outOfRange: its default 5 is outside its range (at most 3). Dropping it.',
-                'secondTester / infinite: its default must be a finite number. Dropping it.',
-                'secondTester / notANumber: its default must be a finite number. Dropping it.',
-                'secondTester / nanMax: its min and max must be finite numbers. Dropping it.',
-                'secondTester / filterTypo: does not know the option `optionFilter`. Ignoring it.',
-                'secondTester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                'secondTester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',
-                'secondTester / speed: its attribute "secondTesterAnimationSpeed" is already used by second-tester / speed. Dropping it.',
-                // Only the malformed first `twice` is reported: the valid second is not a duplicate of it.
-                'secondTester / twice: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
-                'secondTester / ok: is declared twice. Keeping the first valid one.',
-            ],
-            $entry['value']['problems'],
-        );
+        $this->assertSame('Animation control problems.', $entry['value']['message']);
+        $this->assertSame($verdict['problems'], $entry['value']['problems']);
+        $this->assertEquals($verdict['controls'], $controls);
     }
 
     public function testControlValidationIsMemoized(): void
@@ -1008,6 +1030,12 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertSame(['speed' => 150], $blocks['test/default-out-of-range']['second-tester']['defaults']);
 
         $this->assertContains(
+            'test/default-off-step / second-tester / defaults / speed: defaults to 52, off the control\'s step grid (steps of 5 from 0). The editor rounds it once the field is used. Keeping it.',
+            $problems,
+        );
+        $this->assertSame(['speed' => 52], $blocks['test/default-off-step']['second-tester']['defaults']);
+
+        $this->assertContains(
             'test/default-infinite / second-tester / defaults / speed: defaults to 1e999, which is not a finite number. Dropping it.',
             $problems,
         );
@@ -1016,7 +1044,7 @@ class AnimationFrameworkModuleTest extends TestCase
 
         // Counted as well as named, so the two valid entries are proven silent and the restricted
         // teal is reported once.
-        $this->assertCount(14, $problems);
+        $this->assertCount(15, $problems);
     }
 
     public function testAnOptionsFilterSelectTakesItsPermittedValuesAsWritten(): void

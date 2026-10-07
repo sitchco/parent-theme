@@ -6,20 +6,17 @@ use Sitchco\Parent\Modules\Animation\AnimationControl;
 use Sitchco\Parent\Modules\Animation\AnimationModule;
 
 /**
- * An animation whose controls break every definition rule the coordinator enforces, alongside one
- * that is fine. A fake of its own because the AnimationModule contract is what is under test here.
+ * An animation whose controls break every definition rule the coordinator enforces, alongside some
+ * that are fine. A fake of its own because the AnimationModule contract is what is under test here.
  *
- * Keyed `secondTester` so that its `speed` meets SecondAnimationTester's (keyed `second-tester`) in
- * one attribute name, secondTesterAnimationSpeed: distinct keys, one collision.
+ * Its valid `edgeAnimationSpeed` is one half of an attribute collision: CollidingAnimationTester,
+ * keyed `malformed-controls-tester-animation-edge`, declares `speed`, and both build
+ * malformedControlsTesterAnimationEdgeAnimationSpeed. Kebab keys cannot collide on their own, so
+ * a control name carrying `Animation` is the only way two attributes still meet.
  */
 class MalformedControlsAnimationTester extends AnimationModule
 {
     public const HOOK_SUFFIX = 'malformed-controls-tester';
-
-    public function key(): string
-    {
-        return 'secondTester';
-    }
 
     public function label(): string
     {
@@ -60,9 +57,24 @@ class MalformedControlsAnimationTester extends AnimationModule
             AnimationControl::number('infinite', 'Infinite', ['default' => INF]),
             AnimationControl::number('notANumber', 'Not a number', ['default' => 'fast']),
             AnimationControl::number('nanMax', 'NAN max', ['max' => NAN]),
+            AnimationControl::number('minAboveMax', 'Min above max', ['min' => 5, 'max' => 1]),
+            AnimationControl::number('zeroStep', 'Zero step', ['step' => 0]),
+            AnimationControl::number('negativeStep', 'Negative step', ['step' => -1]),
+            AnimationControl::number('infiniteStep', 'Infinite step', ['step' => INF]),
+            AnimationControl::number('offGrid', 'Off grid', ['default' => 3, 'min' => 0, 'step' => 5]),
+            // No step means whole numbers, the grid the editor rounds to without one.
+            AnimationControl::number('fractionNoStep', 'Fraction, no step', ['default' => 0.5]),
+            // Kept: a range of one value, and a fractional step its default sits on.
+            AnimationControl::number('pinned', 'Pinned', ['default' => 2, 'min' => 2, 'max' => 2]),
+            AnimationControl::number('quarterStep', 'Quarter step', ['default' => 0.75, 'step' => 0.25]),
+            // Kept: off the multiples of 0.5, so the grid starts at min, as the editor's does.
+            AnimationControl::number('offsetGrid', 'Offset grid', ['default' => 1.25, 'min' => 0.25, 'step' => 0.5]),
+            // Two defects: the blank label is reported, and the control is not looked at further.
+            AnimationControl::number('twoDefects', ' ', ['min' => 5, 'max' => 1]),
+            AnimationControl::text('blankLabel', ' '),
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
-            AnimationControl::number('speed', 'Collides'),
+            AnimationControl::number('edgeAnimationSpeed', 'Collision source'),
             // Dropped for its missing source; the toggle of the same name after it is kept.
             AnimationControl::select('twice', 'Malformed first'),
             AnimationControl::toggle('twice', 'Valid second'),
