@@ -116,4 +116,82 @@ describe('createEditorPropsBuilder', () => {
             wrapperProps: { 'data-x': 'second' },
         });
     });
+
+    describe('the style channel', () => {
+        const colorField = {
+            name: 'color',
+            style: (value) => ({ '--x-color': value || undefined }),
+        };
+
+        it('puts custom properties on wrapperProps.style', () => {
+            const build = createEditorPropsBuilder([colorField]);
+
+            expect(build(group({ color: 'red' }))).toEqual({
+                wrapperProps: { style: { '--x-color': 'red' } },
+            });
+        });
+
+        it('adds nothing when the only field emits nothing', () => {
+            const build = createEditorPropsBuilder([colorField]);
+
+            expect(build(group({ color: '' }))).toBeNull();
+        });
+
+        it('emits a styleGenerator with no fields', () => {
+            const build = createEditorPropsBuilder([], { styleGenerator: () => ({ '--g': '1' }) });
+
+            expect(build(group({}))).toEqual({ wrapperProps: { style: { '--g': '1' } } });
+        });
+
+        it("keeps attributes and another registration's style alongside its own", () => {
+            const build = createEditorPropsBuilder([], {
+                attributeGenerator: () => ({ 'data-animation': 'x' }),
+                styleGenerator: () => ({
+                    '--inner': '1',
+                    '--shared': 'inner',
+                }),
+            });
+            const outerProps = {
+                'data-outer': 'y',
+                style: {
+                    '--outer': '2',
+                    '--shared': 'outer',
+                },
+            };
+
+            expect(build(group({}, { wrapperProps: outerProps }))).toEqual({
+                wrapperProps: {
+                    'data-animation': 'x',
+                    'data-outer': 'y',
+                    style: {
+                        '--inner': '1',
+                        '--outer': '2',
+                        '--shared': 'outer',
+                    },
+                },
+            });
+        });
+
+        it('stacks two registrations on one block, last registration winning', () => {
+            const first = createEditorPropsBuilder([], {
+                styleGenerator: () => ({
+                    '--x': 'first',
+                    '--a': '1',
+                }),
+            });
+            const second = createEditorPropsBuilder([], { styleGenerator: () => ({ '--x': 'second' }) });
+
+            const outer = second(group({}));
+            const inner = first(group({}, outer));
+
+            expect(inner).toEqual({
+                wrapperProps: {
+                    style: {
+                        '--x': 'second',
+                        '--a': '1',
+                    },
+                },
+            });
+        });
+    });
 });
