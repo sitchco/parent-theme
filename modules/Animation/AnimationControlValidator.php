@@ -75,8 +75,16 @@ class AnimationControlValidator
                     continue;
                 }
 
+                /* A value of the wrong PHP type, which the factory recorded and left unset rather
+                 than throwing. Every one is named, since one look at the definition fixes them all. */
+                if ($control->typeProblems) {
+                    $problems[] = sprintf('%s: %s. Dropping it.', $context, implode('; ', $control->typeProblems));
+                    continue;
+                }
+
                 $problem = match ($control->type) {
-                    'select' => $this->selectProblem($control),
+                    'select' => $this->defaultTypeProblem($control) ?? $this->selectProblem($control),
+                    'toggle', 'text' => $this->defaultTypeProblem($control),
                     'number' => $this->numberProblem($control),
                     default => null,
                 };
@@ -101,6 +109,19 @@ class AnimationControlValidator
         }
 
         return ['controls' => $valid, 'problems' => $problems];
+    }
+
+    /**
+     * A default the factory kept as written because it is not of its control's type. Not cast:
+     * a toggle's `'false'` would become `true`, silently. A number's default is numberProblem()'s.
+     */
+    private function defaultTypeProblem(AnimationControl $control): ?string
+    {
+        return match ($control->type) {
+            'toggle' => is_bool($control->default) ? null : 'its default must be true or false.',
+            'select', 'text' => is_string($control->default) ? null : 'its default must be a string or a number.',
+            default => null,
+        };
     }
 
     private function selectProblem(AnimationControl $control): ?string

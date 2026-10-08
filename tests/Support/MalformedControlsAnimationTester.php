@@ -72,6 +72,16 @@ class MalformedControlsAnimationTester extends AnimationModule
             // Two defects: the blank label is reported, and the control is not looked at further.
             AnimationControl::number('twoDefects', ' ', ['min' => 5, 'max' => 1]),
             AnimationControl::text('blankLabel', ' '),
+            // Wrong PHP types: reported and dropped, never cast or thrown.
+            AnimationControl::toggle('stringToggle', 'String toggle', ['default' => 'false']),
+            AnimationControl::select('arrayDefault', 'Array default', [
+                'options' => [['label' => 'A', 'value' => 'a']],
+                'default' => [],
+            ]),
+            AnimationControl::text('arrayText', 'Array text', ['default' => ['a']]),
+            AnimationControl::select('stringOptions', 'String options', ['options' => 'red']),
+            AnimationControl::number('wordMin', 'Word min', ['min' => 'low']),
+            AnimationControl::number('twoTypes', 'Two types', ['min' => 'low', 'help' => 5]),
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
             AnimationControl::number('edgeAnimationSpeed', 'Collision source'),

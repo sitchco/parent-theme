@@ -74,6 +74,12 @@ class AnimationControlValidatorTest extends TestCase
                 // Its min above its max goes unreported: the first defect found is the one named.
                 'malformed-controls-tester / twoDefects: its label must not be empty. Dropping it.',
                 'malformed-controls-tester / blankLabel: its label must not be empty. Dropping it.',
+                'malformed-controls-tester / stringToggle: its default must be true or false. Dropping it.',
+                'malformed-controls-tester / arrayDefault: its default must be a string or a number. Dropping it.',
+                'malformed-controls-tester / arrayText: its default must be a string or a number. Dropping it.',
+                'malformed-controls-tester / stringOptions: `options` must be a list. Dropping it.',
+                'malformed-controls-tester / wordMin: `min` must be a number. Dropping it.',
+                'malformed-controls-tester / twoTypes: `help` must be a string; `min` must be a number. Dropping it.',
                 'malformed-controls-tester / filterTypo: does not know the option `optionFilter`. Ignoring it.',
                 'malformed-controls-tester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 'malformed-controls-tester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',

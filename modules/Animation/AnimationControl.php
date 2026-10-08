@@ -42,9 +42,11 @@ namespace Sitchco\Parent\Modules\Animation;
  * Validation is the coordinator's, not this class's: a malformed control is logged and dropped
  * there, alongside every other definition problem, rather than thrown from a module's controls().
  * An option key a factory does not know (a misspelled `defualt`) is recorded in `unknownOptions`
- * for the coordinator to report. The one exception is a value of the wrong PHP type for a typed
- * property — `'options' => 'red'`, `'min' => 'low'` — which throws a TypeError here, as any
- * mistyped constructor argument would.
+ * for the coordinator to report. So is an option of the wrong PHP type — `'options' => 'red'`,
+ * `'min' => 'low'` — which is recorded in `typeProblems` and left unset rather than thrown as a
+ * TypeError. Nor is a `default` cast to its control's type: a toggle's `'false'` would become
+ * `true`. It is kept as written, and the coordinator drops a control whose default is the wrong
+ * type.
  */
 readonly class AnimationControl implements \JsonSerializable
 {
@@ -64,6 +66,8 @@ readonly class AnimationControl implements \JsonSerializable
         public int|float|null $step = null,
         /** @var list<string> Option keys the factory did not recognize, reported by the coordinator. */
         public array $unknownOptions = [],
+        /** @var list<string> Options of the wrong PHP type, as `` `key` must be … ``, reported by the coordinator. */
+        public array $typeProblems = [],
     ) {}
 
     /**
@@ -71,7 +75,7 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function select(string $name, string $label, array $options = []): self
     {
-        [$options, $unknown] = self::withDefaults(
+        [$options, $unknown, $typeProblems] = self::withDefaults(
             ['options' => null, 'optionsFilter' => null, 'default' => '', 'help' => null],
             $options,
         );
@@ -80,11 +84,12 @@ readonly class AnimationControl implements \JsonSerializable
             type: 'select',
             name: $name,
             label: $label,
-            default: (string) $options['default'],
+            default: self::stringScalar($options['default']),
             help: $options['help'],
             options: $options['options'],
             optionsFilter: $options['optionsFilter'],
             unknownOptions: $unknown,
+            typeProblems: $typeProblems,
         );
     }
 
@@ -93,15 +98,16 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function toggle(string $name, string $label, array $options = []): self
     {
-        [$options, $unknown] = self::withDefaults(['default' => false, 'help' => null], $options);
+        [$options, $unknown, $typeProblems] = self::withDefaults(['default' => false, 'help' => null], $options);
 
         return new self(
             type: 'toggle',
             name: $name,
             label: $label,
-            default: (bool) $options['default'],
+            default: $options['default'],
             help: $options['help'],
             unknownOptions: $unknown,
+            typeProblems: $typeProblems,
         );
     }
 
@@ -118,7 +124,7 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function number(string $name, string $label, array $options = []): self
     {
-        [$options, $unknown] = self::withDefaults(
+        [$options, $unknown, $typeProblems] = self::withDefaults(
             ['default' => 0, 'min' => null, 'max' => null, 'step' => null, 'help' => null],
             $options,
         );
@@ -133,6 +139,7 @@ readonly class AnimationControl implements \JsonSerializable
             max: $options['max'],
             step: $options['step'],
             unknownOptions: $unknown,
+            typeProblems: $typeProblems,
         );
     }
 
@@ -141,26 +148,68 @@ readonly class AnimationControl implements \JsonSerializable
      */
     public static function text(string $name, string $label, array $options = []): self
     {
-        [$options, $unknown] = self::withDefaults(['default' => '', 'help' => null], $options);
+        [$options, $unknown, $typeProblems] = self::withDefaults(['default' => '', 'help' => null], $options);
 
         return new self(
             type: 'text',
             name: $name,
             label: $label,
-            default: (string) $options['default'],
+            default: self::stringScalar($options['default']),
             help: $options['help'],
             unknownOptions: $unknown,
+            typeProblems: $typeProblems,
         );
     }
 
     /**
-     * A factory's options merged over its defaults, and the keys among them it does not know.
+     * The PHP type each typed option must have, and how a problem message names it. `default` is
+     * not here: its type depends on the control, and the coordinator checks it.
+     */
+    private const OPTION_TYPES = [
+        'options' => ['is_array', 'a list'],
+        'optionsFilter' => ['is_string', 'a string'],
+        'help' => ['is_string', 'a string'],
+        'min' => [[self::class, 'isNumber'], 'a number'],
+        'max' => [[self::class, 'isNumber'], 'a number'],
+        'step' => [[self::class, 'isNumber'], 'a number'],
+    ];
+
+    /**
+     * A factory's options merged over its defaults, the keys among them it does not know, and the
+     * typed options whose values have the wrong PHP type. Those are reset to their default, null,
+     * so the constructor never sees them, and reported instead.
      *
-     * @return array{0: array<string, mixed>, 1: list<string>}
+     * @return array{0: array<string, mixed>, 1: list<string>, 2: list<string>}
      */
     private static function withDefaults(array $defaults, array $options): array
     {
-        return [array_merge($defaults, $options), array_map('strval', array_keys(array_diff_key($options, $defaults)))];
+        $merged = array_merge($defaults, $options);
+        $typeProblems = [];
+
+        foreach (self::OPTION_TYPES as $key => [$check, $expected]) {
+            if (!array_key_exists($key, $options) || $options[$key] === null || $check($options[$key])) {
+                continue;
+            }
+
+            $typeProblems[] = "`{$key}` must be {$expected}";
+            $merged[$key] = $defaults[$key];
+        }
+
+        return [$merged, array_map('strval', array_keys(array_diff_key($options, $defaults))), $typeProblems];
+    }
+
+    private static function isNumber(mixed $value): bool
+    {
+        return is_int($value) || is_float($value);
+    }
+
+    /**
+     * A default as a string when it is a string or a number, so `30` and `'30'` are one value;
+     * anything else kept as written, for the coordinator to reject.
+     */
+    private static function stringScalar(mixed $value): mixed
+    {
+        return is_string($value) || self::isNumber($value) ? (string) $value : $value;
     }
 
     /**
