@@ -1391,31 +1391,66 @@ class AnimationFrameworkModuleTest extends TestCase
     }
 
     /**
-     * Global, so the canvas follows the preference as the front end does. Isolated as
+     * The handles queued when $hook fires for the coordinator $build makes. Isolated as
      * queuedEditorScripts() is, for the same reasons.
      *
-     * The handle is registered without a source first, so the case doesn't depend on a build: with
-     * no main.css in dist/, ModuleAssets has no URL to register and WordPress queues nothing.
+     * Each handle is registered without a source first, so the case doesn't depend on a build:
+     * with no file in dist/, ModuleAssets has no URL to register and WordPress queues nothing.
+     *
+     * @param 'wp_styles'|'wp_scripts' $queue
+     * @return list<string>
      */
-    public function testTheReducedMotionStylesheetIsEnqueuedForTheFrontEndAndTheEditor(): void
+    private function queuedOn(string $hook, string $queue, string $handle, callable $build): array
     {
-        $hook = 'enqueue_block_assets';
-        $savedStyles = $GLOBALS['wp_styles'] ?? null;
+        $savedQueue = $GLOBALS[$queue] ?? null;
         $savedHook = $GLOBALS['wp_filter'][$hook] ?? null;
-        unset($GLOBALS['wp_styles'], $GLOBALS['wp_filter'][$hook]);
+        unset($GLOBALS[$queue], $GLOBALS['wp_filter'][$hook]);
 
         try {
-            wp_register_style(AnimationFrameworkModule::hookName(), false);
-            $this->frameworkFor(AnimationTester::class);
+            $dependencies = $queue === 'wp_styles' ? wp_styles() : wp_scripts();
+            $dependencies->add($handle, false);
+            $build();
             do_action($hook);
 
-            $this->assertContains(AnimationFrameworkModule::hookName(), wp_styles()->queue);
+            return $dependencies->queue;
         } finally {
-            $GLOBALS['wp_styles'] = $savedStyles;
+            $GLOBALS[$queue] = $savedQueue;
             unset($GLOBALS['wp_filter'][$hook]);
             if ($savedHook) {
                 $GLOBALS['wp_filter'][$hook] = $savedHook;
             }
         }
+    }
+
+    /** Global, so the canvas follows the preference as the front end does. */
+    public function testTheReducedMotionStylesheetIsEnqueuedForTheFrontEndAndTheEditor(): void
+    {
+        $handle = AnimationFrameworkModule::hookName();
+
+        $this->assertContains(
+            $handle,
+            $this->queuedOn('enqueue_block_assets', 'wp_styles', $handle, fn() => $this->frameworkForFixtures('clean')),
+        );
+    }
+
+    public function testTheRuntimeIsEnqueuedOnTheFrontEnd(): void
+    {
+        $handle = AnimationFrameworkModule::hookName('runtime');
+
+        $this->assertContains(
+            $handle,
+            $this->queuedOn('wp_enqueue_scripts', 'wp_scripts', $handle, fn() => $this->frameworkForFixtures('clean')),
+        );
+    }
+
+    /** The parent theme ships `'animations' => []`: nothing to animate, nothing to load. */
+    public function testNothingIsEnqueuedWithoutAnyAnimationConfig(): void
+    {
+        $style = AnimationFrameworkModule::hookName();
+        $script = AnimationFrameworkModule::hookName('runtime');
+        $build = fn() => $this->frameworkFor(AnimationTester::class);
+
+        $this->assertNotContains($style, $this->queuedOn('enqueue_block_assets', 'wp_styles', $style, $build));
+        $this->assertNotContains($script, $this->queuedOn('wp_enqueue_scripts', 'wp_scripts', $script, $build));
     }
 }

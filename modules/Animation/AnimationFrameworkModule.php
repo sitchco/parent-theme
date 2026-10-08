@@ -97,9 +97,20 @@ class AnimationFrameworkModule extends Module
     {
         $this->initialized = true;
 
+        /* Front-end assets only where blocks may carry animations at all. Checked against the raw
+           section, which is a cached config read, rather than by resolving it: resolution would log
+           any config problem on every page view, not just where an animated block renders. */
         // The reduced-motion rule; global, so the canvas follows the preference as the front end does.
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
-            $assets->enqueueStyle(static::hookName(), 'main.css');
+            if ($this->hasAnimationConfig()) {
+                $assets->enqueueStyle(static::hookName(), 'main.css');
+            }
+        });
+        // The behaviour runtime; front end only, so no animation JS runs inside the editor.
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            if ($this->hasAnimationConfig()) {
+                $assets->enqueueScript(static::hookName('runtime'), 'animation.js', [UIFramework::hookName()]);
+            }
         });
 
         add_filter(ExtendBlockModule::hookName('wrapper-props'), [$this, 'wrapperProps'], 10, 2);
@@ -311,6 +322,14 @@ class AnimationFrameworkModule extends Module
         }
 
         return $blockContent;
+    }
+
+    /**
+     * Whether the `animations` config section names any block at all, before resolution.
+     */
+    private function hasAnimationConfig(): bool
+    {
+        return !empty($this->configRegistry->load(static::CONFIG_KEY));
     }
 
     /**
