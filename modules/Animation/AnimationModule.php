@@ -21,7 +21,8 @@ use Sitchco\Framework\Module;
  *         public function label(): string { return 'Letter Animation'; }
  *     }
  *
- * Settings of its own are optional, declared through controls() — see AnimationControl.
+ * Settings of its own are optional, declared through controls() — see AnimationControl. So is markup
+ * the block needs, declared through markup() and placed by markupHosts().
  *
  * HOOK_SUFFIX is deliberately left empty here so that every subclass declares its own — a module
  * with an empty suffix is skipped by ModuleRegistry::addModules() with a logged warning. The
@@ -104,6 +105,35 @@ abstract class AnimationModule extends Module
      * @return list<AnimationControl>
      */
     public function controls(): array
+    {
+        return [];
+    }
+
+    /**
+     * Markup this animation needs inside the block — a glyph, an overlay — or null for none.
+     *
+     * Most animations need none. When given, the framework inserts it as the first child of the
+     * block's host element (see markupHosts()) wherever the animation is selected. It is inserted
+     * unescaped, so it must be a constant: never anything an author entered.
+     */
+    public function markup(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Where markup() goes: the first element, in document order, carrying any of these classes.
+     * Empty, the default, means the block's own outermost element.
+     *
+     * Name the element an animation's stylesheet expects to host it. The letter animation crops
+     * its glyph against Kadence's inner container, where a column's background is painted, so it
+     * lists `kt-inside-inner-col` and `kt-row-column-wrap`. On a block with none of them the
+     * markup is skipped with a logged warning rather than put somewhere the stylesheet does not
+     * match.
+     *
+     * @return list<string>
+     */
+    public function markupHosts(): array
     {
         return [];
     }

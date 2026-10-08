@@ -14,6 +14,7 @@ use Sitchco\Parent\Tests\Support\ConfigRegistryTester;
 use Sitchco\Parent\Tests\Support\DuplicateAnimationTester;
 use Sitchco\Parent\Tests\Support\EmptyKeyAnimationTester;
 use Sitchco\Parent\Tests\Support\MalformedControlsAnimationTester;
+use Sitchco\Parent\Tests\Support\MarkupAnimationTester;
 use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Parent\Tests\Support\SecondAnimationTester;
 use Sitchco\Parent\Tests\Support\CollidingAnimationTester;
@@ -1286,5 +1287,74 @@ class AnimationFrameworkModuleTest extends TestCase
                 $GLOBALS['wp_filter'][$hook] = $saved;
             }
         }
+    }
+
+    /** A coordinator over the markup fixture, with the markup animation and one without markup. */
+    private function markupFramework(): AnimationFrameworkModule
+    {
+        return $this->frameworkWithConfig(
+            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/markup'),
+            MarkupAnimationTester::class,
+            AnimationTester::class,
+        );
+    }
+
+    public function testASelectedAnimationsMarkupGoesIntoItsHost(): void
+    {
+        $html = '<div class="block"><div class="inner">content</div></div>';
+
+        $this->assertSame(
+            '<div class="block"><div class="inner">' . MarkupAnimationTester::MARKUP . 'content</div></div>',
+            $this->markupFramework()->injectMarkup($html, [
+                'blockName' => 'test/markup',
+                'attrs' => ['animation' => 'markup-tester'],
+            ]),
+        );
+    }
+
+    /**
+     * @dataProvider noMarkupProvider
+     */
+    public function testNoMarkupIsInjectedWithoutAnAllowedAnimationThatHasSome(string $blockName, array $attrs): void
+    {
+        $html = '<div class="block"><div class="inner">content</div></div>';
+
+        $this->assertSame(
+            $html,
+            $this->markupFramework()->injectMarkup($html, ['blockName' => $blockName, 'attrs' => $attrs]),
+        );
+    }
+
+    public static function noMarkupProvider(): array
+    {
+        return [
+            'no animation' => ['test/markup', []],
+            'an animation without markup' => ['test/markup', ['animation' => 'animation-tester']],
+            'not offered on this block' => ['test/no-markup', ['animation' => 'markup-tester']],
+            'unconfigured block' => ['core/group', ['animation' => 'markup-tester']],
+        ];
+    }
+
+    public function testABlockWithoutAHostRendersWithoutTheMarkupAndWarnsOncePerBlockType(): void
+    {
+        $framework = $this->markupFramework();
+        $html = '<div class="block">content</div>';
+        $block = ['blockName' => 'test/markup', 'attrs' => ['animation' => 'markup-tester']];
+        $results = [];
+
+        $first = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, $html, $block, &$results) {
+            $results[] = $framework->injectMarkup($html, $block);
+        });
+        $second = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, $html, $block, &$results) {
+            $results[] = $framework->injectMarkup($html, $block);
+        });
+
+        $this->assertSame([$html, $html], $results);
+        $this->assertSame(LogLevel::WARNING, $first['level']);
+        $this->assertSame(
+            'Animation "markup-tester" has no host for its markup in a test/markup block (no element with the class inner or wrap), so it renders without it.',
+            $first['value'],
+        );
+        $this->assertNull($second);
     }
 }

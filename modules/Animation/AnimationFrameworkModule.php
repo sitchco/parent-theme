@@ -36,6 +36,9 @@ use Sitchco\Utils\Logger;
  * filter, and never into saved markup: the editor registration uses `saveOutput: false` and
  * shows the same output in the canvas only. So no block can fail validation over an animation,
  * and a changed config default reaches every block that hasn't stored a value of its own.
+ *
+ * An animation that needs markup of its own inside the block has it inserted the same way, on
+ * render_block (injectMarkup()).
  */
 class AnimationFrameworkModule extends Module
 {
@@ -71,6 +74,9 @@ class AnimationFrameworkModule extends Module
     /** Whether init() has run; until it has, nothing below memoizes. See getAnimations(). */
     private bool $initialized = false;
 
+    /** Animation and block pairs already warned about having no markup host this request. */
+    private array $warnedHostless = [];
+
     public function __construct(
         protected ModuleRegistry $moduleRegistry,
         protected ConfigRegistry $configRegistry,
@@ -92,6 +98,8 @@ class AnimationFrameworkModule extends Module
         $this->initialized = true;
 
         add_filter(ExtendBlockModule::hookName('wrapper-props'), [$this, 'wrapperProps'], 10, 2);
+        // After ExtendBlock writes the wrapper props, at 10, so the two never edit one string at once.
+        add_filter('render_block', [$this, 'injectMarkup'], 11, 2);
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $blockAnimations = $this->getBlockAnimations();
@@ -240,6 +248,59 @@ class AnimationFrameworkModule extends Module
         }
 
         return $props;
+    }
+
+    /**
+     * Inserts the selected animation's markup() into a block's rendered HTML, at its host.
+     *
+     * Only for an animation the block may use now, as with wrapperProps(), and only when the
+     * animation declares markup. A block with no host for it (see AnimationModule::markupHosts())
+     * renders without the markup, and the miss is logged as a warning once per animation and block
+     * type per request: the fix is a config or markupHosts() change, and render_block runs on every
+     * request, so a warning per render would bury it.
+     *
+     * Driven by the stored `animation` attribute, not by a class: nothing an ExtendBlock control
+     * writes reaches `attrs.className`.
+     */
+    public function injectMarkup(string $blockContent, array $block): string
+    {
+        $key = $block['attrs']['animation'] ?? null;
+        if (!is_string($key) || $key === '') {
+            return $blockContent;
+        }
+
+        $blockName = (string) ($block['blockName'] ?? '');
+        if (!isset($this->getAnimationsForBlock($blockName)[$key])) {
+            return $blockContent;
+        }
+
+        $animation = $this->getAnimation($key);
+        $markup = $animation?->markup();
+        if ($markup === null || $markup === '') {
+            return $blockContent;
+        }
+
+        $hosts = $animation->markupHosts();
+        $injected = MarkupInjector::inject($blockContent, $markup, $hosts);
+        if ($injected !== null) {
+            return $injected;
+        }
+
+        if (!isset($this->warnedHostless[$key][$blockName])) {
+            $this->warnedHostless[$key][$blockName] = true;
+            Logger::warning(
+                sprintf(
+                    'Animation "%s" has no host for its markup in a %s block (%s), so it renders without it.',
+                    $key,
+                    $blockName,
+                    $hosts
+                        ? 'no element with the class ' . implode(' or ', $hosts)
+                        : 'no outermost element that can hold children',
+                ),
+            );
+        }
+
+        return $blockContent;
     }
 
     /**
