@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Tests;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\ModuleRegistry;
+use Sitchco\Parent\Modules\Animation\AnimationControl;
 use Sitchco\Parent\Modules\Animation\AnimationControlValidator;
 use Sitchco\Parent\Modules\Animation\AnimationFrameworkModule;
 use Sitchco\Modules\UIFramework\UIFramework;
@@ -890,7 +891,9 @@ class AnimationFrameworkModuleTest extends TestCase
                 'min' => 0,
                 'max' => 100,
                 'step' => 5,
+                'css' => '{value}%',
                 'attribute' => 'secondTesterAnimationSpeed',
+                'cssProperty' => '--second-tester-animation-speed',
             ],
             $serialized['second-tester'][0],
         );
@@ -902,7 +905,9 @@ class AnimationFrameworkModuleTest extends TestCase
                 'name' => 'caption',
                 'label' => 'Caption',
                 'default' => 'hello',
+                'css' => '"{value}"',
                 'attribute' => 'secondTesterAnimationCaption',
+                'cssProperty' => '--second-tester-animation-caption',
             ],
             $serialized['second-tester'][3],
         );
@@ -1074,5 +1079,212 @@ class AnimationFrameworkModuleTest extends TestCase
         $bool = $this->entryFor($framework, 'test/bool-default');
         $this->assertSame([], $bool['allowed']);
         $this->assertSame(['reverse' => false], $bool['defaults']);
+    }
+
+    /**
+     * What wrapperProps() adds for one block, over props that start empty unless given.
+     *
+     * @param array<string, mixed> $attrs
+     */
+    private function propsFor(
+        AnimationFrameworkModule $framework,
+        string $blockName,
+        array $attrs,
+        array $props = ['attributes' => [], 'style' => []],
+    ): array {
+        return $framework->wrapperProps($props, ['blockName' => $blockName, 'attrs' => $attrs]);
+    }
+
+    /**
+     * The cases the editor's cssValue() is held to as well (animation-fields.test.js), so the
+     * canvas and the front end cannot drift.
+     *
+     * @dataProvider cssCaseProvider
+     */
+    public function testCssValuesMatchTheEditor(string $type, array $options, mixed $value, ?string $expected): void
+    {
+        $control = AnimationControl::$type('x', 'X', $options);
+
+        $this->assertSame($expected, $control->cssValue($value));
+    }
+
+    public static function cssCaseProvider(): array
+    {
+        $cases = json_decode(file_get_contents(__DIR__ . '/fixtures/animation-css-cases.json'), true);
+
+        return array_combine(
+            array_column($cases, 'case'),
+            array_map(fn(array $case) => [$case['type'], $case['options'], $case['value'], $case['expected']], $cases),
+        );
+    }
+
+    public function testCssPropertiesJoinTheKeyAnimationAndTheKebabCaseName(): void
+    {
+        $this->assertSame('--letter-animation-color', AnimationFrameworkModule::cssProperty('letter', 'color'));
+        $this->assertSame('--fade-up-animation-start-at', AnimationFrameworkModule::cssProperty('fade-up', 'startAt'));
+        $this->assertSame('--fade-up-animation-step2', AnimationFrameworkModule::cssProperty('fade-up', 'step2'));
+    }
+
+    /**
+     * @dataProvider silentBlockProvider
+     */
+    public function testABlockWithNoUsableAnimationEmitsNothing(string $blockName, array $attrs): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $this->assertSame(['attributes' => [], 'style' => []], $this->propsFor($framework, $blockName, $attrs));
+    }
+
+    public static function silentBlockProvider(): array
+    {
+        return [
+            'no animation attribute' => ['test/bare-list', []],
+            'None' => ['test/bare-list', ['animation' => '']],
+            'not a string' => ['test/bare-list', ['animation' => ['animation-tester']]],
+            'not offered on this block' => ['test/enabled-true', ['animation' => 'second-tester']],
+            'no such animation' => ['test/bare-list', ['animation' => 'no-such-animation']],
+            'unconfigured block' => ['core/paragraph', ['animation' => 'animation-tester']],
+        ];
+    }
+
+    public function testAnUntouchedBlockEmitsItsControlsOwnDefaults(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/bare-list', ['animation' => 'animation-tester']);
+
+        $this->assertSame(['data-animation' => 'animation-tester'], $props['attributes']);
+        /* Color and opacity default to '', which emits nothing so the stylesheet's own default
+         applies; a toggle's false is a value, and emits its `off` CSS. */
+        $this->assertSame(
+            [
+                '--animation-tester-animation-speed' => '25ms',
+                '--animation-tester-animation-reverse' => 'normal',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testABlocksConfigDefaultsApplyToItsUntouchedControls(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/overrides', ['animation' => 'animation-tester']);
+
+        $this->assertSame(
+            [
+                '--animation-tester-animation-opacity' => 'calc(30 / 100)',
+                '--animation-tester-animation-speed' => '25ms',
+                '--animation-tester-animation-reverse' => 'normal',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testStoredValuesWinOverEveryDefault(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/overrides', [
+            'animation' => 'animation-tester',
+            'animationTesterAnimationColor' => 'green',
+            'animationTesterAnimationOpacity' => '',
+            'animationTesterAnimationSpeed' => '50',
+            'animationTesterAnimationReverse' => true,
+        ]);
+
+        // A stored '' is the author choosing the animation default over the block's '30'.
+        $this->assertSame(
+            [
+                '--animation-tester-animation-color' => 'var(--wp--preset--color--green)',
+                '--animation-tester-animation-speed' => '50ms',
+                '--animation-tester-animation-reverse' => 'reverse',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testAValueTheBlockNoLongerPermitsEmitsNothing(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        // The fixture permits only purple.
+        $props = $this->propsFor($framework, 'test/allowed-scalar', [
+            'animation' => 'animation-tester',
+            'animationTesterAnimationColor' => 'green',
+        ]);
+
+        $this->assertSame('animation-tester', $props['attributes']['data-animation']);
+        $this->assertArrayNotHasKey('--animation-tester-animation-color', $props['style']);
+    }
+
+    public function testEveryControlTypeEmitsAndAControlWithoutCssDoesNot(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/bare-list', [
+            'animation' => 'second-tester',
+            'secondTesterAnimationDirection' => 'down',
+            'secondTesterAnimationTint' => 'teal',
+        ]);
+
+        // Tint comes from a JS hook, so PHP cannot check it is offered: the template takes it as written.
+        $this->assertSame(
+            [
+                '--second-tester-animation-speed' => '50%',
+                '--second-tester-animation-tint' => 'var(--wp--preset--color--teal)',
+                '--second-tester-animation-caption' => '"hello"',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testAnotherContributorsPropsAreKept(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor(
+            $framework,
+            'test/bare-list',
+            ['animation' => 'second-tester'],
+            ['attributes' => ['data-other' => 'x'], 'style' => ['--other' => '1']],
+        );
+
+        $this->assertSame(['data-other' => 'x', 'data-animation' => 'second-tester'], $props['attributes']);
+        $this->assertSame('1', $props['style']['--other']);
+    }
+
+    /**
+     * The whole path, from init() hooking wrapper-props to the HTML ExtendBlock writes.
+     *
+     * The filter is emptied first and restored after: every case in this file calls init(), and
+     * each leaves its coordinator hooked, so without this every earlier fixture would contribute.
+     */
+    public function testInitRendersTheOutputOntoTheBlockWrapper(): void
+    {
+        $hook = ExtendBlockModule::hookName('wrapper-props');
+        $saved = $GLOBALS['wp_filter'][$hook] ?? null;
+        unset($GLOBALS['wp_filter'][$hook]);
+
+        try {
+            $this->frameworkForFixtures('parent');
+            $extendBlock = $this->container->get(ExtendBlockModule::class);
+            $render = fn(string $html, array $attrs) => $extendBlock->injectWrapperProps($html, [
+                'blockName' => 'test/bare-list',
+                'attrs' => $attrs,
+            ]);
+
+            $html = '<div class="wp-block-group" style="color:red">content</div>';
+            $this->assertSame($html, $render($html, []));
+            $this->assertSame(
+                '<div data-animation="second-tester" class="wp-block-group" style="color:red;--second-tester-animation-speed:50%;--second-tester-animation-caption:&quot;hello&quot;;">content</div>',
+                $render($html, ['animation' => 'second-tester']),
+            );
+        } finally {
+            unset($GLOBALS['wp_filter'][$hook]);
+            if ($saved) {
+                $GLOBALS['wp_filter'][$hook] = $saved;
+            }
+        }
     }
 }

@@ -25,17 +25,22 @@ import { buildAnimationFields } from './animation-fields';
  *             },
  *         },
  *         controls: {
- *             parallax: [{ type: 'number', name: 'speed', attribute: 'parallaxAnimationSpeed', label: 'Speed', default: 50 }],
+ *             parallax: [{
+ *                 type: 'number', name: 'speed', attribute: 'parallaxAnimationSpeed',
+ *                 cssProperty: '--parallax-animation-speed', label: 'Speed', default: 50, css: '{value}%',
+ *             }],
  *             letter: [{
- *                 type: 'select', name: 'opacity', attribute: 'letterAnimationOpacity', label: 'Opacity', default: '',
- *                 options: [{ label: 'Default', value: '' }, { label: '30%', value: '30' }, { label: '50%', value: '50' }],
+ *                 type: 'select', name: 'opacity', attribute: 'letterAnimationOpacity',
+ *                 cssProperty: '--letter-animation-opacity', label: 'Opacity', default: '',
+ *                 options: [{ label: 'Default', value: '' }, { label: '30%', value: '30', css: '0.3' }, { label: '50%', value: '50', css: '0.5' }],
  *             }],
  *         },
  *     }
  *
  * `blocks` decides which animations each block offers, and narrows their controls per block
  * through `allowed` and `defaults`. `controls` holds each animation's own control definitions,
- * which buildAnimationFields() turns into the fields below the select.
+ * which buildAnimationFields() turns into the fields below the select. Each carries the block
+ * `attribute` its value is stored under and the `cssProperty` its `css` value is emitted to.
  *
  * What PHP's encoding means for the reader:
  * - An empty `allowed` or `defaults` arrives as a list, `[]`, not `{}`. asMap() reads it as an
@@ -62,6 +67,10 @@ export default function ({ extendBlock, fields }, { blocks: blockAnimations = {}
     extendBlock({
         blocks,
         namespace: 'sitchco/animation',
+        /* The front end is rendered server-side for every block, static or dynamic, by
+           AnimationFrameworkModule::wrapperProps(). What this registration emits reaches the
+           canvas only, so saved markup — and block validation — never depend on an animation. */
+        saveOutput: false,
         panel: {
             title: 'Animation',
             /* 'settings', not 'styles'. Kadence's Style tab renders into the default inspector
@@ -80,6 +89,11 @@ export default function ({ extendBlock, fields }, { blocks: blockAnimations = {}
                    registration offer a different list on each block. A block missing from the
                    map cannot reach here — `blocks` is built from its keys — but the fallback
                    keeps a stale registration from throwing rather than degrading. */
+                /* `data-animation` only for a key the block may use now. A stale value stays visible
+                   in the select as "(unavailable)", and emits nothing, as on the front end. */
+                attributes: (value, { blockName } = {}) => ({
+                    'data-animation': value && blockAnimations[blockName]?.[value] ? value : undefined,
+                }),
                 options: ({ blockName }) => [
                     {
                         label: 'None',

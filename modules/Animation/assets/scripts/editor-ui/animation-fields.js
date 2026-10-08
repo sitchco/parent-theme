@@ -16,8 +16,11 @@
  *   ExtendBlock's function `default`. A dynamic block nobody touched follows it; a static block
  *   stores it once its animation is chosen; a picked value stays. See utils/field-value.js.
  *
- * No `className` or `attributes` yet: the controls write attributes and emit nothing, so saved
- * markup is unchanged. Routing values into the DOM is S6.
+ * - **Output.** A control with `css` emits its CSS value as its `cssProperty`
+ *   (`--{key}-animation-{name}`) onto the block in the editor canvas, through ExtendBlock's style
+ *   channel. Saved markup is never touched: the registration uses `saveOutput: false`, and the
+ *   front end gets the same properties from PHP (AnimationFrameworkModule::wrapperProps()). A value
+ *   the block's `allowed` list no longer permits emits nothing, as it does there.
  *
  * Plain JS with no JSX and no @wordpress imports, so it is unit testable on its own. See
  * tests/js/animation-fields.test.js.
@@ -172,6 +175,49 @@ export function normalizeHookOptions(options, filterName) {
           ];
 }
 
+/** What a `css` template's placeholder is replaced with. Mirrors AnimationControl::CSS_PLACEHOLDER. */
+const CSS_PLACEHOLDER = '{value}';
+
+/**
+ * The CSS value one of a control's values emits, or null for none. The JS twin of
+ * AnimationControl::cssValue(), held to the same answers by tests/fixtures/animation-css-cases.json.
+ *
+ * Null for the empty value, for a value of the wrong type, for a static select's value it does not
+ * offer, and for a control without `css`. A toggle's false is a value: it emits its `off` CSS.
+ *
+ * @param {Object} control - A serialized control
+ * @param {*}      value
+ * @returns {string|null}
+ */
+export function cssValue(control, value) {
+    const { css } = control;
+    if (control.type === 'toggle') {
+        return typeof value === 'boolean' && css && typeof css === 'object'
+            ? (css[value ? 'on' : 'off'] ?? null)
+            : null;
+    }
+
+    let string = null;
+    if (typeof value === 'string') {
+        string = control.type === 'number' ? null : value;
+    } else if (typeof value === 'number' && Number.isFinite(value)) {
+        string = String(value);
+    }
+    if (string === null || string === '') {
+        return null;
+    }
+    if (control.type === 'select' && control.options) {
+        const option = control.options.find(({ value: optionValue }) => String(optionValue) === string);
+        if (!option) {
+            return null;
+        }
+        if (typeof option.css === 'string') {
+            return option.css;
+        }
+    }
+    return typeof css === 'string' ? css.split(CSS_PLACEHOLDER).join(string) : null;
+}
+
 /**
  * A map from the blob, or an empty one. PHP serializes an empty map as a JSON list, and a list
  * answers to `length` — so `[]` is read as `{}` rather than probed.
@@ -209,6 +255,19 @@ export function buildAnimationFields(fields, { blocks = {}, controls = {} }, app
                     return Object.hasOwn(defaults, control.name) ? defaults[control.name] : control.default;
                 },
             };
+            if (control.css !== undefined || control.options?.some((option) => option.css !== undefined)) {
+                /* Gated by `condition` like everything else the field emits, so switching
+                   animations or choosing None leaves no property behind. */
+                field.style = (value, { blockName } = {}) => {
+                    const permitted = asMap(entryFor(blockName)?.allowed)[control.name];
+                    if (permitted && !permitted.includes(String(value))) {
+                        return undefined;
+                    }
+
+                    const css = cssValue(control, value);
+                    return css === null ? undefined : { [control.cssProperty]: css };
+                };
+            }
 
             for (const setting of ['help', 'min', 'max', 'step']) {
                 if (control[setting] !== undefined) {

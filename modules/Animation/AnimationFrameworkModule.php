@@ -28,8 +28,14 @@ use Sitchco\Utils\Logger;
  *
  * The coordinator discovers animations and their controls, resolves config against both, and hands
  * the result to the editor, where one ExtendBlock registration turns it into an Animation select
- * per configured block plus each animation's own controls. Emitting the data attributes and
- * injecting per-animation markup arrive with the stories that need them.
+ * per configured block plus each animation's own controls.
+ *
+ * It also renders what a block emits on the front end: `data-animation="<key>"` and one custom
+ * property per control, `--{key}-animation-{name}` (see wrapperProps()). That output is written
+ * server-side for every block, static or dynamic, through ExtendBlockModule's `wrapper-props`
+ * filter, and never into saved markup: the editor registration uses `saveOutput: false` and
+ * shows the same output in the canvas only. So no block can fail validation over an animation,
+ * and a changed config default reaches every block that hasn't stored a value of its own.
  */
 class AnimationFrameworkModule extends Module
 {
@@ -84,6 +90,8 @@ class AnimationFrameworkModule extends Module
     public function init(): void
     {
         $this->initialized = true;
+
+        add_filter(ExtendBlockModule::hookName('wrapper-props'), [$this, 'wrapperProps'], 10, 2);
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $blockAnimations = $this->getBlockAnimations();
@@ -166,6 +174,75 @@ class AnimationFrameworkModule extends Module
     }
 
     /**
+     * The custom property a control's CSS value is written to: `--{key}-animation-{name}`, with a
+     * camelCase name in kebab-case. `letter` + `color` is `--letter-animation-color`; `fade-up` +
+     * `startAt` is `--fade-up-animation-start-at`.
+     *
+     * The animation's stylesheet consumes it, and a JS behaviour reads it with getComputedStyle(),
+     * so like attributeName() it is built here once and shipped to the editor with each control.
+     * Kebab keys and camelCase names keep it unambiguous: no two controls can share one.
+     */
+    public static function cssProperty(string $key, string $name): string
+    {
+        return "--{$key}-animation-" . strtolower(preg_replace('/[A-Z]/', '-$0', $name));
+    }
+
+    /**
+     * What a block emits for its animation, added to ExtendBlockModule's `wrapper-props`.
+     *
+     * Nothing unless the block's stored `animation` is one the block may use now: a key the config
+     * withdrew, or an animation no longer active, emits nothing, as the editor's select shows it as
+     * "(unavailable)". Otherwise `data-animation`, and for each control with a CSS value, its
+     * custom property.
+     *
+     * A control's value is resolved in the order the editor's function default uses: the value
+     * stored on the block, else the block's config default, else the control's own. A value the
+     * block's `allowed` list no longer permits emits nothing for that control.
+     *
+     * Hooked for every block on every request, so the cheapest test comes first: most blocks have
+     * no `animation` attribute at all, and leave without config being resolved.
+     *
+     * @param array{attributes: array<string, mixed>, style: array<string, mixed>} $props
+     * @param array{blockName?: ?string, attrs?: array<string, mixed>} $block
+     */
+    public function wrapperProps(array $props, array $block): array
+    {
+        $attrs = $block['attrs'] ?? [];
+        $key = $attrs['animation'] ?? null;
+        if (!is_string($key) || $key === '') {
+            return $props;
+        }
+
+        $entry = $this->getAnimationsForBlock((string) ($block['blockName'] ?? ''))[$key] ?? null;
+        if ($entry === null) {
+            return $props;
+        }
+
+        $props['attributes']['data-animation'] = $key;
+
+        foreach ($this->getControls()[$key] ?? [] as $name => $control) {
+            $attribute = static::attributeName($key, $name);
+            $value = match (true) {
+                isset($attrs[$attribute]) => $attrs[$attribute],
+                array_key_exists($name, $entry['defaults']) => $entry['defaults'][$name],
+                default => $control->default,
+            };
+
+            $permitted = $entry['allowed'][$name] ?? null;
+            if ($permitted !== null && (!is_scalar($value) || !in_array((string) $value, $permitted, true))) {
+                continue;
+            }
+
+            $css = $control->cssValue($value);
+            if ($css !== null) {
+                $props['style'][static::cssProperty($key, $name)] = $css;
+            }
+        }
+
+        return $props;
+    }
+
+    /**
      * Every active animation's valid controls, keyed by animation key and then control name.
      *
      * Validated once and memoized, under the same timing rule as getAnimations(). A control that
@@ -185,7 +262,7 @@ class AnimationFrameworkModule extends Module
 
     /**
      * The controls as the editor receives them: per animation key, a list of serialized controls,
-     * each carrying the `attribute` its value is stored under. Animations without controls are left
+     * each carrying the `attribute` its value is stored under and the `cssProperty` it emits to. Animations without controls are left
      * out.
      *
      * @return array<string, list<array<string, mixed>>>
@@ -199,6 +276,7 @@ class AnimationFrameworkModule extends Module
                 $serialized[$key][] = [
                     ...$control->jsonSerialize(),
                     'attribute' => static::attributeName($key, $control->name),
+                    'cssProperty' => static::cssProperty($key, $control->name),
                 ];
             }
         }

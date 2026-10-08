@@ -82,6 +82,21 @@ class MalformedControlsAnimationTester extends AnimationModule
             AnimationControl::select('stringOptions', 'String options', ['options' => 'red']),
             AnimationControl::number('wordMin', 'Word min', ['min' => 'low']),
             AnimationControl::number('twoTypes', 'Two types', ['min' => 'low', 'help' => 5]),
+            // CSS that could never be written.
+            AnimationControl::text('cssWrongType', 'CSS wrong type', ['css' => 5]),
+            AnimationControl::text('cssNoPlaceholder', 'CSS no placeholder', ['css' => 'red']),
+            AnimationControl::number('cssUnsafe', 'CSS unsafe', ['css' => '{value}ms; color: red']),
+            AnimationControl::toggle('toggleCssString', 'Toggle CSS string', ['css' => 'reverse']),
+            AnimationControl::toggle('toggleCssHalf', 'Toggle CSS half', ['css' => ['on' => 'reverse']]),
+            AnimationControl::toggle('toggleCssUnsafe', 'Toggle CSS unsafe', ['css' => ['on' => 'a}', 'off' => 'b']]),
+            AnimationControl::select('optionCssNumber', 'Option CSS number', [
+                'options' => [['label' => 'A', 'value' => 'a', 'css' => 1]],
+                'default' => 'a',
+            ]),
+            AnimationControl::select('optionCssUnsafe', 'Option CSS unsafe', [
+                'options' => [['label' => 'A', 'value' => 'a', 'css' => '</style>']],
+                'default' => 'a',
+            ]),
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
             AnimationControl::number('edgeAnimationSpeed', 'Collision source'),

@@ -39,6 +39,17 @@ namespace Sitchco\Parent\Modules\Animation;
  * sets one, choosing `''` stores `''`, so the editor labels it "Animation default" whatever the
  * options call it (EMPTY_OPTION_LABEL in editor-ui/animation-fields.js).
  *
+ * What a control emits is its `css`: the CSS value behind each of its values, which the framework
+ * writes to the block as the custom property `--{key}-animation-{name}` (cssValue()). A control
+ * without one stores its value and emits nothing.
+ * - select: a template, `'var(--wp--preset--color--{value})'`, and/or a `css` key on each static
+ *   option, which wins over the template. A select fed by `optionsFilter` can only use a template,
+ *   since PHP never sees its values.
+ * - toggle: `['on' => …, 'off' => …]`.
+ * - number and text: a template.
+ * `{value}` is replaced with the value as a string. The empty value, `''`, always emits nothing,
+ * so the animation's own stylesheet default applies.
+ *
  * Validation is the coordinator's, not this class's: a malformed control is logged and dropped
  * there, alongside every other definition problem, rather than thrown from a module's controls().
  * An option key a factory does not know (a misspelled `defualt`) is recorded in `unknownOptions`
@@ -64,6 +75,8 @@ readonly class AnimationControl implements \JsonSerializable
         public int|float|null $min = null,
         public int|float|null $max = null,
         public int|float|null $step = null,
+        /** @var string|array{on: string, off: string}|null The CSS value behind each value; see the class docblock. */
+        public string|array|null $css = null,
         /** @var list<string> Option keys the factory did not recognize, reported by the coordinator. */
         public array $unknownOptions = [],
         /** @var list<string> Options of the wrong PHP type, as `` `key` must be … ``, reported by the coordinator. */
@@ -71,12 +84,12 @@ readonly class AnimationControl implements \JsonSerializable
     ) {}
 
     /**
-     * @param array{options?: list<array{label: string, value: string|int|float}>, optionsFilter?: string, default?: string, help?: string} $options
+     * @param array{options?: list<array{label: string, value: string|int|float, css?: string}>, optionsFilter?: string, default?: string, help?: string, css?: string} $options
      */
     public static function select(string $name, string $label, array $options = []): self
     {
         [$options, $unknown, $typeProblems] = self::withDefaults(
-            ['options' => null, 'optionsFilter' => null, 'default' => '', 'help' => null],
+            ['options' => null, 'optionsFilter' => null, 'default' => '', 'help' => null, 'css' => null],
             $options,
         );
 
@@ -88,17 +101,21 @@ readonly class AnimationControl implements \JsonSerializable
             help: $options['help'],
             options: $options['options'],
             optionsFilter: $options['optionsFilter'],
+            css: $options['css'],
             unknownOptions: $unknown,
             typeProblems: $typeProblems,
         );
     }
 
     /**
-     * @param array{default?: bool, help?: string} $options
+     * @param array{default?: bool, help?: string, css?: array{on: string, off: string}} $options
      */
     public static function toggle(string $name, string $label, array $options = []): self
     {
-        [$options, $unknown, $typeProblems] = self::withDefaults(['default' => false, 'help' => null], $options);
+        [$options, $unknown, $typeProblems] = self::withDefaults(
+            ['default' => false, 'help' => null, 'css' => null],
+            $options,
+        );
 
         return new self(
             type: 'toggle',
@@ -106,6 +123,7 @@ readonly class AnimationControl implements \JsonSerializable
             label: $label,
             default: $options['default'],
             help: $options['help'],
+            css: $options['css'],
             unknownOptions: $unknown,
             typeProblems: $typeProblems,
         );
@@ -120,12 +138,12 @@ readonly class AnimationControl implements \JsonSerializable
      * silently rewrite a value nobody touched. The coordinator drops a control whose default does
      * not.
      *
-     * @param array{default?: int|float, min?: int|float, max?: int|float, step?: int|float, help?: string} $options
+     * @param array{default?: int|float, min?: int|float, max?: int|float, step?: int|float, help?: string, css?: string} $options
      */
     public static function number(string $name, string $label, array $options = []): self
     {
         [$options, $unknown, $typeProblems] = self::withDefaults(
-            ['default' => 0, 'min' => null, 'max' => null, 'step' => null, 'help' => null],
+            ['default' => 0, 'min' => null, 'max' => null, 'step' => null, 'help' => null, 'css' => null],
             $options,
         );
 
@@ -138,17 +156,21 @@ readonly class AnimationControl implements \JsonSerializable
             min: $options['min'],
             max: $options['max'],
             step: $options['step'],
+            css: $options['css'],
             unknownOptions: $unknown,
             typeProblems: $typeProblems,
         );
     }
 
     /**
-     * @param array{default?: string, help?: string} $options
+     * @param array{default?: string, help?: string, css?: string} $options
      */
     public static function text(string $name, string $label, array $options = []): self
     {
-        [$options, $unknown, $typeProblems] = self::withDefaults(['default' => '', 'help' => null], $options);
+        [$options, $unknown, $typeProblems] = self::withDefaults(
+            ['default' => '', 'help' => null, 'css' => null],
+            $options,
+        );
 
         return new self(
             type: 'text',
@@ -156,6 +178,7 @@ readonly class AnimationControl implements \JsonSerializable
             label: $label,
             default: self::stringScalar($options['default']),
             help: $options['help'],
+            css: $options['css'],
             unknownOptions: $unknown,
             typeProblems: $typeProblems,
         );
@@ -172,6 +195,7 @@ readonly class AnimationControl implements \JsonSerializable
         'min' => [[self::class, 'isNumber'], 'a number'],
         'max' => [[self::class, 'isNumber'], 'a number'],
         'step' => [[self::class, 'isNumber'], 'a number'],
+        'css' => [[self::class, 'isStringOrArray'], 'a string or an array'],
     ];
 
     /**
@@ -203,6 +227,11 @@ readonly class AnimationControl implements \JsonSerializable
         return is_int($value) || is_float($value);
     }
 
+    private static function isStringOrArray(mixed $value): bool
+    {
+        return is_string($value) || is_array($value);
+    }
+
     /**
      * A default as a string when it is a string or a number, so `30` and `'30'` are one value;
      * anything else kept as written, for the coordinator to reject.
@@ -210,6 +239,50 @@ readonly class AnimationControl implements \JsonSerializable
     private static function stringScalar(mixed $value): mixed
     {
         return is_string($value) || self::isNumber($value) ? (string) $value : $value;
+    }
+
+    /** What a template's placeholder is replaced with. */
+    public const CSS_PLACEHOLDER = '{value}';
+
+    /**
+     * The CSS value one of this control's values emits, or null for none.
+     *
+     * Null for the empty value (`''` or null), for a value of the wrong type, for a static select's
+     * value that it does not offer, and for a control without `css`. A toggle's false is a value,
+     * not "unset": it emits its `off` CSS.
+     *
+     * This answers for the control alone. Whether a block permits the value is the coordinator's
+     * question. Mirrored by cssValue() in editor-ui/animation-fields.js; the parity fixture,
+     * tests/fixtures/animation-css-cases.json, holds the two to the same answers.
+     */
+    public function cssValue(mixed $value): ?string
+    {
+        if ($this->type === 'toggle') {
+            return is_bool($value) && is_array($this->css) ? $this->css[$value ? 'on' : 'off'] ?? null : null;
+        }
+
+        $string = match ($this->type) {
+            'number' => is_int($value) || (is_float($value) && is_finite($value)) ? (string) $value : null,
+            default => is_string($value) || is_int($value) || is_float($value) ? (string) $value : null,
+        };
+        if ($string === null || $string === '') {
+            return null;
+        }
+
+        if ($this->type === 'select' && $this->options !== null) {
+            $option =
+                array_values(
+                    array_filter($this->stringOptions(), fn(array $option) => $option['value'] === $string),
+                )[0] ?? null;
+            if ($option === null) {
+                return null;
+            }
+            if (is_string($option['css'] ?? null)) {
+                return $option['css'];
+            }
+        }
+
+        return is_string($this->css) ? str_replace(self::CSS_PLACEHOLDER, $string, $this->css) : null;
     }
 
     /**
@@ -318,6 +391,7 @@ readonly class AnimationControl implements \JsonSerializable
                 'min' => $this->min,
                 'max' => $this->max,
                 'step' => $this->step,
+                'css' => $this->css,
             ],
             fn($value) => $value !== null,
         );

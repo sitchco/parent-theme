@@ -29,15 +29,18 @@ class AnimationTester extends AnimationModule
         return [
             AnimationControl::select('color', 'Color', [
                 'options' => self::options('', 'purple', 'green', 'red'),
+                'css' => 'var(--wp--preset--color--{value})',
             ]),
             AnimationControl::select('opacity', 'Opacity', [
                 'options' => self::options('', 10, 30, 50),
+                'css' => 'calc({value} / 100)',
             ]),
             AnimationControl::select('speed', 'Speed', [
                 'options' => self::options('25', '50'),
                 'default' => '25',
+                'css' => '{value}ms',
             ]),
-            AnimationControl::toggle('reverse', 'Reverse'),
+            AnimationControl::toggle('reverse', 'Reverse', ['css' => ['on' => 'reverse', 'off' => 'normal']]),
         ];
     }
 

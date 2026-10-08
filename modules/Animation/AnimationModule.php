@@ -29,23 +29,21 @@ use Sitchco\Framework\Module;
  *
  * Two things that are easy to get wrong:
  *
- * 1. Assets load on every page, not per block, and only on the front end. An animation enqueues its
- *    CSS and JS from init() via enqueueFrontendAssets(), rather than conditionally wherever it
- *    happens to be used. Animations are expected across many blocks and pages, and it is the
- *    per-block data-animation attribute that actually triggers one on a given element; a stylesheet
- *    with no matching attribute on the page costs only its transfer size and the render-blocking
- *    parse it pays for in the head, while conditional loading produces an inconsistent feel. If one
- *    animation's payload grows heavy, revisit it alone rather than changing this default.
+ * 1. Assets load on every page, not per block. An animation enqueues its CSS and JS from init(),
+ *    rather than conditionally wherever it happens to be used. Animations are expected across many
+ *    blocks and pages, and it is the per-block data-animation attribute that actually triggers one
+ *    on a given element; a stylesheet with no matching attribute on the page costs only its
+ *    transfer size and the render-blocking parse it pays for in the head, while conditional loading
+ *    produces an inconsistent feel. If one animation's payload grows heavy, revisit it alone rather
+ *    than changing this default.
  *
- *    enqueueFrontendAssets() hooks wp_enqueue_scripts, which does not fire for the block editor
- *    canvas, so an animation built this way does not preview in the editor. That is intended for
- *    now: nothing emits the attributes an animation reacts to yet. If editor preview is wanted
- *    later, the stylesheet moves to enqueueGlobalAssets() — which hooks enqueue_block_assets and so
- *    covers the front end and the editor both — while the script stays on enqueueFrontendAssets().
- *    That is the split KadenceBlocks.php:24-30 already uses, and it keeps whether animation JS runs
- *    inside the editor a decision made then rather than by accident. Not enqueueEditorPreviewAssets():
- *    it hooks enqueue_block_assets behind an is_admin() guard (Module.php:122), so moving the
- *    stylesheet there would take it off the front end.
+ *    The stylesheet goes through enqueueGlobalAssets(), which hooks enqueue_block_assets and so
+ *    reaches the front end and the editor canvas both. The canvas carries the same data-animation
+ *    and custom properties the front end does, so the animation previews as it will look. The
+ *    script, if there is one, stays on enqueueFrontendAssets(), so animation JS does not run
+ *    inside the editor by accident. That is the split KadenceBlocks.php already uses. Not
+ *    enqueueEditorPreviewAssets(): it hooks enqueue_block_assets behind an is_admin() guard
+ *    (Module.php), so a stylesheet there would be missing from the front end.
  *
  * 2. DEPENDENCIES does not merge. PHP replaces a class constant rather than combining it, so a
  *    subclass needing its own dependency has to carry the parent's forward:
