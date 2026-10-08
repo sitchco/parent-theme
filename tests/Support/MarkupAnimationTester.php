@@ -5,8 +5,9 @@ namespace Sitchco\Parent\Tests\Support;
 use Sitchco\Parent\Modules\Animation\AnimationModule;
 
 /**
- * An animation that brings markup of its own, hosted by an inner element, as the letter
- * animation's glyph is. The other fakes declare none, which covers the default.
+ * An animation that brings markup of its own, hosted by an inner element, and handles reduced
+ * motion itself, as the letter animation does. The other fakes declare neither, which covers the
+ * defaults.
  */
 class MarkupAnimationTester extends AnimationModule
 {
@@ -17,6 +18,11 @@ class MarkupAnimationTester extends AnimationModule
     public function label(): string
     {
         return 'Markup Tester';
+    }
+
+    public function reducedMotion(): string
+    {
+        return self::MOTION_OWN;
     }
 
     public function markup(): ?string

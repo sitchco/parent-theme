@@ -97,6 +97,11 @@ class AnimationFrameworkModule extends Module
     {
         $this->initialized = true;
 
+        // The reduced-motion rule; global, so the canvas follows the preference as the front end does.
+        $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
+            $assets->enqueueStyle(static::hookName(), 'main.css');
+        });
+
         add_filter(ExtendBlockModule::hookName('wrapper-props'), [$this, 'wrapperProps'], 10, 2);
         // After ExtendBlock writes the wrapper props, at 10, so the two never edit one string at once.
         add_filter('render_block', [$this, 'injectMarkup'], 11, 2);
@@ -124,6 +129,7 @@ class AnimationFrameworkModule extends Module
             $assets->inlineScriptData(static::hookName('editor-ui'), 'animations', [
                 'blocks' => $blockAnimations,
                 'controls' => $this->getAnimationControls(),
+                'ownMotion' => $this->getOwnMotionKeys(),
             ]);
         });
     }
@@ -200,8 +206,9 @@ class AnimationFrameworkModule extends Module
      *
      * Nothing unless the block's stored `animation` is one the block may use now: a key the config
      * withdrew, or an animation no longer active, emits nothing, as the editor's select shows it as
-     * "(unavailable)". Otherwise `data-animation`, and for each control with a CSS value, its
-     * custom property.
+     * "(unavailable)". Otherwise `data-animation`, `data-animation-motion="own"` for an animation
+     * that handles reduced motion itself, and for each control with a CSS value, its custom
+     * property.
      *
      * A control's value is resolved in the order the editor's function default uses: the value
      * stored on the block, else the block's config default, else the control's own. A value the
@@ -227,6 +234,9 @@ class AnimationFrameworkModule extends Module
         }
 
         $props['attributes']['data-animation'] = $key;
+        if ($this->getAnimation($key)?->reducedMotion() === AnimationModule::MOTION_OWN) {
+            $props['attributes']['data-animation-motion'] = AnimationModule::MOTION_OWN;
+        }
 
         foreach ($this->getControls()[$key] ?? [] as $name => $control) {
             $attribute = static::attributeName($key, $name);
@@ -301,6 +311,22 @@ class AnimationFrameworkModule extends Module
         }
 
         return $blockContent;
+    }
+
+    /**
+     * The keys of every active animation that handles reduced motion itself, for the editor to
+     * emit `data-animation-motion` as wrapperProps() does.
+     *
+     * @return list<string>
+     */
+    public function getOwnMotionKeys(): array
+    {
+        return array_keys(
+            array_filter(
+                $this->getAnimations(),
+                fn(AnimationModule $animation) => $animation->reducedMotion() === AnimationModule::MOTION_OWN,
+            ),
+        );
     }
 
     /**
@@ -431,6 +457,13 @@ class AnimationFrameworkModule extends Module
                     "Duplicate animation key \"{$key}\": {$classname} collides with {$kept}. Keeping {$kept}.",
                 );
                 continue;
+            }
+
+            $motion = $module->reducedMotion();
+            if (!in_array($motion, [AnimationModule::MOTION_FRAMEWORK, AnimationModule::MOTION_OWN], true)) {
+                Logger::error(
+                    "Animation {$classname} returned \"{$motion}\" from reducedMotion(), which is neither MOTION_FRAMEWORK nor MOTION_OWN. Treating it as MOTION_FRAMEWORK.",
+                );
             }
 
             $animations[$key] = $module;

@@ -111,7 +111,7 @@ describe('animation controls', () => {
     it('emits data-animation only for an animation the block may use now', () => {
         extendAnimation(sitchco, { blocks: MAP });
         const [field] = sitchco.calls[0].fields;
-        const emitted = (value, blockName) => field.attributes(value, { blockName })['data-animation'];
+        const emitted = (value, blockName) => field.attributes(value, { blockName })?.['data-animation'];
 
         expect(emitted('parallax', 'core/heading')).toBe('parallax');
         // Stored, but not offered on this block: shown as "(unavailable)", and emits nothing.
@@ -122,6 +122,25 @@ describe('animation controls', () => {
 
     /* The heart of the design: one registration still offers a different list per block, because
        options resolve from the render context rather than once at registration time. */
+    it('marks an animation that handles reduced motion itself, and only that one', () => {
+        extendAnimation(sitchco, {
+            blocks: MAP,
+            ownMotion: ['parallax'],
+        });
+
+        const [field] = sitchco.calls[0].fields;
+
+        expect(field.attributes('parallax', { blockName: 'core/heading' })).toEqual({
+            'data-animation': 'parallax',
+            'data-animation-motion': 'own',
+        });
+
+        expect(field.attributes('fade-up', { blockName: 'core/heading' })).toEqual({
+            'data-animation': 'fade-up',
+            'data-animation-motion': undefined,
+        });
+    });
+
     it('offers each block only the animations its own config entry allows', () => {
         extendAnimation(sitchco, { blocks: MAP });
         const [field] = sitchco.calls[0].fields;

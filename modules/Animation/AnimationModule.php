@@ -64,6 +64,12 @@ abstract class AnimationModule extends Module
      */
     public const DEPENDENCIES = [AnimationFrameworkModule::class];
 
+    /** Reduced motion is the framework's: its stylesheet stops this animation's motion. */
+    public const MOTION_FRAMEWORK = 'framework';
+
+    /** Reduced motion is the animation's own: its stylesheet or script handles the preference. */
+    public const MOTION_OWN = 'own';
+
     /**
      * Unique animation key — the value stored on the block and emitted as data-animation.
      *
@@ -107,6 +113,24 @@ abstract class AnimationModule extends Module
     public function controls(): array
     {
         return [];
+    }
+
+    /**
+     * Who handles `prefers-reduced-motion` for this animation.
+     *
+     * MOTION_FRAMEWORK, the default: the framework's stylesheet stops the motion, settling each
+     * animation on its last frame. An animation that declares nothing therefore degrades safely.
+     *
+     * MOTION_OWN: the block carries `data-animation-motion="own"`, the framework's rule skips it,
+     * and this animation handles the preference itself — pausing on a chosen frame, say, or
+     * keeping a busy indicator spinning because the motion is the information. A JS behaviour of
+     * an animation that doesn't return MOTION_OWN is not started under reduced motion at all.
+     *
+     * Any other value is logged and treated as MOTION_FRAMEWORK.
+     */
+    public function reducedMotion(): string
+    {
+        return static::MOTION_FRAMEWORK;
     }
 
     /**

@@ -19,6 +19,7 @@ use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Parent\Tests\Support\SecondAnimationTester;
 use Sitchco\Parent\Tests\Support\CollidingAnimationTester;
 use Sitchco\Parent\Tests\Support\InvalidKeyAnimationTester;
+use Sitchco\Parent\Tests\Support\InvalidMotionAnimationTester;
 use Sitchco\Tests\TestCase;
 use Sitchco\Utils\LogLevel;
 use Sitchco\Utils\Logger;
@@ -658,6 +659,7 @@ class AnimationFrameworkModuleTest extends TestCase
             [
                 'blocks' => $framework->getBlockAnimations(),
                 'controls' => $framework->getAnimationControls(),
+                'ownMotion' => $framework->getOwnMotionKeys(),
             ],
             json_decode($matches[1], true),
         );
@@ -1356,5 +1358,64 @@ class AnimationFrameworkModuleTest extends TestCase
             $first['value'],
         );
         $this->assertNull($second);
+    }
+
+    public function testAnAnimationHandlingReducedMotionItselfIsMarkedOnTheBlock(): void
+    {
+        $framework = $this->markupFramework();
+        $props = fn(string $key) => $this->propsFor($framework, 'test/markup', ['animation' => $key])['attributes'];
+
+        $this->assertSame(
+            ['data-animation' => 'markup-tester', 'data-animation-motion' => 'own'],
+            $props('markup-tester'),
+        );
+        // The default leaves the block to the framework's rule, so it carries no marker at all.
+        $this->assertSame(['data-animation' => 'animation-tester'], $props('animation-tester'));
+        $this->assertSame(['markup-tester'], $framework->getOwnMotionKeys());
+    }
+
+    public function testAnUnknownReducedMotionValueIsLoggedAndTreatedAsTheFrameworks(): void
+    {
+        $framework = $this->frameworkFor(InvalidMotionAnimationTester::class);
+        $animations = null;
+
+        $entry = $this->captureLogs(function () use ($framework, &$animations) {
+            $animations = $framework->getAnimations();
+        });
+
+        $this->assertArrayHasKey('invalid-motion-tester', $animations);
+        $this->assertSame(LogLevel::ERROR, $entry['level']);
+        $this->assertStringContainsString(InvalidMotionAnimationTester::class, $entry['value']);
+        $this->assertStringContainsString('"sometimes"', $entry['value']);
+        $this->assertSame([], $framework->getOwnMotionKeys());
+    }
+
+    /**
+     * Global, so the canvas follows the preference as the front end does. Isolated as
+     * queuedEditorScripts() is, for the same reasons.
+     *
+     * The handle is registered without a source first, so the case doesn't depend on a build: with
+     * no main.css in dist/, ModuleAssets has no URL to register and WordPress queues nothing.
+     */
+    public function testTheReducedMotionStylesheetIsEnqueuedForTheFrontEndAndTheEditor(): void
+    {
+        $hook = 'enqueue_block_assets';
+        $savedStyles = $GLOBALS['wp_styles'] ?? null;
+        $savedHook = $GLOBALS['wp_filter'][$hook] ?? null;
+        unset($GLOBALS['wp_styles'], $GLOBALS['wp_filter'][$hook]);
+
+        try {
+            wp_register_style(AnimationFrameworkModule::hookName(), false);
+            $this->frameworkFor(AnimationTester::class);
+            do_action($hook);
+
+            $this->assertContains(AnimationFrameworkModule::hookName(), wp_styles()->queue);
+        } finally {
+            $GLOBALS['wp_styles'] = $savedStyles;
+            unset($GLOBALS['wp_filter'][$hook]);
+            if ($savedHook) {
+                $GLOBALS['wp_filter'][$hook] = $savedHook;
+            }
+        }
     }
 }
