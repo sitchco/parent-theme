@@ -83,8 +83,12 @@ export default function (
             title: 'Animation',
             /* 'settings', not 'styles'. Kadence's Style tab renders into the default inspector
                group; filling WP's own styles slot would make core push a second native
-               "Settings | Styles" tab bar above Kadence's. Ignored on non-Kadence blocks, which
-               get an ordinary Settings panel. */
+               "Settings | Styles" tab bar above Kadence's.
+
+               Core blocks get the same group: an Animation panel of its own on their Settings tab,
+               rather than one folded into a core panel. One placement for every block keeps the
+               control where an editor learns to look for it, and `kadenceTab` below is ignored
+               off Kadence blocks. */
             group: 'settings',
             kadenceTab: 'style',
             initialOpen: false,
