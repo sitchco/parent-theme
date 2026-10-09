@@ -151,9 +151,12 @@ abstract class AnimationModule extends Module
      *
      * Name the element an animation's stylesheet expects to host it. The letter animation crops
      * its glyph against Kadence's inner container, where a column's background is painted, so it
-     * lists `kt-inside-inner-col` and `kt-row-column-wrap`. On a block with none of them the
-     * markup is skipped with a logged warning rather than put somewhere the stylesheet does not
-     * match.
+     * lists `kt-inside-inner-col` and `kt-row-column-wrap`.
+     *
+     * Every block configured for this animation must render one of these hosts itself. The lookup
+     * runs over the block's rendered HTML, which already holds its inner blocks, so on a block
+     * without one the markup lands in the first inner block that has one. Only when nothing in
+     * the block carries any of them is the markup skipped, with a logged warning.
      *
      * @return list<string>
      */

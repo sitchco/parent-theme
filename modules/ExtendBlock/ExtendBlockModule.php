@@ -131,6 +131,10 @@ class ExtendBlockModule extends Module
      *
      * Each dropped name is logged once per request. When nothing survives, the content is
      * returned untouched, byte for byte.
+     *
+     * The wrapper is the first element of the block's rendered HTML (seekWrapper()). A block that
+     * renders none of its own, such as `core/block`, hands its props to its first inner block, so
+     * a contributor should only target blocks that render their own wrapper.
      */
     public function injectWrapperProps(string $block_content, array $block): string
     {

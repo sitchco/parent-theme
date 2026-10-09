@@ -563,6 +563,20 @@ class AnimationFrameworkModuleTest extends TestCase
         ];
     }
 
+    public function testABlockWithNoWrapperOfItsOwnIsRefusedWithoutLosingTheOthers(): void
+    {
+        $framework = $this->frameworkForFixtures('wrapperless');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+
+        $this->assertSame(['core/group'], array_keys($blocks));
+        $this->assertCount(1, $entry['value']['problems']);
+        $this->assertStringContainsString('core/block: renders no wrapper', $entry['value']['problems'][0]);
+    }
+
     public function testAnAnimationNoModuleProvidesIsDroppedWithoutLosingItsSiblings(): void
     {
         $entries = $this->frameworkForFixtures('parent')->getAnimationsForBlock('test/unknown-animation');
