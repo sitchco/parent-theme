@@ -2,6 +2,7 @@
 
 namespace Sitchco\Parent\Tests;
 
+use Sitchco\Parent\Modules\Animation\AnimationControl;
 use Sitchco\Parent\Modules\Animation\AnimationControlValidator;
 use Sitchco\Parent\Modules\Animation\AnimationModule;
 use Sitchco\Parent\Tests\Support\CollidingAnimationTester;
@@ -74,9 +75,25 @@ class AnimationControlValidatorTest extends TestCase
                 // Its min above its max goes unreported: the first defect found is the one named.
                 'malformed-controls-tester / twoDefects: its label must not be empty. Dropping it.',
                 'malformed-controls-tester / blankLabel: its label must not be empty. Dropping it.',
+                'malformed-controls-tester / stringToggle: its default must be true or false. Dropping it.',
+                'malformed-controls-tester / arrayDefault: its default must be a string or a number. Dropping it.',
+                'malformed-controls-tester / arrayText: its default must be a string or a number. Dropping it.',
+                'malformed-controls-tester / stringOptions: `options` must be a list. Dropping it.',
+                'malformed-controls-tester / wordMin: `min` must be a number. Dropping it.',
+                'malformed-controls-tester / twoTypes: `help` must be a string; `min` must be a number. Dropping it.',
+                'malformed-controls-tester / cssWrongType: `css` must be a string or an array. Dropping it.',
+                'malformed-controls-tester / cssNoPlaceholder: its `css` must be a template containing {value}. Dropping it.',
+                'malformed-controls-tester / cssUnsafe: its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                "malformed-controls-tester / toggleCssString: a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else. Dropping it.",
+                "malformed-controls-tester / toggleCssHalf: a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else. Dropping it.",
+                'malformed-controls-tester / toggleCssUnsafe: its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                "malformed-controls-tester / toggleCssExtra: a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else. Dropping it.",
+                "malformed-controls-tester / optionCssNumber: an option's `css` must be a string. Dropping it.",
+                'malformed-controls-tester / optionCssUnsafe: its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
                 'malformed-controls-tester / filterTypo: does not know the option `optionFilter`. Ignoring it.',
                 'malformed-controls-tester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 'malformed-controls-tester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',
+                'malformed-controls-tester / foreignTypedOption: does not know the option `options`. Ignoring it.',
                 // Only the malformed first `twice` is reported: the valid second is not a duplicate of it.
                 'malformed-controls-tester / twice: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 'malformed-controls-tester / ok: is declared twice. Keeping the first valid one.',
@@ -96,7 +113,16 @@ class AnimationControlValidatorTest extends TestCase
 
         $this->assertSame(['speed', 'direction', 'tint', 'caption'], array_keys($controls['second-tester']));
         $this->assertSame(
-            ['pinned', 'quarterStep', 'offsetGrid', 'defaultTypo', 'edgeAnimationSpeed', 'twice', 'ok'],
+            [
+                'pinned',
+                'quarterStep',
+                'offsetGrid',
+                'defaultTypo',
+                'foreignTypedOption',
+                'edgeAnimationSpeed',
+                'twice',
+                'ok',
+            ],
             array_keys($controls['malformed-controls-tester']),
         );
         // The malformed tester comes first, so it keeps the attribute both build.
@@ -117,6 +143,21 @@ class AnimationControlValidatorTest extends TestCase
         $controls = $this->validate(MalformedControlsAnimationTester::class)['controls']['malformed-controls-tester'];
 
         $this->assertFalse($controls['defaultTypo']->default);
+    }
+
+    public function testATypedOptionTheFactoryDoesNotDefineIsOnlyUnknown(): void
+    {
+        $control = AnimationControl::toggle('a', 'A', ['options' => 'red']);
+
+        $this->assertSame(['options'], $control->unknownOptions);
+        $this->assertSame([], $control->typeProblems);
+    }
+
+    public function testTheKeptControlsStillEncodeForTheEditor(): void
+    {
+        $controls = $this->validate(MalformedControlsAnimationTester::class)['controls']['malformed-controls-tester'];
+
+        $this->assertNotFalse(wp_json_encode(array_values($controls)));
     }
 
     public function testAnimationsWithValidControlsReportNothing(): void

@@ -28,8 +28,17 @@ use Sitchco\Utils\Logger;
  *
  * The coordinator discovers animations and their controls, resolves config against both, and hands
  * the result to the editor, where one ExtendBlock registration turns it into an Animation select
- * per configured block plus each animation's own controls. Emitting the data attributes and
- * injecting per-animation markup arrive with the stories that need them.
+ * per configured block plus each animation's own controls.
+ *
+ * It also renders what a block emits on the front end: `data-animation="<key>"` and one custom
+ * property per control, `--{key}-animation-{name}` (see wrapperProps()). That output is written
+ * server-side for every block, static or dynamic, through ExtendBlockModule's `wrapper-props`
+ * filter, and never into saved markup: the editor registration uses `saveOutput: false` and
+ * shows the same output in the canvas only. So no block can fail validation over an animation,
+ * and a changed config default reaches every block that hasn't stored a value of its own.
+ *
+ * An animation that needs markup of its own inside the block has it inserted the same way, on
+ * render_block (injectMarkup()).
  */
 class AnimationFrameworkModule extends Module
 {
@@ -65,6 +74,9 @@ class AnimationFrameworkModule extends Module
     /** Whether init() has run; until it has, nothing below memoizes. See getAnimations(). */
     private bool $initialized = false;
 
+    /** Animation and block pairs already warned about having no markup host this request. */
+    private array $warnedHostless = [];
+
     public function __construct(
         protected ModuleRegistry $moduleRegistry,
         protected ConfigRegistry $configRegistry,
@@ -84,6 +96,26 @@ class AnimationFrameworkModule extends Module
     public function init(): void
     {
         $this->initialized = true;
+
+        /* Front-end assets only where blocks may carry animations at all. Checked against the raw
+           section, which is a cached config read, rather than by resolving it: resolution would log
+           any config problem on every page view, not just where an animated block renders. */
+        // The reduced-motion rule; global, so the canvas follows the preference as the front end does.
+        $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
+            if ($this->hasAnimationConfig()) {
+                $assets->enqueueStyle(static::hookName(), 'main.css');
+            }
+        });
+        // The behaviour runtime; front end only, so no animation JS runs inside the editor.
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            if ($this->hasAnimationConfig()) {
+                $assets->enqueueScript(static::hookName('runtime'), 'animation.js', [UIFramework::hookName()]);
+            }
+        });
+
+        add_filter(ExtendBlockModule::hookName('wrapper-props'), [$this, 'wrapperProps'], 10, 2);
+        // After core's block supports at 10, so a block they hide arrives empty and is skipped.
+        add_filter('render_block', [$this, 'injectMarkup'], 11, 2);
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $blockAnimations = $this->getBlockAnimations();
@@ -108,6 +140,7 @@ class AnimationFrameworkModule extends Module
             $assets->inlineScriptData(static::hookName('editor-ui'), 'animations', [
                 'blocks' => $blockAnimations,
                 'controls' => $this->getAnimationControls(),
+                'ownMotion' => $this->getOwnMotionKeys(),
             ]);
         });
     }
@@ -166,6 +199,161 @@ class AnimationFrameworkModule extends Module
     }
 
     /**
+     * The custom property a control's CSS value is written to: `--{key}-animation-{name}`, with a
+     * camelCase name in kebab-case. `letter` + `color` is `--letter-animation-color`; `fade-up` +
+     * `startAt` is `--fade-up-animation-start-at`.
+     *
+     * The animation's stylesheet consumes it, and a JS behaviour reads it with getComputedStyle(),
+     * so like attributeName() it is built here once and shipped to the editor with each control.
+     * Kebab keys and camelCase names keep it unambiguous: no two controls can share one.
+     */
+    public static function cssProperty(string $key, string $name): string
+    {
+        return "--{$key}-animation-" . strtolower(preg_replace('/[A-Z]/', '-$0', $name));
+    }
+
+    /**
+     * What a block emits for its animation, added to ExtendBlockModule's `wrapper-props`.
+     *
+     * Nothing unless the block's stored `animation` is one the block may use now: a key the config
+     * withdrew, or an animation no longer active, emits nothing, as the editor's select shows it as
+     * "(unavailable)". Otherwise `data-animation`, `data-animation-motion="own"` for an animation
+     * that handles reduced motion itself, and for each control with a CSS value, its custom
+     * property.
+     *
+     * A control's value is resolved in the order the editor's function default uses: the value
+     * stored on the block, else the block's config default, else the control's own. A value the
+     * block's `allowed` list no longer permits emits nothing for that control.
+     *
+     * Hooked for every block on every request, so the cheapest test comes first: most blocks have
+     * no `animation` attribute at all, and leave without config being resolved.
+     *
+     * @param array{attributes: array<string, mixed>, style: array<string, mixed>} $props
+     * @param array{blockName?: ?string, attrs?: array<string, mixed>} $block
+     */
+    public function wrapperProps(array $props, array $block): array
+    {
+        $attrs = $block['attrs'] ?? [];
+        $key = $attrs['animation'] ?? null;
+        if (!is_string($key) || $key === '') {
+            return $props;
+        }
+
+        $entry = $this->getAnimationsForBlock((string) ($block['blockName'] ?? ''))[$key] ?? null;
+        if ($entry === null) {
+            return $props;
+        }
+
+        $props['attributes']['data-animation'] = $key;
+        if ($this->getAnimation($key)?->reducedMotion() === AnimationModule::MOTION_OWN) {
+            $props['attributes']['data-animation-motion'] = AnimationModule::MOTION_OWN;
+        }
+
+        foreach ($this->getControls()[$key] ?? [] as $name => $control) {
+            $attribute = static::attributeName($key, $name);
+            $value = match (true) {
+                isset($attrs[$attribute]) => $attrs[$attribute],
+                array_key_exists($name, $entry['defaults']) => $entry['defaults'][$name],
+                default => $control->default,
+            };
+
+            $permitted = $entry['allowed'][$name] ?? null;
+            if ($permitted !== null && (!is_scalar($value) || !in_array((string) $value, $permitted, true))) {
+                continue;
+            }
+
+            $css = $control->cssValue($value);
+            if ($css !== null) {
+                $props['style'][static::cssProperty($key, $name)] = $css;
+            }
+        }
+
+        return $props;
+    }
+
+    /**
+     * Inserts the selected animation's markup() into a block's rendered HTML, at its host.
+     *
+     * Only for an animation the block may use now, as with wrapperProps(), and only when the
+     * animation declares markup. A block with no host for it (see AnimationModule::markupHosts())
+     * renders without the markup, and the miss is logged as a warning once per animation and block
+     * type per request: the fix is a config or markupHosts() change, and render_block runs on every
+     * request, so a warning per render would bury it.
+     *
+     * Driven by the stored `animation` attribute, not by a class: nothing an ExtendBlock control
+     * writes reaches `attrs.className`.
+     */
+    public function injectMarkup(string $blockContent, array $block): string
+    {
+        $key = $block['attrs']['animation'] ?? null;
+        if (!is_string($key) || $key === '') {
+            return $blockContent;
+        }
+
+        $blockName = (string) ($block['blockName'] ?? '');
+        if (!isset($this->getAnimationsForBlock($blockName)[$key])) {
+            return $blockContent;
+        }
+
+        $animation = $this->getAnimation($key);
+        $markup = $animation?->markup();
+        if ($markup === null || $markup === '') {
+            return $blockContent;
+        }
+        // A block that rendered nothing — hidden with core's visibility support, say — has nothing
+        // to host the markup, and nothing is misconfigured.
+        if (trim($blockContent) === '') {
+            return $blockContent;
+        }
+
+        $hosts = $animation->markupHosts();
+        $injected = MarkupInjector::inject($blockContent, $markup, $hosts);
+        if ($injected !== null) {
+            return $injected;
+        }
+
+        if (!isset($this->warnedHostless[$key][$blockName])) {
+            $this->warnedHostless[$key][$blockName] = true;
+            Logger::warning(
+                sprintf(
+                    'Animation "%s" has no host for its markup in a %s block (%s), so it renders without it.',
+                    $key,
+                    $blockName,
+                    $hosts
+                        ? 'no element with the class ' . implode(' or ', $hosts)
+                        : 'no outermost element that can hold children',
+                ),
+            );
+        }
+
+        return $blockContent;
+    }
+
+    /**
+     * Whether the `animations` config section names any block at all, before resolution.
+     */
+    private function hasAnimationConfig(): bool
+    {
+        return !empty($this->configRegistry->load(static::CONFIG_KEY));
+    }
+
+    /**
+     * The keys of every active animation that handles reduced motion itself, for the editor to
+     * emit `data-animation-motion` as wrapperProps() does.
+     *
+     * @return list<string>
+     */
+    public function getOwnMotionKeys(): array
+    {
+        return array_keys(
+            array_filter(
+                $this->getAnimations(),
+                fn(AnimationModule $animation) => $animation->reducedMotion() === AnimationModule::MOTION_OWN,
+            ),
+        );
+    }
+
+    /**
      * Every active animation's valid controls, keyed by animation key and then control name.
      *
      * Validated once and memoized, under the same timing rule as getAnimations(). A control that
@@ -185,7 +373,7 @@ class AnimationFrameworkModule extends Module
 
     /**
      * The controls as the editor receives them: per animation key, a list of serialized controls,
-     * each carrying the `attribute` its value is stored under. Animations without controls are left
+     * each carrying the `attribute` its value is stored under and the `cssProperty` it emits to. Animations without controls are left
      * out.
      *
      * @return array<string, list<array<string, mixed>>>
@@ -199,6 +387,7 @@ class AnimationFrameworkModule extends Module
                 $serialized[$key][] = [
                     ...$control->jsonSerialize(),
                     'attribute' => static::attributeName($key, $control->name),
+                    'cssProperty' => static::cssProperty($key, $control->name),
                 ];
             }
         }
@@ -292,6 +481,13 @@ class AnimationFrameworkModule extends Module
                     "Duplicate animation key \"{$key}\": {$classname} collides with {$kept}. Keeping {$kept}.",
                 );
                 continue;
+            }
+
+            $motion = $module->reducedMotion();
+            if (!in_array($motion, [AnimationModule::MOTION_FRAMEWORK, AnimationModule::MOTION_OWN], true)) {
+                Logger::error(
+                    "Animation {$classname} returned \"{$motion}\" from reducedMotion(), which is neither MOTION_FRAMEWORK nor MOTION_OWN. Treating it as MOTION_FRAMEWORK.",
+                );
             }
 
             $animations[$key] = $module;

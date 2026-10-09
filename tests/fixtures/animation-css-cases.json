@@ -1,0 +1,160 @@
+[
+    {
+        "case": "select template",
+        "type": "select",
+        "options": { "optionsFilter": "test.tint-options", "css": "var(--wp--preset--color--{value})" },
+        "value": "purple",
+        "expected": "var(--wp--preset--color--purple)"
+    },
+    {
+        "case": "select template, empty value",
+        "type": "select",
+        "options": { "optionsFilter": "test.tint-options", "css": "var(--wp--preset--color--{value})" },
+        "value": "",
+        "expected": null
+    },
+    {
+        "case": "select per-option css wins over the template",
+        "type": "select",
+        "options": {
+            "options": [
+                { "label": "Default", "value": "" },
+                { "label": "30%", "value": 30, "css": "0.3" },
+                { "label": "50%", "value": 50 }
+            ],
+            "css": "calc({value} / 100)"
+        },
+        "value": "30",
+        "expected": "0.3"
+    },
+    {
+        "case": "select falls back to the template without a per-option css",
+        "type": "select",
+        "options": {
+            "options": [
+                { "label": "30%", "value": 30, "css": "0.3" },
+                { "label": "50%", "value": 50 }
+            ],
+            "css": "calc({value} / 100)"
+        },
+        "value": "50",
+        "expected": "calc(50 / 100)"
+    },
+    {
+        "case": "select per-option css alone",
+        "type": "select",
+        "options": {
+            "options": [
+                { "label": "Slow", "value": "slow", "css": "2s" },
+                { "label": "Fast", "value": "fast" }
+            ]
+        },
+        "value": "fast",
+        "expected": null
+    },
+    {
+        "case": "select value it does not offer",
+        "type": "select",
+        "options": { "options": [{ "label": "Up", "value": "up" }], "css": "{value}" },
+        "value": "down",
+        "expected": null
+    },
+    {
+        "case": "select numeric value matches its string option",
+        "type": "select",
+        "options": { "options": [{ "label": "30%", "value": "30", "css": "0.3" }] },
+        "value": 30,
+        "expected": "0.3"
+    },
+    {
+        "case": "select without css",
+        "type": "select",
+        "options": { "options": [{ "label": "Up", "value": "up" }] },
+        "value": "up",
+        "expected": null
+    },
+    {
+        "case": "select boolean value",
+        "type": "select",
+        "options": { "optionsFilter": "x", "css": "{value}" },
+        "value": true,
+        "expected": null
+    },
+    {
+        "case": "toggle on",
+        "type": "toggle",
+        "options": { "css": { "on": "reverse", "off": "normal" } },
+        "value": true,
+        "expected": "reverse"
+    },
+    {
+        "case": "toggle off is a value",
+        "type": "toggle",
+        "options": { "css": { "on": "reverse", "off": "normal" } },
+        "value": false,
+        "expected": "normal"
+    },
+    {
+        "case": "toggle string value",
+        "type": "toggle",
+        "options": { "css": { "on": "reverse", "off": "normal" } },
+        "value": "true",
+        "expected": null
+    },
+    {
+        "case": "toggle without css",
+        "type": "toggle",
+        "options": {},
+        "value": true,
+        "expected": null
+    },
+    {
+        "case": "number template",
+        "type": "number",
+        "options": { "css": "{value}ms" },
+        "value": 250,
+        "expected": "250ms"
+    },
+    {
+        "case": "number zero is a value",
+        "type": "number",
+        "options": { "css": "{value}ms" },
+        "value": 0,
+        "expected": "0ms"
+    },
+    {
+        "case": "number fraction",
+        "type": "number",
+        "options": { "css": "{value}", "step": 0.25 },
+        "value": 0.75,
+        "expected": "0.75"
+    },
+    {
+        "case": "number numeric string",
+        "type": "number",
+        "options": { "css": "{value}ms" },
+        "value": "250",
+        "expected": null
+    },
+    {
+        "case": "text template, placeholder twice",
+        "type": "text",
+        "options": { "css": "'{value}' / '{value}'" },
+        "value": "hi",
+        "expected": "'hi' / 'hi'"
+    },
+    {
+        "case": "text empty",
+        "type": "text",
+        "options": { "css": "{value}" },
+        "value": "",
+        "expected": null
+    },
+    {
+        "case": "unset value",
+        "type": "text",
+        "options": { "css": "{value}" },
+        "value": null,
+        "expected": null
+    }
+]

@@ -132,10 +132,11 @@ function createAttributeFilter(targetBlocks, allFields, includeClassesAttribute 
  * @param {Function} [options.useSetup] - Custom setup hook
  * @param {boolean} [options.kadenceTabAware] - Whether to auto-detect Kadence tabs
  * @param {Function} [options.classGenerator] - Custom class generator override
+ * @param {boolean} [options.saveOutput] - false when the server renders the front end; see extendBlock()
  * @returns {Function} Higher-order component
  */
 function createInspectorFilter(targetBlocks, panels, allFields, namespace, options = {}) {
-    const { shouldRender, useSetup, kadenceTabAware, classGenerator } = options;
+    const { shouldRender, useSetup, kadenceTabAware, classGenerator, saveOutput = true } = options;
     return createHigherOrderComponent((BlockEdit) => {
         return (props) => {
             if (!isTargetBlock(props.name, targetBlocks)) {
@@ -185,8 +186,12 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
 
             // A static block stores its function defaults once they apply, so its saved markup
             // never depends on a default that can change later. See utils/field-value.js.
+            // Without save output there is no saved markup to protect: the server renders from
+            // the current default, which an untouched block should keep following, as a dynamic
+            // block does.
             const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch(blockEditorStore);
-            const defaultsToStore = isDynamic ? null : contextualDefaultsToStore(allFields, attributes, outputContext);
+            const defaultsToStore =
+                isDynamic || !saveOutput ? null : contextualDefaultsToStore(allFields, attributes, outputContext);
             const defaultsKey = defaultsToStore ? JSON.stringify(defaultsToStore) : '';
             const isMounting = useRef(true);
             useEffect(() => {
@@ -295,6 +300,7 @@ function createInspectorFilter(targetBlocks, panels, allFields, namespace, optio
  * @param {Object} [generators]
  * @param {Function} [generators.classGenerator] - Custom class generator override
  * @param {Function} [generators.attributeGenerator] - Custom attribute generator override
+ * @param {Function} [generators.styleGenerator] - Custom style generator override (canvas only)
  * @returns {Function} Higher-order component
  */
 function createEditorPropsFilter(targetBlocks, allFields, generators = {}) {
@@ -345,13 +351,28 @@ function createEditorPropsFilter(targetBlocks, allFields, generators = {}) {
  * @param {Function} [config.attributeGenerator] - Override default attribute generation:
  *   (attributes, { blockName }) => Object of `data-*` / `aria-*` attributes; any other name is
  *   dropped. They are merged onto a static block's saved wrapper and, in the editor canvas, onto
- *   wrapperProps. A dynamic block's front end does not get them until S7 — only classes are
- *   synced to it. Return `undefined` for anything unset: `''`, `0` and `false` are kept and
- *   serialize. See the rules at the top of utils/attributes.js.
+ *   wrapperProps. A dynamic block's front end does not get them, since PHP renders it: an
+ *   extension that needs them there renders them server-side through ExtendBlockModule's
+ *   `wrapper-props` filter, usually with `saveOutput: false`. Return `undefined` for anything
+ *   unset: `''`, `0` and `false` are kept and serialize. See the rules at the top of
+ *   utils/attributes.js.
  *
- * `condition`, `className`, `attributes` and both generators receive `{ blockName }` in every
- * phase — save, inspector and canvas alike — so none of them can make the editor preview and the
- * saved markup disagree. Only `render` and `options` see the richer render context.
+ * @param {Function} [config.styleGenerator] - Override default style generation:
+ *   (attributes, { blockName }) => Object of CSS custom properties (`--*`). Canvas only: the
+ *   save filter never emits style. See utils/styles.js.
+ * @param {boolean} [config.saveOutput=true] - false to keep the extension out of saved markup: no
+ *   save filter is registered, so classes and attributes reach the editor canvas only, and a
+ *   static block no longer stores its function defaults. The extension then renders its front
+ *   end server-side, through ExtendBlockModule's `wrapper-props` filter, from the block's stored
+ *   attributes. Nothing it emits can affect block validation, and an untouched control follows
+ *   a changed default on every block, static or dynamic. One exception: on a dynamic block,
+ *   classes still sync into the `extendBlockClasses` attribute, which PHP prints, because
+ *   `wrapper-props` carries no classes and gating the sync would drop them from the front end.
+ *
+ * `condition`, `className`, `attributes`, `style` and the generators receive `{ blockName }` in
+ * every phase they run in — save (classes and attributes; never style), inspector and canvas — so
+ * none of them can make the editor preview and the saved markup disagree. Only `render` and
+ * `options` see the richer render context.
  * @param {boolean} [config.kadenceTabAware] - Auto-detect Kadence tabs (default: true for kadence/* blocks)
  *
  * @example
@@ -419,7 +440,9 @@ export function extendBlock(config) {
         useSetup,
         classGenerator,
         attributeGenerator,
+        styleGenerator,
         kadenceTabAware,
+        saveOutput = true,
     } = config;
     if (!namespace) {
         throw new Error('extendBlock requires a namespace');
@@ -451,17 +474,21 @@ export function extendBlock(config) {
     }
     // 3 & 4. Emit classes and attributes into saved content and the editor canvas.
     //    `classGenerator` alone still belongs to extendBlockClasses(), unchanged — it is
-    //    `attributeGenerator` that earns a registration without fields, because there is no
-    //    attributes-only path through the field list.
-    if (allFields.length > 0 || attributeGenerator) {
-        addFilter(
-            'blocks.getSaveContent.extraProps',
-            `${namespace}/add-save-props`,
-            createSavePropsFilter(blocks, allFields, {
-                classGenerator,
-                attributeGenerator,
-            })
-        );
+    //    `attributeGenerator` or `styleGenerator` that earns a registration without fields,
+    //    because there is no path through the field list for either on its own.
+    //    With `saveOutput: false`, saved content is left alone and the server renders the
+    //    front end instead.
+    if (allFields.length > 0 || attributeGenerator || styleGenerator) {
+        if (saveOutput) {
+            addFilter(
+                'blocks.getSaveContent.extraProps',
+                `${namespace}/add-save-props`,
+                createSavePropsFilter(blocks, allFields, {
+                    classGenerator,
+                    attributeGenerator,
+                })
+            );
+        }
 
         addFilter(
             'editor.BlockListBlock',
@@ -469,6 +496,7 @@ export function extendBlock(config) {
             createEditorPropsFilter(blocks, allFields, {
                 classGenerator,
                 attributeGenerator,
+                styleGenerator,
             })
         );
     }
@@ -482,6 +510,7 @@ export function extendBlock(config) {
                 useSetup,
                 kadenceTabAware: enableKadenceTabAware,
                 classGenerator,
+                saveOutput,
             })
         );
     }
@@ -535,8 +564,8 @@ export function extendBlockClasses(config) {
  * data attributes derived from attributes it already has.
  *
  * On a dynamic block the attributes exist only in the editor canvas, since its front end is
- * rendered by PHP. That is true of full extendBlock() too until S7: today only classes are synced
- * to the server side.
+ * rendered by PHP. That is true of full extendBlock() too; for server-rendered output, see
+ * ExtendBlockModule's `wrapper-props` filter.
  *
  * @param {Object} config - Extension configuration
  * @param {string|string[]} config.blocks - Block name(s) to extend

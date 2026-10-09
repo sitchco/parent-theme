@@ -2,6 +2,8 @@
 
 namespace Sitchco\Parent\Modules\Animation;
 
+use Sitchco\Parent\Modules\ExtendBlock\ExtendBlockModule;
+
 /**
  * Checks every active animation's controls and keeps the ones that work.
  *
@@ -75,11 +77,20 @@ class AnimationControlValidator
                     continue;
                 }
 
-                $problem = match ($control->type) {
-                    'select' => $this->selectProblem($control),
-                    'number' => $this->numberProblem($control),
-                    default => null,
-                };
+                /* A value of the wrong PHP type, which the factory recorded and left unset rather
+                 than throwing. Every one is named, since one look at the definition fixes them all. */
+                if ($control->typeProblems) {
+                    $problems[] = sprintf('%s: %s. Dropping it.', $context, implode('; ', $control->typeProblems));
+                    continue;
+                }
+
+                $problem =
+                    match ($control->type) {
+                        'select' => $this->defaultTypeProblem($control) ?? $this->selectProblem($control),
+                        'toggle', 'text' => $this->defaultTypeProblem($control),
+                        'number' => $this->numberProblem($control),
+                        default => null,
+                    } ?? $this->cssProblem($control);
                 if ($problem !== null) {
                     $problems[] = "{$context}: {$problem} Dropping it.";
                     continue;
@@ -101,6 +112,72 @@ class AnimationControlValidator
         }
 
         return ['controls' => $valid, 'problems' => $problems];
+    }
+
+    /**
+     * A default the factory kept as written because it is not of its control's type. Not cast:
+     * a toggle's `'false'` would become `true`, silently. A number's default is numberProblem()'s.
+     */
+    private function defaultTypeProblem(AnimationControl $control): ?string
+    {
+        return match ($control->type) {
+            'toggle' => is_bool($control->default) ? null : 'its default must be true or false.',
+            'select', 'text' => is_string($control->default) ? null : 'its default must be a string or a number.',
+            default => null,
+        };
+    }
+
+    /**
+     * A `css` declaration that could not emit what it means to.
+     *
+     * Its static text is held to the rule ExtendBlockModule's wrapper-props applies to every style
+     * value, so a definition that could never be written is caught here, once, rather than dropped
+     * on every render. What a placeholder later receives — an author's text, say — is still
+     * checked there.
+     */
+    private function cssProblem(AnimationControl $control): ?string
+    {
+        $unsafe = fn(string $css) => !ExtendBlockModule::isSafeStyleValue($css);
+        $unsafeMessage = 'its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot.';
+
+        if ($control->type === 'toggle') {
+            if ($control->css === null) {
+                return null;
+            }
+            /* Exactly the two keys: jsonSerialize() sends the whole array to the editor, and one
+             value it cannot encode (INF, say) would fail the payload for every control. */
+            $css = is_array($control->css) ? $control->css : [];
+            $keys = array_keys($css);
+            sort($keys);
+            if ($keys !== ['off', 'on'] || !is_string($css['on']) || !is_string($css['off'])) {
+                return "a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else.";
+            }
+            return $unsafe($css['on']) || $unsafe($css['off']) ? $unsafeMessage : null;
+        }
+
+        if ($control->type === 'select') {
+            foreach ($control->options ?? [] as $option) {
+                if (!array_key_exists('css', $option)) {
+                    continue;
+                }
+                if (!is_string($option['css'])) {
+                    return "an option's `css` must be a string.";
+                }
+                if ($unsafe($option['css'])) {
+                    return $unsafeMessage;
+                }
+            }
+        }
+
+        if ($control->css === null) {
+            return null;
+        }
+        if (!is_string($control->css) || !str_contains($control->css, AnimationControl::CSS_PLACEHOLDER)) {
+            return sprintf('its `css` must be a template containing %s.', AnimationControl::CSS_PLACEHOLDER);
+        }
+
+        // The placeholder's own braces are not CSS: what replaces them is checked at render.
+        return $unsafe(str_replace(AnimationControl::CSS_PLACEHOLDER, '', $control->css)) ? $unsafeMessage : null;
     }
 
     private function selectProblem(AnimationControl $control): ?string

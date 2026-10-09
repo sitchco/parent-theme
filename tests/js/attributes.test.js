@@ -92,6 +92,18 @@ describe('mergeAttributes', () => {
         });
     });
 
+    it.each(['data-x onfocus=alert(1)', 'data-x"><script>', 'data-', 'data-X'])(
+        'drops the name %j, which is more than a data- or aria- name',
+        (name) => {
+            expect(
+                mergeAttributes({
+                    [name]: '1',
+                    'data-safe': '2',
+                })
+            ).toEqual({ 'data-safe': '2' });
+        }
+    );
+
     it('warns once per dropped name', () => {
         mergeAttributes({ 'once-only': '1' });
         mergeAttributes({ 'once-only': '2' });

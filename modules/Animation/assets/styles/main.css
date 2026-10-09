@@ -1,0 +1,39 @@
+/**
+ * The framework's reduced-motion rule: under `prefers-reduced-motion: reduce`, motion on any block
+ * carrying an animation stops, unless the animation handles reduced motion itself.
+ *
+ * An animation opts out by returning AnimationModule::MOTION_OWN from reducedMotion(); the block
+ * then carries `data-animation-motion="own"` and its stylesheet supplies its own handling — the
+ * letter animation pausing on a chosen frame, or a busy indicator that keeps spinning because the
+ * motion is the information. Everything else gets this rule, so an animation that declares nothing
+ * still degrades safely.
+ *
+ * Settled, not removed. Each animation runs once, instantly and without its delay, and holds its
+ * last frame, so a reveal ends revealed — a staggered one included, all at once. `animation: none`
+ * would instead drop the fill and show a pose the animation may never pass through — a fade-in
+ * stuck at its invisible start.
+ *
+ * The rule stops at an `own` block nested inside, so that block's own handling still applies.
+ *
+ * `!important` because one rule has to beat every animation's own selectors, whatever their
+ * specificity, without each animation repeating it. It is scoped to the reduced-motion preference
+ * and to animated blocks, so it overrides nothing anywhere else.
+ */
+@media (prefers-reduced-motion: reduce) {
+    [data-animation]:not([data-animation-motion='own']),
+    [data-animation]:not([data-animation-motion='own'])
+        *:not([data-animation-motion='own'], [data-animation-motion='own'] *),
+    [data-animation]:not([data-animation-motion='own'])
+        *:not([data-animation-motion='own'], [data-animation-motion='own'] *)::before,
+    [data-animation]:not([data-animation-motion='own'])
+        *:not([data-animation-motion='own'], [data-animation-motion='own'] *)::after,
+    [data-animation]:not([data-animation-motion='own'])::before,
+    [data-animation]:not([data-animation-motion='own'])::after {
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
+    }
+}

@@ -72,8 +72,38 @@ class MalformedControlsAnimationTester extends AnimationModule
             // Two defects: the blank label is reported, and the control is not looked at further.
             AnimationControl::number('twoDefects', ' ', ['min' => 5, 'max' => 1]),
             AnimationControl::text('blankLabel', ' '),
+            // Wrong PHP types: reported and dropped, never cast or thrown.
+            AnimationControl::toggle('stringToggle', 'String toggle', ['default' => 'false']),
+            AnimationControl::select('arrayDefault', 'Array default', [
+                'options' => [['label' => 'A', 'value' => 'a']],
+                'default' => [],
+            ]),
+            AnimationControl::text('arrayText', 'Array text', ['default' => ['a']]),
+            AnimationControl::select('stringOptions', 'String options', ['options' => 'red']),
+            AnimationControl::number('wordMin', 'Word min', ['min' => 'low']),
+            AnimationControl::number('twoTypes', 'Two types', ['min' => 'low', 'help' => 5]),
+            // CSS that could never be written.
+            AnimationControl::text('cssWrongType', 'CSS wrong type', ['css' => 5]),
+            AnimationControl::text('cssNoPlaceholder', 'CSS no placeholder', ['css' => 'red']),
+            AnimationControl::number('cssUnsafe', 'CSS unsafe', ['css' => '{value}ms; color: red']),
+            AnimationControl::toggle('toggleCssString', 'Toggle CSS string', ['css' => 'reverse']),
+            AnimationControl::toggle('toggleCssHalf', 'Toggle CSS half', ['css' => ['on' => 'reverse']]),
+            AnimationControl::toggle('toggleCssUnsafe', 'Toggle CSS unsafe', ['css' => ['on' => 'a}', 'off' => 'b']]),
+            AnimationControl::toggle('toggleCssExtra', 'Toggle CSS extra', [
+                'css' => ['on' => 'reverse', 'off' => 'normal', 'm' => INF],
+            ]),
+            AnimationControl::select('optionCssNumber', 'Option CSS number', [
+                'options' => [['label' => 'A', 'value' => 'a', 'css' => 1]],
+                'default' => 'a',
+            ]),
+            AnimationControl::select('optionCssUnsafe', 'Option CSS unsafe', [
+                'options' => [['label' => 'A', 'value' => 'a', 'css' => '</style>']],
+                'default' => 'a',
+            ]),
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
+            // A typed option this factory doesn't define: unknown, not a type problem.
+            AnimationControl::toggle('foreignTypedOption', 'Foreign typed option', ['options' => 'red']),
             AnimationControl::number('edgeAnimationSpeed', 'Collision source'),
             // Dropped for its missing source; the toggle of the same name after it is kept.
             AnimationControl::select('twice', 'Malformed first'),

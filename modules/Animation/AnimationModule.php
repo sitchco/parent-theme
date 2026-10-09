@@ -21,7 +21,8 @@ use Sitchco\Framework\Module;
  *         public function label(): string { return 'Letter Animation'; }
  *     }
  *
- * Settings of its own are optional, declared through controls() — see AnimationControl.
+ * Settings of its own are optional, declared through controls() — see AnimationControl. So is markup
+ * the block needs, declared through markup() and placed by markupHosts().
  *
  * HOOK_SUFFIX is deliberately left empty here so that every subclass declares its own — a module
  * with an empty suffix is skipped by ModuleRegistry::addModules() with a logged warning. The
@@ -29,23 +30,21 @@ use Sitchco\Framework\Module;
  *
  * Two things that are easy to get wrong:
  *
- * 1. Assets load on every page, not per block, and only on the front end. An animation enqueues its
- *    CSS and JS from init() via enqueueFrontendAssets(), rather than conditionally wherever it
- *    happens to be used. Animations are expected across many blocks and pages, and it is the
- *    per-block data-animation attribute that actually triggers one on a given element; a stylesheet
- *    with no matching attribute on the page costs only its transfer size and the render-blocking
- *    parse it pays for in the head, while conditional loading produces an inconsistent feel. If one
- *    animation's payload grows heavy, revisit it alone rather than changing this default.
+ * 1. Assets load on every page, not per block. An animation enqueues its CSS and JS from init(),
+ *    rather than conditionally wherever it happens to be used. Animations are expected across many
+ *    blocks and pages, and it is the per-block data-animation attribute that actually triggers one
+ *    on a given element; a stylesheet with no matching attribute on the page costs only its
+ *    transfer size and the render-blocking parse it pays for in the head, while conditional loading
+ *    produces an inconsistent feel. If one animation's payload grows heavy, revisit it alone rather
+ *    than changing this default.
  *
- *    enqueueFrontendAssets() hooks wp_enqueue_scripts, which does not fire for the block editor
- *    canvas, so an animation built this way does not preview in the editor. That is intended for
- *    now: nothing emits the attributes an animation reacts to yet. If editor preview is wanted
- *    later, the stylesheet moves to enqueueGlobalAssets() — which hooks enqueue_block_assets and so
- *    covers the front end and the editor both — while the script stays on enqueueFrontendAssets().
- *    That is the split KadenceBlocks.php:24-30 already uses, and it keeps whether animation JS runs
- *    inside the editor a decision made then rather than by accident. Not enqueueEditorPreviewAssets():
- *    it hooks enqueue_block_assets behind an is_admin() guard (Module.php:122), so moving the
- *    stylesheet there would take it off the front end.
+ *    The stylesheet goes through enqueueGlobalAssets(), which hooks enqueue_block_assets and so
+ *    reaches the front end and the editor canvas both. The canvas carries the same data-animation
+ *    and custom properties the front end does, so the animation previews as it will look. The
+ *    script, if there is one, stays on enqueueFrontendAssets(), so animation JS does not run
+ *    inside the editor by accident. That is the split KadenceBlocks.php already uses. Not
+ *    enqueueEditorPreviewAssets(): it hooks enqueue_block_assets behind an is_admin() guard
+ *    (Module.php), so a stylesheet there would be missing from the front end.
  *
  * 2. DEPENDENCIES does not merge. PHP replaces a class constant rather than combining it, so a
  *    subclass needing its own dependency has to carry the parent's forward:
@@ -64,6 +63,12 @@ abstract class AnimationModule extends Module
      * Activating any animation pulls in the coordinator. Read note 2 above before overriding this.
      */
     public const DEPENDENCIES = [AnimationFrameworkModule::class];
+
+    /** Reduced motion is the framework's: its stylesheet stops this animation's motion. */
+    public const MOTION_FRAMEWORK = 'framework';
+
+    /** Reduced motion is the animation's own: its stylesheet or script handles the preference. */
+    public const MOTION_OWN = 'own';
 
     /**
      * Unique animation key — the value stored on the block and emitted as data-animation.
@@ -106,6 +111,57 @@ abstract class AnimationModule extends Module
      * @return list<AnimationControl>
      */
     public function controls(): array
+    {
+        return [];
+    }
+
+    /**
+     * Who handles `prefers-reduced-motion` for this animation.
+     *
+     * MOTION_FRAMEWORK, the default: the framework's stylesheet stops the motion, settling each
+     * animation on its last frame. An animation that declares nothing therefore degrades safely.
+     *
+     * MOTION_OWN: the block carries `data-animation-motion="own"`, the framework's rule skips it,
+     * and this animation handles the preference itself — pausing on a chosen frame, say, or
+     * keeping a busy indicator spinning because the motion is the information. A JS behaviour of
+     * an animation that doesn't return MOTION_OWN is not started under reduced motion at all, so
+     * a reveal behaviour applies its hidden state in JS, never in CSS (see runtime.js).
+     *
+     * Any other value is logged and treated as MOTION_FRAMEWORK.
+     */
+    public function reducedMotion(): string
+    {
+        return static::MOTION_FRAMEWORK;
+    }
+
+    /**
+     * Markup this animation needs inside the block — a glyph, an overlay — or null for none.
+     *
+     * Most animations need none. When given, the framework inserts it as the first child of the
+     * block's host element (see markupHosts()) wherever the animation is selected. It is inserted
+     * unescaped, so it must be a constant: never anything an author entered.
+     */
+    public function markup(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Where markup() goes: the first element, in document order, carrying any of these classes.
+     * Empty, the default, means the block's own outermost element.
+     *
+     * Name the element an animation's stylesheet expects to host it. The letter animation crops
+     * its glyph against Kadence's inner container, where a column's background is painted, so it
+     * lists `kt-inside-inner-col` and `kt-row-column-wrap`.
+     *
+     * Every block configured for this animation must render one of these hosts itself. The lookup
+     * runs over the block's rendered HTML, which already holds its inner blocks, so on a block
+     * without one the markup lands in the first inner block that has one. Only when nothing in
+     * the block carries any of them is the markup skipped, with a logged warning.
+     *
+     * @return list<string>
+     */
+    public function markupHosts(): array
     {
         return [];
     }

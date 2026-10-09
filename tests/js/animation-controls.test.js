@@ -94,17 +94,53 @@ describe('animation controls', () => {
             default: '',
         });
 
-        /* The select writes the attribute and emits nothing, which is the whole of this PR's "no
-           block-validation risk" claim — toMatchObject alone would ignore an output channel added
-           later. S6 is meant to break this on purpose. */
+        // No class: the select emits data-animation alone.
         expect(field.className).toBeUndefined();
-        expect(field.attributes).toBeUndefined();
         expect(sitchco.calls[0].classGenerator).toBeUndefined();
         expect(sitchco.calls[0].attributeGenerator).toBeUndefined();
     });
 
+    /* The "no block-validation risk" claim: nothing this registration emits is saved. The front end
+       is rendered by AnimationFrameworkModule::wrapperProps(). */
+    it('emits to the canvas only, never into saved markup', () => {
+        extendAnimation(sitchco, { blocks: MAP });
+
+        expect(sitchco.calls[0].saveOutput).toBe(false);
+    });
+
+    it('emits data-animation only for an animation the block may use now', () => {
+        extendAnimation(sitchco, { blocks: MAP });
+        const [field] = sitchco.calls[0].fields;
+        const emitted = (value, blockName) => field.attributes(value, { blockName })?.['data-animation'];
+
+        expect(emitted('parallax', 'core/heading')).toBe('parallax');
+        // Stored, but not offered on this block: shown as "(unavailable)", and emits nothing.
+        expect(emitted('parallax', 'core/paragraph')).toBeUndefined();
+        expect(emitted('', 'core/heading')).toBeUndefined();
+        expect(emitted(undefined, 'core/heading')).toBeUndefined();
+    });
+
     /* The heart of the design: one registration still offers a different list per block, because
        options resolve from the render context rather than once at registration time. */
+    it('marks an animation that handles reduced motion itself, and only that one', () => {
+        extendAnimation(sitchco, {
+            blocks: MAP,
+            ownMotion: ['parallax'],
+        });
+
+        const [field] = sitchco.calls[0].fields;
+
+        expect(field.attributes('parallax', { blockName: 'core/heading' })).toEqual({
+            'data-animation': 'parallax',
+            'data-animation-motion': 'own',
+        });
+
+        expect(field.attributes('fade-up', { blockName: 'core/heading' })).toEqual({
+            'data-animation': 'fade-up',
+            'data-animation-motion': undefined,
+        });
+    });
+
     it('offers each block only the animations its own config entry allows', () => {
         extendAnimation(sitchco, { blocks: MAP });
         const [field] = sitchco.calls[0].fields;

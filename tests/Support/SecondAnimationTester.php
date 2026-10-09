@@ -30,13 +30,23 @@ class SecondAnimationTester extends AnimationModule
     public function controls(): array
     {
         return [
-            AnimationControl::number('speed', 'Speed', ['default' => 50, 'min' => 0, 'max' => 100, 'step' => 5]),
+            AnimationControl::number('speed', 'Speed', [
+                'default' => 50,
+                'min' => 0,
+                'max' => 100,
+                'step' => 5,
+                'css' => '{value}%',
+            ]),
+            // No css: stored, and emits nothing.
             AnimationControl::select('direction', 'Direction', [
                 'options' => [['label' => 'Up', 'value' => 'up'], ['label' => 'Down', 'value' => 'down']],
                 'default' => 'up',
             ]),
-            AnimationControl::select('tint', 'Tint', ['optionsFilter' => 'test.tint-options']),
-            AnimationControl::text('caption', 'Caption', ['default' => 'hello']),
+            AnimationControl::select('tint', 'Tint', [
+                'optionsFilter' => 'test.tint-options',
+                'css' => 'var(--wp--preset--color--{value})',
+            ]),
+            AnimationControl::text('caption', 'Caption', ['default' => 'hello', 'css' => '"{value}"']),
         ];
     }
 }

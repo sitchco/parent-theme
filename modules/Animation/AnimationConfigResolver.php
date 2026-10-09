@@ -81,6 +81,11 @@ namespace Sitchco\Parent\Modules\Animation;
  *    does the same. Naming a DIFFERENT animation is additive in either form and never touches its
  *    siblings — it is only re-stating an inherited one as `true` that costs anything.
  *
+ * BLOCKS. A configured block must render its own wrapper element, and, for an animation with
+ * markupHosts(), its own host. The framework looks both up in the block's rendered HTML, which
+ * already holds its inner blocks, so a block without them has the animation land on a child.
+ * `core/block` is refused outright, since a synced pattern never renders a wrapper.
+ *
  * CONTROLS. Every option name under `allowed` or `defaults` must name one of the animation's own
  * controls (AnimationModule::controls()), and is checked against it:
  *
@@ -100,6 +105,13 @@ namespace Sitchco\Parent\Modules\Animation;
  */
 class AnimationConfigResolver
 {
+    /**
+     * Blocks that render no wrapper of their own, so cannot carry an animation. A synced pattern
+     * renders its inner blocks and nothing around them: its wrapper props would land on its first
+     * inner block, and its markup in whatever host that block happens to hold.
+     */
+    private const WRAPPERLESS_BLOCKS = ['core/block'];
+
     /** The only sub-keys a per-block override array may use. */
     private const OVERRIDE_ALLOWED = 'allowed';
     private const OVERRIDE_DEFAULTS = 'defaults';
@@ -143,6 +155,14 @@ class AnimationConfigResolver
             /* Block-level removal, and the two ways of saying "nothing here". All intentional, so
              none of them is worth a word. */
             if ($blockConfig === false || $blockConfig === null || $blockConfig === []) {
+                continue;
+            }
+
+            if (in_array($blockName, self::WRAPPERLESS_BLOCKS, true)) {
+                $this->flagProblem(
+                    $blockName,
+                    'renders no wrapper of its own, so it cannot carry an animation. Configure the blocks inside it instead.',
+                );
                 continue;
             }
 

@@ -34,11 +34,13 @@ function createField(type, defaults) {
  * - default: Default value for the attribute
  * - render: React component for the inspector control
  *
- * A field emits through two independent, optional channels, both gated by `condition`:
+ * A field emits through three independent, optional channels, all gated by `condition`:
  * - className:  (value, context) => string | string[] | null — merged into the wrapper's class
  * - attributes: (value, context) => Object | null          — merged onto the wrapper as props: the
  *   saved markup of a static block, and the editor canvas of any block. A dynamic block's
- *   front end does not get them until S7; only classes are synced there.
+ *   front end does not get them; only classes are synced there.
+ * - style:      (value, context) => Object | null          — CSS custom properties, in the
+ *   editor canvas only. See utils/styles.js.
  *
  * Use `className` for anything a stylesheet matches and `attributes` for anything JS reads.
  *
@@ -57,7 +59,9 @@ function createField(type, defaults) {
  * registration serves blocks whose defaults differ. The attribute is then registered without a
  * default and the value is resolved on every read. A dynamic block follows the default until an
  * author picks a value; a static block stores the default once the field applies, so its saved
- * markup cannot go stale. Not supported inside responsive(). See utils/field-value.js.
+ * markup cannot go stale — unless its registration uses `saveOutput: false`, which saves no
+ * markup, so the static block follows the default as a dynamic one does. Not supported inside
+ * responsive(). See utils/field-value.js.
  */
 export const fields = {
     /**
@@ -75,6 +79,7 @@ export const fields = {
      * @param {string|Function} [config.default=''] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
+     * @param {Function} [config.style] - Custom property generator (value, context) => Object|null, canvas only
      * @param {string} [config.help] - Help text
      */
     select: createField('select', {
@@ -100,6 +105,7 @@ export const fields = {
      * @param {boolean|Function} [config.default=false] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
+     * @param {Function} [config.style] - Custom property generator (value, context) => Object|null, canvas only
      * @param {string} [config.help] - Help text
      */
     toggle: createField('toggle', {
@@ -119,6 +125,7 @@ export const fields = {
      * @param {string|Function} [config.default=''] - Default value, or a function of the output context
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
+     * @param {Function} [config.style] - Custom property generator (value, context) => Object|null, canvas only
      * @param {string} [config.help] - Help text
      */
     text: createField('text', {
@@ -144,6 +151,7 @@ export const fields = {
      *   off that grid is rewritten the first time an author tabs through the field.
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
+     * @param {Function} [config.style] - Custom property generator (value, context) => Object|null, canvas only
      * @param {string} [config.help] - Help text
      */
     number: createField('number', {
@@ -178,6 +186,7 @@ export const fields = {
      *   writes the breakpoint being edited.
      * @param {Function} [config.className] - Class generator (value, context) => string|string[]|null
      * @param {Function} [config.attributes] - Attribute generator (value, context) => Object|null
+     * @param {Function} [config.style] - Custom property generator (value, context) => Object|null, canvas only
      */
     custom: (config) => ({
         type: 'custom',

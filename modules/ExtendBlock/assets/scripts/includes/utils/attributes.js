@@ -26,8 +26,9 @@
  * - A key the block or core also sets (`aria-label`, `data-block`, `data-align`, …) resolves
  *   differently by phase: the extension wins on save, the block wins in the canvas. Don't emit
  *   keys your target block sets itself. See the precedence note in utils/editor-props.js.
- * - Dynamic blocks get these attributes in the editor canvas only, until S7. Their front end is
- *   rendered by PHP, and only classes are synced to it (through `extendBlockClasses`).
+ * - Dynamic blocks get these attributes in the editor canvas only. Their front end is rendered by
+ *   PHP, and only classes are synced to it (through `extendBlockClasses`). Server-rendered
+ *   attributes go through ExtendBlockModule's `wrapper-props` filter instead.
  *
  * Every callback that decides OUTPUT — `condition`, a field's `className` or `attributes`, and
  * the `classGenerator` / `attributeGenerator` overrides — gets the same output context in every
@@ -53,8 +54,11 @@ import { readFieldValue } from './field-value';
  * element (`children`, `dangerouslySetInnerHTML`, `on*`, a mis-cased `Class`) are open-ended,
  * while everything the animation framework plans to emit is `data-*`. Enforced here, at the one
  * point every attribute passes through, rather than guarded for at each call site.
+ *
+ * Anchored at both ends, so a name can't carry a space, a quote or a second attribute. Mirrors
+ * ExtendBlockModule::ATTRIBUTE_NAME_PATTERN.
  */
-const ALLOWED_NAME = /^(data|aria)-/;
+const ALLOWED_NAME = /^(data|aria)-[a-z0-9_.:-]+$/;
 
 const warned = new Set();
 

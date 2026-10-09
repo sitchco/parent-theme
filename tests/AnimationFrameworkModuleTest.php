@@ -4,6 +4,7 @@ namespace Sitchco\Parent\Tests;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\ModuleRegistry;
+use Sitchco\Parent\Modules\Animation\AnimationControl;
 use Sitchco\Parent\Modules\Animation\AnimationControlValidator;
 use Sitchco\Parent\Modules\Animation\AnimationFrameworkModule;
 use Sitchco\Modules\UIFramework\UIFramework;
@@ -13,10 +14,12 @@ use Sitchco\Parent\Tests\Support\ConfigRegistryTester;
 use Sitchco\Parent\Tests\Support\DuplicateAnimationTester;
 use Sitchco\Parent\Tests\Support\EmptyKeyAnimationTester;
 use Sitchco\Parent\Tests\Support\MalformedControlsAnimationTester;
+use Sitchco\Parent\Tests\Support\MarkupAnimationTester;
 use Sitchco\Parent\Tests\Support\ModuleTester;
 use Sitchco\Parent\Tests\Support\SecondAnimationTester;
 use Sitchco\Parent\Tests\Support\CollidingAnimationTester;
 use Sitchco\Parent\Tests\Support\InvalidKeyAnimationTester;
+use Sitchco\Parent\Tests\Support\InvalidMotionAnimationTester;
 use Sitchco\Tests\TestCase;
 use Sitchco\Utils\LogLevel;
 use Sitchco\Utils\Logger;
@@ -560,6 +563,20 @@ class AnimationFrameworkModuleTest extends TestCase
         ];
     }
 
+    public function testABlockWithNoWrapperOfItsOwnIsRefusedWithoutLosingTheOthers(): void
+    {
+        $framework = $this->frameworkForFixtures('wrapperless');
+        $blocks = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, &$blocks) {
+            $blocks = $framework->getBlockAnimations();
+        });
+
+        $this->assertSame(['core/group'], array_keys($blocks));
+        $this->assertCount(1, $entry['value']['problems']);
+        $this->assertStringContainsString('core/block: renders no wrapper', $entry['value']['problems'][0]);
+    }
+
     public function testAnAnimationNoModuleProvidesIsDroppedWithoutLosingItsSiblings(): void
     {
         $entries = $this->frameworkForFixtures('parent')->getAnimationsForBlock('test/unknown-animation');
@@ -656,6 +673,7 @@ class AnimationFrameworkModuleTest extends TestCase
             [
                 'blocks' => $framework->getBlockAnimations(),
                 'controls' => $framework->getAnimationControls(),
+                'ownMotion' => $framework->getOwnMotionKeys(),
             ],
             json_decode($matches[1], true),
         );
@@ -890,7 +908,9 @@ class AnimationFrameworkModuleTest extends TestCase
                 'min' => 0,
                 'max' => 100,
                 'step' => 5,
+                'css' => '{value}%',
                 'attribute' => 'secondTesterAnimationSpeed',
+                'cssProperty' => '--second-tester-animation-speed',
             ],
             $serialized['second-tester'][0],
         );
@@ -902,7 +922,9 @@ class AnimationFrameworkModuleTest extends TestCase
                 'name' => 'caption',
                 'label' => 'Caption',
                 'default' => 'hello',
+                'css' => '"{value}"',
                 'attribute' => 'secondTesterAnimationCaption',
+                'cssProperty' => '--second-tester-animation-caption',
             ],
             $serialized['second-tester'][3],
         );
@@ -1074,5 +1096,405 @@ class AnimationFrameworkModuleTest extends TestCase
         $bool = $this->entryFor($framework, 'test/bool-default');
         $this->assertSame([], $bool['allowed']);
         $this->assertSame(['reverse' => false], $bool['defaults']);
+    }
+
+    /**
+     * What wrapperProps() adds for one block, over props that start empty unless given.
+     *
+     * @param array<string, mixed> $attrs
+     */
+    private function propsFor(
+        AnimationFrameworkModule $framework,
+        string $blockName,
+        array $attrs,
+        array $props = ['attributes' => [], 'style' => []],
+    ): array {
+        return $framework->wrapperProps($props, ['blockName' => $blockName, 'attrs' => $attrs]);
+    }
+
+    /**
+     * The cases the editor's cssValue() is held to as well (animation-fields.test.js), so the
+     * canvas and the front end cannot drift.
+     *
+     * @dataProvider cssCaseProvider
+     */
+    public function testCssValuesMatchTheEditor(string $type, array $options, mixed $value, ?string $expected): void
+    {
+        $control = AnimationControl::$type('x', 'X', $options);
+
+        $this->assertSame($expected, $control->cssValue($value));
+    }
+
+    public static function cssCaseProvider(): array
+    {
+        $cases = json_decode(file_get_contents(__DIR__ . '/fixtures/animation-css-cases.json'), true);
+
+        return array_combine(
+            array_column($cases, 'case'),
+            array_map(fn(array $case) => [$case['type'], $case['options'], $case['value'], $case['expected']], $cases),
+        );
+    }
+
+    public function testCssPropertiesJoinTheKeyAnimationAndTheKebabCaseName(): void
+    {
+        $this->assertSame('--letter-animation-color', AnimationFrameworkModule::cssProperty('letter', 'color'));
+        $this->assertSame('--fade-up-animation-start-at', AnimationFrameworkModule::cssProperty('fade-up', 'startAt'));
+        $this->assertSame('--fade-up-animation-step2', AnimationFrameworkModule::cssProperty('fade-up', 'step2'));
+    }
+
+    /**
+     * @dataProvider silentBlockProvider
+     */
+    public function testABlockWithNoUsableAnimationEmitsNothing(string $blockName, array $attrs): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $this->assertSame(['attributes' => [], 'style' => []], $this->propsFor($framework, $blockName, $attrs));
+    }
+
+    public static function silentBlockProvider(): array
+    {
+        return [
+            'no animation attribute' => ['test/bare-list', []],
+            'None' => ['test/bare-list', ['animation' => '']],
+            'not a string' => ['test/bare-list', ['animation' => ['animation-tester']]],
+            'not offered on this block' => ['test/enabled-true', ['animation' => 'second-tester']],
+            'no such animation' => ['test/bare-list', ['animation' => 'no-such-animation']],
+            'unconfigured block' => ['core/paragraph', ['animation' => 'animation-tester']],
+        ];
+    }
+
+    public function testAnUntouchedBlockEmitsItsControlsOwnDefaults(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/bare-list', ['animation' => 'animation-tester']);
+
+        $this->assertSame(['data-animation' => 'animation-tester'], $props['attributes']);
+        /* Color and opacity default to '', which emits nothing so the stylesheet's own default
+         applies; a toggle's false is a value, and emits its `off` CSS. */
+        $this->assertSame(
+            [
+                '--animation-tester-animation-speed' => '25ms',
+                '--animation-tester-animation-reverse' => 'normal',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testABlocksConfigDefaultsApplyToItsUntouchedControls(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/overrides', ['animation' => 'animation-tester']);
+
+        $this->assertSame(
+            [
+                '--animation-tester-animation-opacity' => 'calc(30 / 100)',
+                '--animation-tester-animation-speed' => '25ms',
+                '--animation-tester-animation-reverse' => 'normal',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testStoredValuesWinOverEveryDefault(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/overrides', [
+            'animation' => 'animation-tester',
+            'animationTesterAnimationColor' => 'green',
+            'animationTesterAnimationOpacity' => '',
+            'animationTesterAnimationSpeed' => '50',
+            'animationTesterAnimationReverse' => true,
+        ]);
+
+        // A stored '' is the author choosing the animation default over the block's '30'.
+        $this->assertSame(
+            [
+                '--animation-tester-animation-color' => 'var(--wp--preset--color--green)',
+                '--animation-tester-animation-speed' => '50ms',
+                '--animation-tester-animation-reverse' => 'reverse',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testAValueTheBlockNoLongerPermitsEmitsNothing(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        // The fixture permits only purple.
+        $props = $this->propsFor($framework, 'test/allowed-scalar', [
+            'animation' => 'animation-tester',
+            'animationTesterAnimationColor' => 'green',
+        ]);
+
+        $this->assertSame('animation-tester', $props['attributes']['data-animation']);
+        $this->assertArrayNotHasKey('--animation-tester-animation-color', $props['style']);
+    }
+
+    public function testEveryControlTypeEmitsAndAControlWithoutCssDoesNot(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor($framework, 'test/bare-list', [
+            'animation' => 'second-tester',
+            'secondTesterAnimationDirection' => 'down',
+            'secondTesterAnimationTint' => 'teal',
+        ]);
+
+        // Tint comes from a JS hook, so PHP cannot check it is offered: the template takes it as written.
+        $this->assertSame(
+            [
+                '--second-tester-animation-speed' => '50%',
+                '--second-tester-animation-tint' => 'var(--wp--preset--color--teal)',
+                '--second-tester-animation-caption' => '"hello"',
+            ],
+            $props['style'],
+        );
+    }
+
+    public function testAnotherContributorsPropsAreKept(): void
+    {
+        $framework = $this->frameworkForFixtures('parent');
+
+        $props = $this->propsFor(
+            $framework,
+            'test/bare-list',
+            ['animation' => 'second-tester'],
+            ['attributes' => ['data-other' => 'x'], 'style' => ['--other' => '1']],
+        );
+
+        $this->assertSame(['data-other' => 'x', 'data-animation' => 'second-tester'], $props['attributes']);
+        $this->assertSame('1', $props['style']['--other']);
+    }
+
+    /**
+     * The whole path, from init() hooking wrapper-props to the HTML ExtendBlock writes.
+     *
+     * The filter is emptied first and restored after: every case in this file calls init(), and
+     * each leaves its coordinator hooked, so without this every earlier fixture would contribute.
+     */
+    public function testInitRendersTheOutputOntoTheBlockWrapper(): void
+    {
+        $hook = ExtendBlockModule::hookName('wrapper-props');
+        $saved = $GLOBALS['wp_filter'][$hook] ?? null;
+        unset($GLOBALS['wp_filter'][$hook]);
+
+        try {
+            $this->frameworkForFixtures('parent');
+            $extendBlock = $this->container->get(ExtendBlockModule::class);
+            $render = fn(string $html, array $attrs) => $extendBlock->injectWrapperProps($html, [
+                'blockName' => 'test/bare-list',
+                'attrs' => $attrs,
+            ]);
+
+            $html = '<div class="wp-block-group" style="color:red">content</div>';
+            $this->assertSame($html, $render($html, []));
+            $this->assertSame(
+                '<div data-animation="second-tester" class="wp-block-group" style="color:red;--second-tester-animation-speed:50%;--second-tester-animation-caption:&quot;hello&quot;;">content</div>',
+                $render($html, ['animation' => 'second-tester']),
+            );
+        } finally {
+            unset($GLOBALS['wp_filter'][$hook]);
+            if ($saved) {
+                $GLOBALS['wp_filter'][$hook] = $saved;
+            }
+        }
+    }
+
+    /** A coordinator over the markup fixture, with the markup animation and one without markup. */
+    private function markupFramework(): AnimationFrameworkModule
+    {
+        return $this->frameworkWithConfig(
+            new ConfigRegistryTester(__DIR__ . '/fixtures/animations/markup'),
+            MarkupAnimationTester::class,
+            AnimationTester::class,
+        );
+    }
+
+    public function testASelectedAnimationsMarkupGoesIntoItsHost(): void
+    {
+        $html = '<div class="block"><div class="inner">content</div></div>';
+
+        $this->assertSame(
+            '<div class="block"><div class="inner">' . MarkupAnimationTester::MARKUP . 'content</div></div>',
+            $this->markupFramework()->injectMarkup($html, [
+                'blockName' => 'test/markup',
+                'attrs' => ['animation' => 'markup-tester'],
+            ]),
+        );
+    }
+
+    /**
+     * @dataProvider noMarkupProvider
+     */
+    public function testNoMarkupIsInjectedWithoutAnAllowedAnimationThatHasSome(string $blockName, array $attrs): void
+    {
+        $html = '<div class="block"><div class="inner">content</div></div>';
+
+        $this->assertSame(
+            $html,
+            $this->markupFramework()->injectMarkup($html, ['blockName' => $blockName, 'attrs' => $attrs]),
+        );
+    }
+
+    public static function noMarkupProvider(): array
+    {
+        return [
+            'no animation' => ['test/markup', []],
+            'an animation without markup' => ['test/markup', ['animation' => 'animation-tester']],
+            'not offered on this block' => ['test/no-markup', ['animation' => 'markup-tester']],
+            'unconfigured block' => ['core/group', ['animation' => 'markup-tester']],
+        ];
+    }
+
+    public function testABlockWithoutAHostRendersWithoutTheMarkupAndWarnsOncePerBlockType(): void
+    {
+        $framework = $this->markupFramework();
+        $html = '<div class="block">content</div>';
+        $block = ['blockName' => 'test/markup', 'attrs' => ['animation' => 'markup-tester']];
+        $results = [];
+
+        $first = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, $html, $block, &$results) {
+            $results[] = $framework->injectMarkup($html, $block);
+        });
+        $second = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, $html, $block, &$results) {
+            $results[] = $framework->injectMarkup($html, $block);
+        });
+
+        $this->assertSame([$html, $html], $results);
+        $this->assertSame(LogLevel::WARNING, $first['level']);
+        $this->assertSame(
+            'Animation "markup-tester" has no host for its markup in a test/markup block (no element with the class inner or wrap), so it renders without it.',
+            $first['value'],
+        );
+        $this->assertNull($second);
+    }
+
+    /**
+     * Core's block visibility support empties a hidden block at priority 10, before injectMarkup()
+     * runs at 11. Nothing is misconfigured, so nothing is logged.
+     *
+     * @dataProvider emptyContentProvider
+     */
+    public function testABlockThatRenderedNothingStaysEmptyAndSaysNothing(string $html): void
+    {
+        $framework = $this->markupFramework();
+        $result = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, $html, &$result) {
+            $result = $framework->injectMarkup($html, [
+                'blockName' => 'test/markup',
+                'attrs' => ['animation' => 'markup-tester'],
+            ]);
+        });
+
+        $this->assertSame($html, $result);
+        $this->assertNull($entry);
+    }
+
+    public static function emptyContentProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'whitespace' => ["\n  "],
+        ];
+    }
+
+    public function testAnAnimationHandlingReducedMotionItselfIsMarkedOnTheBlock(): void
+    {
+        $framework = $this->markupFramework();
+        $props = fn(string $key) => $this->propsFor($framework, 'test/markup', ['animation' => $key])['attributes'];
+
+        $this->assertSame(
+            ['data-animation' => 'markup-tester', 'data-animation-motion' => 'own'],
+            $props('markup-tester'),
+        );
+        // The default leaves the block to the framework's rule, so it carries no marker at all.
+        $this->assertSame(['data-animation' => 'animation-tester'], $props('animation-tester'));
+        $this->assertSame(['markup-tester'], $framework->getOwnMotionKeys());
+    }
+
+    public function testAnUnknownReducedMotionValueIsLoggedAndTreatedAsTheFrameworks(): void
+    {
+        $framework = $this->frameworkFor(InvalidMotionAnimationTester::class);
+        $animations = null;
+
+        $entry = $this->captureLogs(function () use ($framework, &$animations) {
+            $animations = $framework->getAnimations();
+        });
+
+        $this->assertArrayHasKey('invalid-motion-tester', $animations);
+        $this->assertSame(LogLevel::ERROR, $entry['level']);
+        $this->assertStringContainsString(InvalidMotionAnimationTester::class, $entry['value']);
+        $this->assertStringContainsString('"sometimes"', $entry['value']);
+        $this->assertSame([], $framework->getOwnMotionKeys());
+    }
+
+    /**
+     * The handles queued when $hook fires for the coordinator $build makes. Isolated as
+     * queuedEditorScripts() is, for the same reasons.
+     *
+     * Each handle is registered without a source first, so the case doesn't depend on a build:
+     * with no file in dist/, ModuleAssets has no URL to register and WordPress queues nothing.
+     *
+     * @param 'wp_styles'|'wp_scripts' $queue
+     * @return list<string>
+     */
+    private function queuedOn(string $hook, string $queue, string $handle, callable $build): array
+    {
+        $savedQueue = $GLOBALS[$queue] ?? null;
+        $savedHook = $GLOBALS['wp_filter'][$hook] ?? null;
+        unset($GLOBALS[$queue], $GLOBALS['wp_filter'][$hook]);
+
+        try {
+            $dependencies = $queue === 'wp_styles' ? wp_styles() : wp_scripts();
+            $dependencies->add($handle, false);
+            $build();
+            do_action($hook);
+
+            return $dependencies->queue;
+        } finally {
+            $GLOBALS[$queue] = $savedQueue;
+            unset($GLOBALS['wp_filter'][$hook]);
+            if ($savedHook) {
+                $GLOBALS['wp_filter'][$hook] = $savedHook;
+            }
+        }
+    }
+
+    /** Global, so the canvas follows the preference as the front end does. */
+    public function testTheReducedMotionStylesheetIsEnqueuedForTheFrontEndAndTheEditor(): void
+    {
+        $handle = AnimationFrameworkModule::hookName();
+
+        $this->assertContains(
+            $handle,
+            $this->queuedOn('enqueue_block_assets', 'wp_styles', $handle, fn() => $this->frameworkForFixtures('clean')),
+        );
+    }
+
+    public function testTheRuntimeIsEnqueuedOnTheFrontEnd(): void
+    {
+        $handle = AnimationFrameworkModule::hookName('runtime');
+
+        $this->assertContains(
+            $handle,
+            $this->queuedOn('wp_enqueue_scripts', 'wp_scripts', $handle, fn() => $this->frameworkForFixtures('clean')),
+        );
+    }
+
+    /** The parent theme ships `'animations' => []`: nothing to animate, nothing to load. */
+    public function testNothingIsEnqueuedWithoutAnyAnimationConfig(): void
+    {
+        $style = AnimationFrameworkModule::hookName();
+        $script = AnimationFrameworkModule::hookName('runtime');
+        $build = fn() => $this->frameworkFor(AnimationTester::class);
+
+        $this->assertNotContains($style, $this->queuedOn('enqueue_block_assets', 'wp_styles', $style, $build));
+        $this->assertNotContains($script, $this->queuedOn('wp_enqueue_scripts', 'wp_scripts', $script, $build));
     }
 }
