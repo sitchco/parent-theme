@@ -124,7 +124,8 @@ abstract class AnimationModule extends Module
      * MOTION_OWN: the block carries `data-animation-motion="own"`, the framework's rule skips it,
      * and this animation handles the preference itself — pausing on a chosen frame, say, or
      * keeping a busy indicator spinning because the motion is the information. A JS behaviour of
-     * an animation that doesn't return MOTION_OWN is not started under reduced motion at all.
+     * an animation that doesn't return MOTION_OWN is not started under reduced motion at all, so
+     * a reveal behaviour applies its hidden state in JS, never in CSS (see runtime.js).
      *
      * Any other value is logged and treated as MOTION_FRAMEWORK.
      */

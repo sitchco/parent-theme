@@ -29,7 +29,7 @@ function root(...els) {
 function runtime(behaviors, { reducedMotion = false, console } = {}) {
     return createRuntime({
         behaviors,
-        reducedMotion: () => reducedMotion,
+        reducedMotion: typeof reducedMotion === 'function' ? reducedMotion : () => reducedMotion,
         getComputedStyle: (el) => ({ getPropertyValue: (name) => el.style[name] ?? '' }),
         console,
     });
@@ -104,6 +104,28 @@ describe('animation runtime', () => {
 
             expect(init).toHaveBeenCalledWith(el, expect.objectContaining({ reducedMotion: true }));
         });
+
+        it('stops and restarts a behaviour as the preference changes, through teardown and scan', () => {
+            let prefersReduced = false;
+            const cleanup = vi.fn();
+            const init = vi.fn(() => cleanup);
+            const region = root(element('parallax'));
+            const { scan, teardown } = runtime({ parallax: { init } }, { reducedMotion: () => prefersReduced });
+
+            scan(region);
+            prefersReduced = true;
+            teardown(region);
+            scan(region);
+
+            expect(cleanup).toHaveBeenCalledTimes(1);
+            expect(init).toHaveBeenCalledTimes(1);
+
+            prefersReduced = false;
+            teardown(region);
+            scan(region);
+
+            expect(init).toHaveBeenCalledTimes(2);
+        });
     });
 
     describe('teardown', () => {
@@ -132,6 +154,25 @@ describe('animation runtime', () => {
             scan(region);
 
             expect(init).toHaveBeenCalledTimes(2);
+        });
+
+        it('reports a cleanup that throws, and still runs the rest', () => {
+            const report = { error: vi.fn() };
+            const second = vi.fn();
+            const cleanups = [
+                () => {
+                    throw new Error('boom');
+                },
+                second,
+            ];
+            const region = root(element('parallax'), element('parallax'));
+            const { scan, teardown } = runtime({ parallax: { init: () => cleanups.shift() } }, { console: report });
+
+            scan(region);
+            teardown(region);
+
+            expect(second).toHaveBeenCalledTimes(1);
+            expect(report.error).toHaveBeenCalledWith(expect.stringContaining("'parallax'"), expect.any(Error));
         });
 
         it('leaves elements outside the root running', () => {

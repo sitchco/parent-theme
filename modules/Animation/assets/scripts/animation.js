@@ -24,4 +24,10 @@ ready(() => {
     };
 
     runtime.scan(document);
+
+    // The stylesheet follows a change of preference by itself; the behaviours need restarting.
+    query.addEventListener('change', () => {
+        runtime.teardown(document);
+        runtime.scan(document);
+    });
 });

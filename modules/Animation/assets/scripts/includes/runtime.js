@@ -21,15 +21,22 @@
  *     });
  *
  * - `init(el, ctx)` runs once per element. It may return a cleanup function, which teardown()
- *   calls.
+ *   calls. The cleanup must restore the element fully — listeners removed, classes and inline
+ *   styles it added taken back — because the element may be started again: after a region
+ *   re-renders, or when the visitor changes their reduced-motion preference.
  * - `ctx.option(name)` reads the control's custom property, `--{key}-animation-{name}`, from the
  *   element's computed style: the same value the stylesheet sees, so CSS and JS share one channel.
  *   It is `''` when the control emits nothing, so the behaviour supplies its own default.
  * - `ctx.reducedMotion` is the visitor's preference. A behaviour only sees it true when its
  *   animation handles reduced motion itself (AnimationModule::MOTION_OWN): any other animation's
- *   behaviour is not started at all while the preference is set.
+ *   behaviour is not started at all while the preference is set. A change of preference after
+ *   load tears every behaviour down and scans again, so each one is started or stopped to match.
  * - Reveal-on-enter belongs in `sitchco.scrollWatch(els, cb)`; continuous motion in the `scroll`
  *   action, offset by the `header-height` filter, as SiteHeader's sticky.js does.
+ * - A reveal applies its hidden state itself, in `init`, never in its stylesheet. Content then
+ *   stays visible whenever the behaviour doesn't run — under reduced motion, or when the script
+ *   fails — at the cost of a possible flash of content before `init` hides it. Its cleanup takes
+ *   the hidden state back off.
  *
  * Regions that re-render after load (fetched results, say) call `sitchco.animations.teardown(root)`
  * before replacing their content and `sitchco.animations.scan(root)` after, so nothing is started
@@ -122,6 +129,9 @@ export function createRuntime({ behaviors, reducedMotion, getComputedStyle, cons
      * Stops every started behaviour under root, calling its cleanup, so a later scan() can start
      * it again on fresh content.
      *
+     * A cleanup that throws is reported, as a failed init is, and the rest still run. The element
+     * is forgotten either way, so a later scan() can start it again.
+     *
      * @param {ParentNode} root
      */
     function teardown(root) {
@@ -132,7 +142,15 @@ export function createRuntime({ behaviors, reducedMotion, getComputedStyle, cons
 
             const cleanup = started.get(el);
             started.delete(el);
-            cleanup?.();
+
+            try {
+                cleanup?.();
+            } catch (error) {
+                console.error(
+                    `[animation] The '${el.getAttribute('data-animation')}' behaviour failed to stop.`,
+                    error
+                );
+            }
         }
     }
     return {
