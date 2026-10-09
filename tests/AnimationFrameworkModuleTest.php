@@ -1374,6 +1374,36 @@ class AnimationFrameworkModuleTest extends TestCase
         $this->assertNull($second);
     }
 
+    /**
+     * Core's block visibility support empties a hidden block at priority 10, before injectMarkup()
+     * runs at 11. Nothing is misconfigured, so nothing is logged.
+     *
+     * @dataProvider emptyContentProvider
+     */
+    public function testABlockThatRenderedNothingStaysEmptyAndSaysNothing(string $html): void
+    {
+        $framework = $this->markupFramework();
+        $result = null;
+
+        $entry = $this->captureLogsAt(LogLevel::WARNING, function () use ($framework, $html, &$result) {
+            $result = $framework->injectMarkup($html, [
+                'blockName' => 'test/markup',
+                'attrs' => ['animation' => 'markup-tester'],
+            ]);
+        });
+
+        $this->assertSame($html, $result);
+        $this->assertNull($entry);
+    }
+
+    public static function emptyContentProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'whitespace' => ["\n  "],
+        ];
+    }
+
     public function testAnAnimationHandlingReducedMotionItselfIsMarkedOnTheBlock(): void
     {
         $framework = $this->markupFramework();

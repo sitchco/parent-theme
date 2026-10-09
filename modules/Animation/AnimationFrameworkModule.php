@@ -114,7 +114,7 @@ class AnimationFrameworkModule extends Module
         });
 
         add_filter(ExtendBlockModule::hookName('wrapper-props'), [$this, 'wrapperProps'], 10, 2);
-        // After ExtendBlock writes the wrapper props, at 10, so the two never edit one string at once.
+        // After core's block supports at 10, so a block they hide arrives empty and is skipped.
         add_filter('render_block', [$this, 'injectMarkup'], 11, 2);
 
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
@@ -298,6 +298,11 @@ class AnimationFrameworkModule extends Module
         $animation = $this->getAnimation($key);
         $markup = $animation?->markup();
         if ($markup === null || $markup === '') {
+            return $blockContent;
+        }
+        // A block that rendered nothing — hidden with core's visibility support, say — has nothing
+        // to host the markup, and nothing is misconfigured.
+        if (trim($blockContent) === '') {
             return $blockContent;
         }
 
