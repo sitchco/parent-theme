@@ -144,9 +144,13 @@ class AnimationControlValidator
             if ($control->css === null) {
                 return null;
             }
+            /* Exactly the two keys: jsonSerialize() sends the whole array to the editor, and one
+             value it cannot encode (INF, say) would fail the payload for every control. */
             $css = is_array($control->css) ? $control->css : [];
-            if (!is_string($css['on'] ?? null) || !is_string($css['off'] ?? null)) {
-                return "a toggle's `css` must be ['on' => …, 'off' => …], each a string.";
+            $keys = array_keys($css);
+            sort($keys);
+            if ($keys !== ['off', 'on'] || !is_string($css['on']) || !is_string($css['off'])) {
+                return "a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else.";
             }
             return $unsafe($css['on']) || $unsafe($css['off']) ? $unsafeMessage : null;
         }

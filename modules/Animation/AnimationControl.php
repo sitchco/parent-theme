@@ -211,7 +211,14 @@ readonly class AnimationControl implements \JsonSerializable
         $typeProblems = [];
 
         foreach (self::OPTION_TYPES as $key => [$check, $expected]) {
-            if (!array_key_exists($key, $options) || $options[$key] === null || $check($options[$key])) {
+            /* A key this factory has no default for is not one it reads: it is reported once, as
+             unknown, rather than type-checked and reset to a default that does not exist. */
+            if (
+                !array_key_exists($key, $defaults) ||
+                !array_key_exists($key, $options) ||
+                $options[$key] === null ||
+                $check($options[$key])
+            ) {
                 continue;
             }
 

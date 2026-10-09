@@ -89,6 +89,9 @@ class MalformedControlsAnimationTester extends AnimationModule
             AnimationControl::toggle('toggleCssString', 'Toggle CSS string', ['css' => 'reverse']),
             AnimationControl::toggle('toggleCssHalf', 'Toggle CSS half', ['css' => ['on' => 'reverse']]),
             AnimationControl::toggle('toggleCssUnsafe', 'Toggle CSS unsafe', ['css' => ['on' => 'a}', 'off' => 'b']]),
+            AnimationControl::toggle('toggleCssExtra', 'Toggle CSS extra', [
+                'css' => ['on' => 'reverse', 'off' => 'normal', 'm' => INF],
+            ]),
             AnimationControl::select('optionCssNumber', 'Option CSS number', [
                 'options' => [['label' => 'A', 'value' => 'a', 'css' => 1]],
                 'default' => 'a',
@@ -99,6 +102,8 @@ class MalformedControlsAnimationTester extends AnimationModule
             ]),
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
+            // A typed option this factory doesn't define: unknown, not a type problem.
+            AnimationControl::toggle('foreignTypedOption', 'Foreign typed option', ['options' => 'red']),
             AnimationControl::number('edgeAnimationSpeed', 'Collision source'),
             // Dropped for its missing source; the toggle of the same name after it is kept.
             AnimationControl::select('twice', 'Malformed first'),
