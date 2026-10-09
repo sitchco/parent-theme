@@ -54,8 +54,11 @@ import { readFieldValue } from './field-value';
  * element (`children`, `dangerouslySetInnerHTML`, `on*`, a mis-cased `Class`) are open-ended,
  * while everything the animation framework plans to emit is `data-*`. Enforced here, at the one
  * point every attribute passes through, rather than guarded for at each call site.
+ *
+ * Anchored at both ends, so a name can't carry a space, a quote or a second attribute. Mirrors
+ * ExtendBlockModule::ATTRIBUTE_NAME_PATTERN.
  */
-const ALLOWED_NAME = /^(data|aria)-/;
+const ALLOWED_NAME = /^(data|aria)-[a-z0-9_.:-]+$/;
 
 const warned = new Set();
 

@@ -33,7 +33,10 @@ import { readFieldValue } from './field-value';
 const ALLOWED_NAME = /^--[A-Za-z0-9_-]+$/;
 
 /** Mirrors ExtendBlockModule::UNSAFE_STYLE_VALUE_PATTERN. */
-const UNSAFE_VALUE = /[;{}\\<>]/;
+const UNSAFE_VALUE = /[;{}\\<>]|\/\*/;
+
+/** Mirrors ExtendBlockModule::CLOSED_QUOTES_PATTERN: every quote in the value closes. */
+const CLOSED_QUOTES = /^(?:[^'"]|"[^"]*"|'[^']*')*$/;
 
 const warned = new Set();
 
@@ -100,8 +103,12 @@ export function mergeStyles(...sources) {
 
                 continue;
             }
-            if (UNSAFE_VALUE.test(value)) {
-                warnDropped(`value:${name}`, `Dropped the '${name}' style: its value contains ; { } \\ < or >.`);
+            if (UNSAFE_VALUE.test(value) || !CLOSED_QUOTES.test(value)) {
+                warnDropped(
+                    `value:${name}`,
+                    `Dropped the '${name}' style: its value contains ; { } \\ < > or /*, or leaves a quote open.`
+                );
+
                 continue;
             }
 

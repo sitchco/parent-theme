@@ -137,8 +137,8 @@ class AnimationControlValidator
      */
     private function cssProblem(AnimationControl $control): ?string
     {
-        $unsafe = fn(string $css) => preg_match(ExtendBlockModule::UNSAFE_STYLE_VALUE_PATTERN, $css) === 1;
-        $unsafeMessage = 'its `css` contains ; { } \\ < or >, which a style value cannot.';
+        $unsafe = fn(string $css) => !ExtendBlockModule::isSafeStyleValue($css);
+        $unsafeMessage = 'its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot.';
 
         if ($control->type === 'toggle') {
             if ($control->css === null) {

@@ -12,21 +12,33 @@ class ExtendBlockModule extends Module
     public const HOOK_SUFFIX = 'extend-block';
 
     /**
-     * The attribute names the wrapper-props filter writes: `data-*` and `aria-*`, nothing else.
-     * The same allowlist as ALLOWED_NAME in assets/scripts/includes/utils/attributes.js, so the
-     * server-rendered front end can never emit what the editor canvas refuses.
+     * The attribute names the wrapper-props filter writes: `data-*` and `aria-*`, nothing else,
+     * spelled in lowercase letters, digits and `_ . : -`. Anchored at both ends, so a name can't
+     * carry a space, a quote or a second attribute. The same allowlist as ALLOWED_NAME in
+     * assets/scripts/includes/utils/attributes.js, so the server-rendered front end can never emit
+     * what the editor canvas refuses.
      */
-    public const ATTRIBUTE_NAME_PATTERN = '/^(data|aria)-/';
+    public const ATTRIBUTE_NAME_PATTERN = '/^(data|aria)-[a-z0-9_.:-]+$/D';
 
     /** The style names the wrapper-props filter writes: CSS custom properties only. */
     public const STYLE_NAME_PATTERN = '/^--[A-Za-z0-9_-]+$/D';
 
     /**
-     * Characters a style value may not contain. Any of them would let a value end its own
-     * declaration and start another (`red; background: url(…)`), or break out of the attribute's
-     * context. Mirrored by UNSAFE_VALUE in assets/scripts/includes/utils/styles.js.
+     * What a style value may not contain: `;`, `{`, `}`, `\`, `<` or `>` would let a value end its
+     * own declaration and start another (`red; background: url(…)`), or break out of the
+     * attribute's context; `/*` would open a comment that runs to the end of the inline style.
+     * See isSafeStyleValue(), which also refuses an unclosed quote. Mirrored by UNSAFE_VALUE in
+     * assets/scripts/includes/utils/styles.js.
      */
-    public const UNSAFE_STYLE_VALUE_PATTERN = '/[;{}\\\\<>]/';
+    public const UNSAFE_STYLE_VALUE_PATTERN = '/[;{}\\\\<>]|\/\*/';
+
+    /**
+     * A value whose quotes all close: any run of unquoted characters and whole "…" or '…' strings.
+     * An unclosed one (an author's `Don't`) would open a CSS string that swallows every declaration
+     * after it. Quotes as such are allowed, so a template can build a string: `'"{value}"'`.
+     * Mirrored by CLOSED_QUOTES in assets/scripts/includes/utils/styles.js.
+     */
+    public const CLOSED_QUOTES_PATTERN = '/^(?:[^\'"]|"[^"]*"|\'[^\']*\')*$/D';
 
     /** Names already warned about this request, so a bad contributor logs once, not per block. */
     private array $warned = [];
@@ -123,7 +135,7 @@ class ExtendBlockModule extends Module
      *
      * - Attribute names outside `data-*` / `aria-*` are dropped, as in the editor.
      * - Style names must be custom properties (`--*`). Values are strings or numbers; one
-     *   containing `;`, `{`, `}`, `\`, `<` or `>` is dropped.
+     *   containing `;`, `{`, `}`, `\`, `<`, `>` or `/*`, or leaving a quote open, is dropped.
      * - `null` and `''` mean "unset" and are dropped, so a contributor can write its keys
      *   unconditionally.
      * - Style properties are appended to the wrapper's existing `style`, so on a name the block
@@ -205,6 +217,16 @@ class ExtendBlockModule extends Module
     }
 
     /**
+     * Whether a value can be written into an inline style without ending its declaration, opening
+     * a comment or string that swallows the rest, or breaking out of the attribute.
+     */
+    public static function isSafeStyleValue(string $value): bool
+    {
+        return !preg_match(static::UNSAFE_STYLE_VALUE_PATTERN, $value) &&
+            preg_match(static::CLOSED_QUOTES_PATTERN, $value) === 1;
+    }
+
+    /**
      * An existing style attribute with custom properties appended, one `name:value` per
      * declaration.
      *
@@ -265,10 +287,10 @@ class ExtendBlockModule extends Module
                 );
                 continue;
             }
-            if (preg_match(static::UNSAFE_STYLE_VALUE_PATTERN, $value)) {
+            if (!static::isSafeStyleValue($value)) {
                 $this->warnDropped(
                     "style-value:{$name}",
-                    "Dropped the '{$name}' style: its value contains ; { } \\ < or >.",
+                    "Dropped the '{$name}' style: its value contains ; { } \\ < > or /*, or leaves a quote open.",
                 );
                 continue;
             }

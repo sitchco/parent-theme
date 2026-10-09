@@ -60,7 +60,7 @@ describe('mergeStyles', () => {
         expect(globalThis.console.warn).toHaveBeenCalledWith(expect.stringContaining(`'${name}' style`));
     });
 
-    it.each(['red; background: url(x)', 'a}b', 'a{b', '</style>', '\\66'])(
+    it.each(['red; background: url(x)', 'a}b', 'a{b', '</style>', '\\66', "Don't", '"a', 'a /* b'])(
         'drops the value %j, which could break out of its declaration',
         (value) => {
             expect(
@@ -73,6 +73,18 @@ describe('mergeStyles', () => {
             });
         }
     );
+
+    it('keeps a value whose quotes all close, so a template can build a CSS string', () => {
+        expect(
+            mergeStyles({
+                '--a': '"Don\'t"',
+                '--b': "'x' 'y'",
+            })
+        ).toEqual({
+            '--a': '"Don\'t"',
+            '--b': "'x' 'y'",
+        });
+    });
 
     it('warns once per name, not once per block', () => {
         mergeStyles({ 'once-only': 'x' });

@@ -302,13 +302,38 @@ class ExtendBlockModuleTest extends TestCase
     {
         return [
             'event handler' => [['attributes' => ['onclick' => 'alert(1)']], "'onclick' attribute"],
+            'second attribute in the name' => [
+                ['attributes' => ['data-x onfocus=alert(1)' => '1']],
+                "'data-x onfocus=alert(1)' attribute",
+            ],
+            'quote in the name' => [['attributes' => ['data-x"><script>' => '1']], "'data-x\"><script>' attribute"],
+            'bare prefix' => [['attributes' => ['data-' => '1']], "'data-' attribute"],
             'class' => [['attributes' => ['class' => 'x']], "'class' attribute"],
             'plain style property' => [['style' => ['color' => 'red']], "'color' style"],
             'declaration break' => [['style' => ['--x' => 'red; background: url(x)']], "'--x' style"],
             'brace' => [['style' => ['--y' => 'a}b']], "'--y' style"],
             'angle bracket' => [['style' => ['--z' => '</style>']], "'--z' style"],
             'backslash' => [['style' => ['--w' => '\\66']], "'--w' style"],
+            'apostrophe' => [['style' => ['--v' => "Don't"]], "'--v' style"],
+            'unclosed double quote' => [['style' => ['--u' => '"a']], "'--u' style"],
+            'comment opener' => [['style' => ['--t' => 'a /* b']], "'--t' style"],
         ];
+    }
+
+    /**
+     * An open string or comment would run to the end of the inline style and swallow every
+     * declaration after it, so the value is dropped and the next property still lands.
+     */
+    public function testAnUnbalancedQuoteDoesNotSwallowTheNextProperty(): void
+    {
+        [$result] = $this->renderWithProps('<div>content</div>', ['style' => ['--a' => "Don't", '--b' => '1']]);
+        $this->assertSame('<div style="--b:1;">content</div>', $result);
+    }
+
+    public function testAQuoteThatClosesIsKept(): void
+    {
+        [$result] = $this->renderWithProps('<div>content</div>', ['style' => ['--a' => '"Don\'t"', '--b' => "'x'"]]);
+        $this->assertSame('<div style="--a:&quot;Don&apos;t&quot;;--b:&apos;x&apos;;">content</div>', $result);
     }
 
     public function testWrapperPropsFromTwoContributorsBothLand(): void
