@@ -13,8 +13,9 @@
  *   (held to the rules PHP validates static ones by, entry by entry; see normalizeHookOptions()),
  *   narrowed to the block's `allowed` list. The empty "no override" option always survives.
  * - **Defaults.** The block's config default, falling back to the control's own, through
- *   ExtendBlock's function `default`. A dynamic block nobody touched follows it; a static block
- *   stores it once its animation is chosen; a picked value stays. See utils/field-value.js.
+ *   ExtendBlock's function `default`. Nothing stores it: the registration uses
+ *   `saveOutput: false`, so an untouched control follows the current default on every block,
+ *   static or dynamic, and a picked value stays. See utils/field-value.js.
  *
  * - **Output.** A control with `css` emits its CSS value as its `cssProperty`
  *   (`--{key}-animation-{name}`) onto the block in the editor canvas, through ExtendBlock's style

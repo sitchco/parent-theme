@@ -353,22 +353,26 @@ function createEditorPropsFilter(targetBlocks, allFields, generators = {}) {
  *   dropped. They are merged onto a static block's saved wrapper and, in the editor canvas, onto
  *   wrapperProps. A dynamic block's front end does not get them, since PHP renders it: an
  *   extension that needs them there renders them server-side through ExtendBlockModule's
- *   `wrapper-props` filter, usually with `saveOutput: false`. Return `undefined` for anything unset: `''`, `0` and `false` are kept and
- *   serialize. See the rules at the top of utils/attributes.js.
+ *   `wrapper-props` filter, usually with `saveOutput: false`. Return `undefined` for anything
+ *   unset: `''`, `0` and `false` are kept and serialize. See the rules at the top of
+ *   utils/attributes.js.
  *
  * @param {Function} [config.styleGenerator] - Override default style generation:
  *   (attributes, { blockName }) => Object of CSS custom properties (`--*`). Canvas only: the
  *   save filter never emits style. See utils/styles.js.
- * @param {boolean} [config.saveOutput=true] - false to leave saved content alone entirely: no
+ * @param {boolean} [config.saveOutput=true] - false to keep the extension out of saved markup: no
  *   save filter is registered, so classes and attributes reach the editor canvas only, and a
  *   static block no longer stores its function defaults. The extension then renders its front
  *   end server-side, through ExtendBlockModule's `wrapper-props` filter, from the block's stored
  *   attributes. Nothing it emits can affect block validation, and an untouched control follows
- *   a changed default on every block, static or dynamic.
+ *   a changed default on every block, static or dynamic. One exception: on a dynamic block,
+ *   classes still sync into the `extendBlockClasses` attribute, which PHP prints, because
+ *   `wrapper-props` carries no classes and gating the sync would drop them from the front end.
  *
- * `condition`, `className`, `attributes`, `style` and the generators receive `{ blockName }` in every
- * phase — save, inspector and canvas alike — so none of them can make the editor preview and the
- * saved markup disagree. Only `render` and `options` see the richer render context.
+ * `condition`, `className`, `attributes`, `style` and the generators receive `{ blockName }` in
+ * every phase they run in — save (classes and attributes; never style), inspector and canvas — so
+ * none of them can make the editor preview and the saved markup disagree. Only `render` and
+ * `options` see the richer render context.
  * @param {boolean} [config.kadenceTabAware] - Auto-detect Kadence tabs (default: true for kadence/* blocks)
  *
  * @example

@@ -97,10 +97,6 @@ export default function (
             fields.select({
                 name: 'animation',
                 label: 'Animation',
-                /* Resolved per render rather than once at registration, which is what lets one
-                   registration offer a different list on each block. A block missing from the
-                   map cannot reach here — `blocks` is built from its keys — but the fallback
-                   keeps a stale registration from throwing rather than degrading. */
                 /* `data-animation` only for a key the block may use now. A stale value stays visible
                    in the select as "(unavailable)", and emits nothing, as on the front end. */
                 attributes: (value, { blockName } = {}) => {
@@ -113,6 +109,10 @@ export default function (
                         'data-animation-motion': ownMotion.includes(value) ? 'own' : undefined,
                     };
                 },
+                /* Resolved per render rather than once at registration, which is what lets one
+                   registration offer a different list on each block. A block missing from the
+                   map cannot reach here — `blocks` is built from its keys — but the fallback
+                   keeps a stale registration from throwing rather than degrading. */
                 options: ({ blockName }) => [
                     {
                         label: 'None',
