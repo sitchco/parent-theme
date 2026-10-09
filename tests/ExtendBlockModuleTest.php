@@ -137,6 +137,19 @@ class ExtendBlockModuleTest extends TestCase
         $this->assertSame('<!-- wp:group --><div class="wp-block-group added">content</div>', $result);
     }
 
+    public function testClassesSkipKadencesLeadingInlineStyle(): void
+    {
+        $html = '<style>.kb-row-layout-id1{}</style><div class="kb-row-layout-wrap">content</div>';
+        $block = [
+            'attrs' => ['extendBlockClasses' => ['ns1' => 'added']],
+            'blockName' => 'kadence/rowlayout',
+        ];
+        $this->assertSame(
+            '<style>.kb-row-layout-id1{}</style><div class="kb-row-layout-wrap added">content</div>',
+            $this->module->injectExtendBlockClasses($html, $block),
+        );
+    }
+
     public function testContentOpeningWithTextGetsNoClasses(): void
     {
         $html = 'text first <div class="wp-block-group">content</div>';
@@ -232,6 +245,29 @@ class ExtendBlockModuleTest extends TestCase
             'attributes' => ['data-animation' => 'letter'],
         ]);
         $this->assertSame("<!-- note -->\n<div data-animation=\"letter\">content</div>", $result);
+    }
+
+    /**
+     * @dataProvider leadingRawTextProvider
+     */
+    public function testWrapperPropsSkipALeadingStyleOrScript(string $leading): void
+    {
+        [$result] = $this->renderWithProps("{$leading}<div class=\"kb-row-layout-wrap\">content</div>", [
+            'attributes' => ['data-animation' => 'letter'],
+        ]);
+        $this->assertSame(
+            "{$leading}<div data-animation=\"letter\" class=\"kb-row-layout-wrap\">content</div>",
+            $result,
+        );
+    }
+
+    public static function leadingRawTextProvider(): array
+    {
+        return [
+            'kadence inline style' => ['<style>.kb-row-layout-id1{}</style>'],
+            'script' => ['<script>var x = "<div>";</script>'],
+            'style after a comment' => ["<!-- note -->\n<style>.a{}</style>\n"],
+        ];
     }
 
     public function testWrapperPropsSkipContentWithNoWrapper(): void

@@ -169,13 +169,21 @@ class ExtendBlockModule extends Module
 
     /**
      * Moves the processor onto the block's wrapper: the first tag, provided nothing but
-     * whitespace and comments comes before it. Content that opens with text has no wrapper to
-     * write to.
+     * whitespace, comments, `<style>` and `<script>` comes before it. Content that opens with text
+     * has no wrapper to write to.
+     *
+     * Kadence prepends an inline `<style>` to a row, column or image whenever its CSS wasn't
+     * printed in the head, which is every one rendered outside the current post (a content
+     * partial in the header, say). The processor reads each of these as one token, contents
+     * included, so skipping it skips the whole element.
      */
     public static function seekWrapper(\WP_HTML_Tag_Processor $processor): bool
     {
         while ($processor->next_token()) {
             $type = $processor->get_token_type();
+            if ($type === '#tag' && in_array($processor->get_tag(), ['STYLE', 'SCRIPT'], true)) {
+                continue;
+            }
             if ($type === '#tag') {
                 return !$processor->is_tag_closer();
             }

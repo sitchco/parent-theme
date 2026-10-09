@@ -48,6 +48,21 @@ class MarkupInjectorTest extends TestCase
     }
 
     /**
+     * Kadence prepends its inline `<style>` to a block rendered outside the current post. The
+     * markup goes into the block's wrapper after it, not after `</style>`.
+     */
+    public function testWithoutHostsALeadingInlineStyleIsSkipped(): void
+    {
+        $this->assertSame(
+            '<style>.kb-row-layout-id1{}</style><div class="kb-row-layout-wrap">' . self::MARKUP . 'content</div>',
+            MarkupInjector::inject(
+                '<style>.kb-row-layout-id1{}</style><div class="kb-row-layout-wrap">content</div>',
+                self::MARKUP,
+            ),
+        );
+    }
+
+    /**
      * @dataProvider hostlessProvider
      */
     public function testReturnsNullWhenNothingCanHostIt(string $html, array $hosts): void
