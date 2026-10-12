@@ -7,7 +7,7 @@
  * during `sitchco.init`:
  *
  *     sitchco.init(() => {
- *         sitchco.hooks.addFilter('animation.behaviors', 'mytheme/parallax', (behaviors) => ({
+ *         sitchco.hooks.addFilter('animation.behaviors', (behaviors) => ({
  *             ...behaviors,
  *             parallax: {
  *                 init(el, ctx) {
