@@ -81,15 +81,17 @@ class AnimationControlValidatorTest extends TestCase
                 'malformed-controls-tester / stringOptions: `options` must be a list. Dropping it.',
                 'malformed-controls-tester / wordMin: `min` must be a number. Dropping it.',
                 'malformed-controls-tester / twoTypes: `help` must be a string; `min` must be a number. Dropping it.',
-                'malformed-controls-tester / cssWrongType: `css` must be a string or an array. Dropping it.',
+                'malformed-controls-tester / cssWrongType: `css` must be a string. Dropping it.',
                 'malformed-controls-tester / cssNoPlaceholder: its `css` must be a template containing {value}. Dropping it.',
-                'malformed-controls-tester / cssUnsafe: its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
-                "malformed-controls-tester / toggleCssString: a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else. Dropping it.",
+                'malformed-controls-tester / cssUnsafe: its `css` template contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                "malformed-controls-tester / toggleCssString: `css` must be an array, ['on' => …, 'off' => …]. Dropping it.",
                 "malformed-controls-tester / toggleCssHalf: a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else. Dropping it.",
-                'malformed-controls-tester / toggleCssUnsafe: its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                'malformed-controls-tester / toggleCssUnsafe: its `css` for `on` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
                 "malformed-controls-tester / toggleCssExtra: a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else. Dropping it.",
-                "malformed-controls-tester / optionCssNumber: an option's `css` must be a string. Dropping it.",
-                'malformed-controls-tester / optionCssUnsafe: its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                'malformed-controls-tester / optionCssNumber: the `css` of its option "a" must be a string. Dropping it.',
+                'malformed-controls-tester / optionCssUnsafe: the `css` of its option "a" contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                'malformed-controls-tester / cssDefaultUnsafe: its `css` for its default "Don\'t" contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
+                'malformed-controls-tester / cssOptionUnsafe: its `css` for its option "red;display:none" contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot. Dropping it.',
                 'malformed-controls-tester / filterTypo: does not know the option `optionFilter`. Ignoring it.',
                 'malformed-controls-tester / filterTypo: a select needs exactly one of `options` or `optionsFilter`. Dropping it.',
                 'malformed-controls-tester / defaultTypo: does not know the options `defualt`, `hlep`. Ignoring them.',
@@ -158,6 +160,15 @@ class AnimationControlValidatorTest extends TestCase
         $controls = $this->validate(MalformedControlsAnimationTester::class)['controls']['malformed-controls-tester'];
 
         $this->assertNotFalse(wp_json_encode(array_values($controls)));
+    }
+
+    public function testAnExplicitNullDefaultIsUnset(): void
+    {
+        $this->assertSame('', AnimationControl::text('label', 'Label', ['default' => null])->default);
+        $this->assertSame(
+            '',
+            AnimationControl::select('tint', 'Tint', ['optionsFilter' => 'x', 'default' => null])->default,
+        );
     }
 
     public function testAnimationsWithValidControlsReportNothing(): void

@@ -34,7 +34,7 @@ namespace Sitchco\Parent\Modules\Animation;
  *   for a palette the theme already shares with its other controls. PHP cannot see those values,
  *   so `allowed` is applied but not checked.
  *
- * A select's empty value, `''`, means "no override": the animation's own stylesheet default.
+ * A select's empty value, `''`, means "no override": the block emits nothing for the control.
  * Config `allowed` never removes it. It is not the block's config default: on a block whose config
  * sets one, choosing `''` stores `''`, so the editor labels it "Animation default" whatever the
  * options call it (EMPTY_OPTION_LABEL in editor-ui/animation-fields.js).
@@ -47,20 +47,42 @@ namespace Sitchco\Parent\Modules\Animation;
  *   since PHP never sees its values.
  * - toggle: `['on' => …, 'off' => …]`.
  * - number and text: a template.
- * `{value}` is replaced with the value as a string. The empty value, `''`, always emits nothing,
- * so the animation's own stylesheet default applies.
+ * `{value}` is replaced with the value as a string. The empty value, `''`, always emits nothing.
+ * Custom properties inherit, so the block then sees the value of the nearest ancestor block with
+ * the same animation, if one sets it, and the animation's own stylesheet default otherwise. An
+ * animation that wants the default every time registers the property with `@property` and
+ * `inherits: false`.
  *
  * Validation is the coordinator's, not this class's: a malformed control is logged and dropped
  * there, alongside every other definition problem, rather than thrown from a module's controls().
  * An option key a factory does not know (a misspelled `defualt`) is recorded in `unknownOptions`
  * for the coordinator to report. So is an option of the wrong PHP type — `'options' => 'red'`,
  * `'min' => 'low'` — which is recorded in `typeProblems` and left unset rather than thrown as a
- * TypeError. Nor is a `default` cast to its control's type: a toggle's `'false'` would become
- * `true`. It is kept as written, and the coordinator drops a control whose default is the wrong
- * type.
+ * TypeError. Nor is a toggle's or a number's `default` cast to its control's type: a toggle's
+ * `'false'` would become `true`. It is kept as written, and the coordinator drops a control whose
+ * default is the wrong type. A select's or a text control's default is the exception: a number
+ * becomes a string, so that `30` matches the `'30'` option, and an explicit null is unset, `''`.
  */
 readonly class AnimationControl implements \JsonSerializable
 {
+    /** What a template's placeholder is replaced with. */
+    public const CSS_PLACEHOLDER = '{value}';
+
+    /**
+     * The PHP type each typed option must have, and how a problem message names it. `default` is
+     * not here: its type depends on the control, and the coordinator checks it. A factory may
+     * override an entry: a toggle's `css` is an array.
+     */
+    private const OPTION_TYPES = [
+        'options' => ['is_array', 'a list'],
+        'optionsFilter' => ['is_string', 'a string'],
+        'help' => ['is_string', 'a string'],
+        'min' => [[self::class, 'isNumber'], 'a number'],
+        'max' => [[self::class, 'isNumber'], 'a number'],
+        'step' => [[self::class, 'isNumber'], 'a number'],
+        'css' => ['is_string', 'a string'],
+    ];
+
     /**
      * @param list<array{label: string, value: string|int|float}>|null $options
      */
@@ -97,7 +119,7 @@ readonly class AnimationControl implements \JsonSerializable
             type: 'select',
             name: $name,
             label: $label,
-            default: self::stringScalar($options['default']),
+            default: self::stringScalar($options['default'] ?? ''),
             help: $options['help'],
             options: $options['options'],
             optionsFilter: $options['optionsFilter'],
@@ -115,6 +137,7 @@ readonly class AnimationControl implements \JsonSerializable
         [$options, $unknown, $typeProblems] = self::withDefaults(
             ['default' => false, 'help' => null, 'css' => null],
             $options,
+            ['css' => ['is_array', "an array, ['on' => …, 'off' => …]"]],
         );
 
         return new self(
@@ -176,7 +199,7 @@ readonly class AnimationControl implements \JsonSerializable
             type: 'text',
             name: $name,
             label: $label,
-            default: self::stringScalar($options['default']),
+            default: self::stringScalar($options['default'] ?? ''),
             help: $options['help'],
             css: $options['css'],
             unknownOptions: $unknown,
@@ -185,32 +208,19 @@ readonly class AnimationControl implements \JsonSerializable
     }
 
     /**
-     * The PHP type each typed option must have, and how a problem message names it. `default` is
-     * not here: its type depends on the control, and the coordinator checks it.
-     */
-    private const OPTION_TYPES = [
-        'options' => ['is_array', 'a list'],
-        'optionsFilter' => ['is_string', 'a string'],
-        'help' => ['is_string', 'a string'],
-        'min' => [[self::class, 'isNumber'], 'a number'],
-        'max' => [[self::class, 'isNumber'], 'a number'],
-        'step' => [[self::class, 'isNumber'], 'a number'],
-        'css' => [[self::class, 'isStringOrArray'], 'a string or an array'],
-    ];
-
-    /**
      * A factory's options merged over its defaults, the keys among them it does not know, and the
      * typed options whose values have the wrong PHP type. Those are reset to their default, null,
-     * so the constructor never sees them, and reported instead.
+     * so the constructor never sees them, and reported instead. $types overrides OPTION_TYPES
+     * entries for this factory.
      *
      * @return array{0: array<string, mixed>, 1: list<string>, 2: list<string>}
      */
-    private static function withDefaults(array $defaults, array $options): array
+    private static function withDefaults(array $defaults, array $options, array $types = []): array
     {
         $merged = array_merge($defaults, $options);
         $typeProblems = [];
 
-        foreach (self::OPTION_TYPES as $key => [$check, $expected]) {
+        foreach ([...self::OPTION_TYPES, ...$types] as $key => [$check, $expected]) {
             /* A key this factory has no default for is not one it reads: it is reported once, as
              unknown, rather than type-checked and reset to a default that does not exist. */
             if (
@@ -234,11 +244,6 @@ readonly class AnimationControl implements \JsonSerializable
         return is_int($value) || is_float($value);
     }
 
-    private static function isStringOrArray(mixed $value): bool
-    {
-        return is_string($value) || is_array($value);
-    }
-
     /**
      * A default as a string when it is a string or a number, so `30` and `'30'` are one value;
      * anything else kept as written, for the coordinator to reject.
@@ -247,9 +252,6 @@ readonly class AnimationControl implements \JsonSerializable
     {
         return is_string($value) || self::isNumber($value) ? (string) $value : $value;
     }
-
-    /** What a template's placeholder is replaced with. */
-    public const CSS_PLACEHOLDER = '{value}';
 
     /**
      * The CSS value one of this control's values emits, or null for none.

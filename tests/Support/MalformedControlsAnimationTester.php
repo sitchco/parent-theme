@@ -100,6 +100,16 @@ class MalformedControlsAnimationTester extends AnimationModule
                 'options' => [['label' => 'A', 'value' => 'a', 'css' => '</style>']],
                 'default' => 'a',
             ]),
+            // A template that passes alone, with a known value that breaks it.
+            AnimationControl::text('cssDefaultUnsafe', 'CSS default unsafe', [
+                'default' => "Don't",
+                'css' => '{value}',
+            ]),
+            AnimationControl::select('cssOptionUnsafe', 'CSS option unsafe', [
+                'options' => [['label' => 'Broken', 'value' => 'red;display:none']],
+                'default' => 'red;display:none',
+                'css' => 'var(--color-{value})',
+            ]),
             AnimationControl::select('filterTypo', 'Filter typo', ['optionFilter' => 'test.tint-options']),
             AnimationControl::toggle('defaultTypo', 'Default typo', ['defualt' => true, 'hlep' => 'x']),
             // A typed option this factory doesn't define: unknown, not a type problem.

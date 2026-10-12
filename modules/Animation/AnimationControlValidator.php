@@ -130,15 +130,21 @@ class AnimationControlValidator
     /**
      * A `css` declaration that could not emit what it means to.
      *
-     * Its static text is held to the rule ExtendBlockModule's wrapper-props applies to every style
+     * What it emits is held to the rule ExtendBlockModule's wrapper-props applies to every style
      * value, so a definition that could never be written is caught here, once, rather than dropped
-     * on every render. What a placeholder later receives — an author's text, say — is still
-     * checked there.
+     * on every render. That covers every value known now: a toggle's `on` and `off`, each static
+     * option's CSS, and the default's. What only arrives later — an author's text, a hook's options —
+     * is still checked there.
+     *
+     * The template is checked first with its placeholder removed. That is a coarse pre-filter, and
+     * approximate: `calc(1s/{value}*2)` becomes `calc(1s/*2)` and is refused, though every value
+     * that fills it would be safe.
      */
     private function cssProblem(AnimationControl $control): ?string
     {
-        $unsafe = fn(string $css) => !ExtendBlockModule::isSafeStyleValue($css);
-        $unsafeMessage = 'its `css` contains ; { } \\ < > or /*, or leaves a quote open, which a style value cannot.';
+        $unsafe = fn(?string $css) => $css !== null && !ExtendBlockModule::isSafeStyleValue($css);
+        $unsafeMessage = fn(string $what) => "{$what} contains ; { } \\ < > or /*, or leaves a quote open, " .
+            'which a style value cannot.';
 
         if ($control->type === 'toggle') {
             if ($control->css === null) {
@@ -152,7 +158,12 @@ class AnimationControlValidator
             if ($keys !== ['off', 'on'] || !is_string($css['on']) || !is_string($css['off'])) {
                 return "a toggle's `css` must be ['on' => …, 'off' => …], each a string, and nothing else.";
             }
-            return $unsafe($css['on']) || $unsafe($css['off']) ? $unsafeMessage : null;
+            foreach (['on', 'off'] as $state) {
+                if ($unsafe($css[$state])) {
+                    return $unsafeMessage("its `css` for `{$state}`");
+                }
+            }
+            return null;
         }
 
         if ($control->type === 'select') {
@@ -161,10 +172,10 @@ class AnimationControlValidator
                     continue;
                 }
                 if (!is_string($option['css'])) {
-                    return "an option's `css` must be a string.";
+                    return "the `css` of its option \"{$option['value']}\" must be a string.";
                 }
                 if ($unsafe($option['css'])) {
-                    return $unsafeMessage;
+                    return $unsafeMessage("the `css` of its option \"{$option['value']}\"");
                 }
             }
         }
@@ -175,9 +186,21 @@ class AnimationControlValidator
         if (!is_string($control->css) || !str_contains($control->css, AnimationControl::CSS_PLACEHOLDER)) {
             return sprintf('its `css` must be a template containing %s.', AnimationControl::CSS_PLACEHOLDER);
         }
+        // The placeholder's own braces are not CSS: what replaces them is checked below, or at render.
+        if ($unsafe(str_replace(AnimationControl::CSS_PLACEHOLDER, '', $control->css))) {
+            return $unsafeMessage('its `css` template');
+        }
 
-        // The placeholder's own braces are not CSS: what replaces them is checked at render.
-        return $unsafe(str_replace(AnimationControl::CSS_PLACEHOLDER, '', $control->css)) ? $unsafeMessage : null;
+        foreach ($control->optionValues() ?? [] as $value) {
+            if ($unsafe($control->cssValue($value))) {
+                return $unsafeMessage("its `css` for its option \"{$value}\"");
+            }
+        }
+        if ($unsafe($control->cssValue($control->default))) {
+            return $unsafeMessage("its `css` for its default \"{$control->default}\"");
+        }
+
+        return null;
     }
 
     private function selectProblem(AnimationControl $control): ?string
