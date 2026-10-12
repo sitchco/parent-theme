@@ -112,6 +112,9 @@ class AnimationFrameworkModuleTest extends TestCase
      * fixture config the file has resolved so far onto the same handle. Both are restored
      * afterwards rather than left cleared, since they are global for the rest of the suite.
      *
+     * $buildFramework returns the coordinator under test, and only its callbacks fire: see
+     * onlyCallbacksOf().
+     *
      * Follows ModuleAssetsTest::resetWPDependencies(), which does the same for wp_footer.
      */
     private function queuedEditorScripts(callable $buildFramework): \WP_Scripts
@@ -123,7 +126,7 @@ class AnimationFrameworkModuleTest extends TestCase
         unset($GLOBALS['wp_scripts'], $GLOBALS['wp_filter'][$hook]);
 
         try {
-            $buildFramework();
+            $this->onlyCallbacksOf($hook, $buildFramework());
             do_action($hook);
 
             return wp_scripts();
@@ -138,6 +141,39 @@ class AnimationFrameworkModuleTest extends TestCase
     private function editorHandle(): string
     {
         return AnimationFrameworkModule::hookName('editor-ui');
+    }
+
+    /**
+     * Drop every callback on $hook except those $framework registered.
+     *
+     * Building a coordinator activates its animations on a registry of their own, and an
+     * animation's DEPENDENCIES pull the coordinator from the shared container: the site-wide
+     * instance, which ModuleRegistry then init()s again. Its enqueue closures land on $hook next
+     * to the test's, reading whatever config the active theme chain declares: nothing in a bare
+     * parent theme, but any child theme's `animations` section otherwise. Keeping only $framework's
+     * callbacks makes the outcome depend on the config under test alone, whichever theme is active.
+     *
+     * Module::addAssetAction() registers each enqueue as a closure bound to the module, so the
+     * bound object is what identifies its owner.
+     */
+    private function onlyCallbacksOf(string $hook, AnimationFrameworkModule $framework): void
+    {
+        $registered = $GLOBALS['wp_filter'][$hook] ?? null;
+        if (!($registered instanceof \WP_Hook)) {
+            return;
+        }
+
+        foreach ($registered->callbacks as $priority => $callbacks) {
+            foreach ($callbacks as $callback) {
+                $function = $callback['function'];
+                if (
+                    !($function instanceof \Closure) ||
+                    (new \ReflectionFunction($function))->getClosureThis() !== $framework
+                ) {
+                    $registered->remove_filter($hook, $function, $priority);
+                }
+            }
+        }
     }
 
     /**
@@ -653,7 +689,7 @@ class AnimationFrameworkModuleTest extends TestCase
     {
         $framework = null;
         $scripts = $this->queuedEditorScripts(function () use (&$framework) {
-            $framework = $this->frameworkForFixtures('clean');
+            return $framework = $this->frameworkForFixtures('clean');
         });
         $handle = $this->editorHandle();
 
@@ -1462,7 +1498,7 @@ class AnimationFrameworkModuleTest extends TestCase
         try {
             $dependencies = $queue === 'wp_styles' ? wp_styles() : wp_scripts();
             $dependencies->add($handle, false);
-            $build();
+            $this->onlyCallbacksOf($hook, $build());
             do_action($hook);
 
             return $dependencies->queue;
