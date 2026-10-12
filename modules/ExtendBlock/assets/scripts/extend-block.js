@@ -30,6 +30,7 @@ import { fields, fieldsToAttributes } from './includes/fields.jsx';
 import { responsive } from './includes/responsive.jsx';
 import { classNames, generateFieldClasses, mergeClassNames } from './includes/utils/class-names';
 import { generateFieldAttributes, mergeAttributes } from './includes/utils/attributes';
+import { generateFieldStyles, mergeStyles } from './includes/utils/styles';
 import { resolveOptions } from './includes/utils/options';
 import { hasContextualDefault, readFieldValue } from './includes/utils/field-value';
 import { useKadenceActiveTab, isKadenceBlock } from './includes/hooks/use-kadence-active-tab';
@@ -46,8 +47,10 @@ window.sitchco.extendBlock = {
     classNames,
     generateFieldClasses,
     generateFieldAttributes,
+    generateFieldStyles,
     mergeClassNames,
     mergeAttributes,
+    mergeStyles,
     resolveOptions,
     readFieldValue,
     hasContextualDefault,

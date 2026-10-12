@@ -119,6 +119,18 @@ describe('createSavePropsFilter', () => {
         expect(filter({}, GROUP, {})).toEqual({ className: 'a b' });
     });
 
+    /* The style channel is canvas-only: a style in saved markup would be compared on every load,
+       and the front end gets it from the server instead (ExtendBlockModule's wrapper-props). */
+    it('never saves a field style', () => {
+        const styled = {
+            name: 'color',
+            style: (value) => ({ '--x-color': value }),
+        };
+        const props = { className: 'x' };
+
+        expect(createSavePropsFilter(['core/group'], [styled])(props, GROUP, { color: 'red' })).toBe(props);
+    });
+
     /* Each registration adds its own filter; neither may clobber the other's classes, and the
        last one wins a shared attribute, as it does in the canvas. */
     it('stacks two registrations on one block, last registration winning', () => {

@@ -1,5 +1,6 @@
 import { generateEditorFieldClasses, generateFieldClasses, mergeClassNames, toClassList } from './class-names';
 import { generateFieldAttributes, mergeAttributes } from './attributes';
+import { generateFieldStyles, mergeStyles } from './styles';
 
 /**
  * Creates the canvas prop builder — what `editor.BlockListBlock` adds to one block's wrapper.
@@ -31,10 +32,12 @@ import { generateFieldAttributes, mergeAttributes } from './attributes';
  * @param {Object} [generators]
  * @param {Function} [generators.classGenerator] - Custom class generator override
  * @param {Function} [generators.attributeGenerator] - Custom attribute generator override
+ * @param {Function} [generators.styleGenerator] - Custom style generator override. The style
+ *   channel exists only here, in the canvas; see utils/styles.js
  * @returns {Function} (props, deviceType) => `{ className?, wrapperProps? }`, or null when there is
  *   nothing to add
  */
-export function createEditorPropsBuilder(allFields, { classGenerator, attributeGenerator } = {}) {
+export function createEditorPropsBuilder(allFields, { classGenerator, attributeGenerator, styleGenerator } = {}) {
     const hasResponsiveFields = allFields.some((f) => f.responsive);
     return (props, deviceType = 'Desktop') => {
         // The same context save builds, so a callback cannot make the canvas and the saved
@@ -49,8 +52,12 @@ export function createEditorPropsBuilder(allFields, { classGenerator, attributeG
         const newAttributes = attributeGenerator
             ? mergeAttributes(attributeGenerator(props.attributes, context))
             : generateFieldAttributes(allFields, props.attributes, context);
+        const newStyle = styleGenerator
+            ? mergeStyles(styleGenerator(props.attributes, context))
+            : generateFieldStyles(allFields, props.attributes, context);
         const hasAttributes = Object.keys(newAttributes).length > 0;
-        if (newClasses.length === 0 && !hasAttributes) {
+        const hasStyle = Object.keys(newStyle).length > 0;
+        if (newClasses.length === 0 && !hasAttributes && !hasStyle) {
             return null;
         }
 
@@ -58,7 +65,7 @@ export function createEditorPropsBuilder(allFields, { classGenerator, attributeG
         if (newClasses.length > 0) {
             extraProps.className = mergeClassNames(props.className, newClasses);
         }
-        if (hasAttributes) {
+        if (hasAttributes || hasStyle) {
             /* Ours first, then whatever is already there — the reverse of save's spread, and
                that is what makes two registrations agree across phases. On save each filter
                spreads last, so the last registration wins a shared key. Here withFilters wraps
@@ -70,6 +77,13 @@ export function createEditorPropsBuilder(allFields, { classGenerator, attributeG
             extraProps.wrapperProps = {
                 ...newAttributes,
                 ...props.wrapperProps,
+            };
+        }
+        if (hasStyle) {
+            // The same order one level down, so another registration's properties are kept.
+            extraProps.wrapperProps.style = {
+                ...newStyle,
+                ...props.wrapperProps?.style,
             };
         }
         return extraProps;

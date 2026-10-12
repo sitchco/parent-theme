@@ -88,7 +88,7 @@ The renderer hooks `render_block_kadence/image` at priority **15**, between:
 
 Photo attachments flow through `InlineSVGModule` untouched (it only mutates SVG sources), so the `data-target` decoration survives.
 
-Kadence prepends an inline `<style>` block before the saved HTML at render time. `WP_HTML_Tag_Processor::next_tag()` skips it automatically because `<style>` is a raw-text element.
+Kadence prepends an inline `<style>` block before the saved HTML at render time. `next_tag()` does not skip it — it stops on `<style>` like any other tag — but the renderer matches the root by tag name, so the `<style>` is passed over.
 
 ### Module dependencies
 

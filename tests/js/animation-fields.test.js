@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import {
     buildAnimationFields,
+    cssValue,
     EMPTY_OPTION_LABEL,
     normalizeHookOptions,
     restrictOptions,
@@ -12,6 +14,7 @@ import {
 } from '../../modules/ExtendBlock/assets/scripts/includes/utils/field-value';
 import { generateFieldClasses } from '../../modules/ExtendBlock/assets/scripts/includes/utils/class-names';
 import { generateFieldAttributes } from '../../modules/ExtendBlock/assets/scripts/includes/utils/attributes';
+import { generateFieldStyles } from '../../modules/ExtendBlock/assets/scripts/includes/utils/styles';
 
 /** Mirrors the real factories: `(config) => ({ type, attributeType, default, render, ...config })`. */
 const factory = (type, attributeType, fallback) => (config) => ({
@@ -575,8 +578,8 @@ describe('buildAnimationFields', () => {
         });
     });
 
-    /* S5 writes attributes and emits nothing, so saved markup is unchanged. S6 is meant to break
-       this on purpose. */
+    /* Output is the style channel alone: no class, and no attribute from a control. The select's
+       data-animation is animation-controls.jsx's. */
     it('emits no class and no attribute', () => {
         const built = Object.values(build());
         const attributes = {
@@ -592,5 +595,166 @@ describe('buildAnimationFields', () => {
 
         expect(generateFieldClasses(built, attributes, { blockName: 'core/group' })).toEqual([]);
         expect(generateFieldAttributes(built, attributes, { blockName: 'core/group' })).toEqual({});
+    });
+
+    describe('style', () => {
+        /** CONTROLS with `css` declared and the cssProperty PHP ships beside each. */
+        const STYLED = {
+            letter: [
+                {
+                    ...CONTROLS.letter[0],
+                    cssProperty: '--letter-animation-color',
+                    css: 'var(--wp--preset--color--{value})',
+                },
+                {
+                    ...CONTROLS.letter[1],
+                    cssProperty: '--letter-animation-opacity',
+                    options: [
+                        ...options('', '10'),
+                        {
+                            label: '30',
+                            value: '30',
+                            css: '0.3',
+                        },
+                        {
+                            label: '50',
+                            value: '50',
+                            css: '0.5',
+                        },
+                    ],
+                },
+            ],
+            'fade-up': [
+                {
+                    ...CONTROLS['fade-up'][0],
+                    cssProperty: '--fade-up-animation-speed',
+                    css: '{value}ms',
+                },
+                {
+                    ...CONTROLS['fade-up'][1],
+                    cssProperty: '--fade-up-animation-reverse',
+                    css: {
+                        on: 'reverse',
+                        off: 'normal',
+                    },
+                },
+                CONTROLS['fade-up'][2],
+            ],
+        };
+        const styles = (attributes, blockName) =>
+            generateFieldStyles(Object.values(build(BLOCKS, STYLED)), attributes, { blockName });
+
+        it('emits each control’s CSS value under its custom property', () => {
+            expect(
+                styles(
+                    {
+                        animation: 'letter',
+                        letterAnimationColor: 'green',
+                        letterAnimationOpacity: '50',
+                    },
+                    'kadence/rowlayout'
+                )
+            ).toEqual({
+                '--letter-animation-color': 'var(--wp--preset--color--green)',
+                '--letter-animation-opacity': '0.5',
+            });
+        });
+
+        it('emits a block’s config default for an untouched control, and a toggle’s false', () => {
+            expect(styles({ animation: 'fade-up' }, 'kadence/rowlayout')).toEqual({
+                '--fade-up-animation-speed': '25ms',
+                '--fade-up-animation-reverse': 'normal',
+            });
+
+            expect(styles({ animation: 'letter' }, 'kadence/rowlayout')).toEqual({
+                '--letter-animation-opacity': '0.3',
+            });
+        });
+
+        it('emits nothing for the empty value, so the stylesheet default applies', () => {
+            expect(
+                styles(
+                    {
+                        animation: 'letter',
+                        letterAnimationOpacity: '',
+                    },
+                    'kadence/rowlayout'
+                )
+            ).toEqual({});
+        });
+
+        it('emits nothing for a value the block’s allowed list no longer permits', () => {
+            expect(
+                styles(
+                    {
+                        animation: 'letter',
+                        letterAnimationColor: 'red',
+                    },
+                    'kadence/rowlayout'
+                )
+            ).toEqual({
+                '--letter-animation-opacity': '0.3',
+            });
+        });
+
+        it('leaves nothing behind once the animation is switched or set to None', () => {
+            const stale = {
+                letterAnimationColor: 'green',
+                fadeUpAnimationSpeed: 80,
+            };
+
+            expect(
+                styles(
+                    {
+                        ...stale,
+                        animation: '',
+                    },
+                    'kadence/rowlayout'
+                )
+            ).toEqual({});
+
+            expect(
+                styles(
+                    {
+                        ...stale,
+                        animation: 'fade-up',
+                    },
+                    'core/group'
+                )
+            ).toEqual({
+                '--fade-up-animation-speed': '80ms',
+                '--fade-up-animation-reverse': 'normal',
+            });
+        });
+
+        it('gives a control without css no style callback', () => {
+            expect(build(BLOCKS, STYLED).fadeUpAnimationCaption.style).toBeUndefined();
+        });
+    });
+});
+
+/**
+ * The cases PHP's AnimationControl::cssValue() is held to as well, so the canvas and the front end
+ * cannot drift. Each control is built as getAnimationControls() serializes it: the factory's
+ * options, with every static option value a string.
+ */
+describe('cssValue parity', () => {
+    const cases = JSON.parse(
+        readFileSync(new globalThis.URL('../fixtures/animation-css-cases.json', import.meta.url), 'utf8')
+    );
+
+    it.each(cases)('$case', ({ type, options: declared, value, expected }) => {
+        const control = {
+            type,
+            ...declared,
+            ...(declared.options && {
+                options: declared.options.map((option) => ({
+                    ...option,
+                    value: String(option.value),
+                })),
+            }),
+        };
+
+        expect(cssValue(control, value)).toBe(expected);
     });
 });
