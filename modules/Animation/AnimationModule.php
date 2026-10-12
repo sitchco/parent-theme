@@ -40,7 +40,9 @@ use Sitchco\Framework\Module;
  *
  *    The stylesheet goes through enqueueGlobalAssets(), which hooks enqueue_block_assets and so
  *    reaches the front end and the editor canvas both. The canvas carries the same data-animation
- *    and custom properties the front end does, so the animation previews as it will look. The
+ *    and custom properties the front end does, so a CSS-only animation previews as it will look.
+ *    markup() is the exception: it reaches the page only through render_block, and the canvas can
+ *    add attributes and a style to a block but not child elements, so it is not previewed. The
  *    script, if there is one, stays on enqueueFrontendAssets(), so animation JS does not run
  *    inside the editor by accident. That is the split KadenceBlocks.php already uses. Not
  *    enqueueEditorPreviewAssets(): it hooks enqueue_block_assets behind an is_admin() guard
@@ -140,6 +142,10 @@ abstract class AnimationModule extends Module
      * Most animations need none. When given, the framework inserts it as the first child of the
      * block's host element (see markupHosts()) wherever the animation is selected. It is inserted
      * unescaped, so it must be a constant: never anything an author entered.
+     *
+     * It is inserted on the front end only, through render_block. The editor canvas has no way to
+     * add child elements to a block, so an animation that depends on its markup does not fully
+     * preview there.
      */
     public function markup(): ?string
     {

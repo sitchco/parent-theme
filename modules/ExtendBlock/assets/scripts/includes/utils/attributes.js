@@ -28,7 +28,9 @@
  *   keys your target block sets itself. See the precedence note in utils/editor-props.js.
  * - Dynamic blocks get these attributes in the editor canvas only. Their front end is rendered by
  *   PHP, and only classes are synced to it (through `extendBlockClasses`). Server-rendered
- *   attributes go through ExtendBlockModule's `wrapper-props` filter instead.
+ *   attributes go through ExtendBlockModule's `wrapper-props` filter instead. That filter drops
+ *   `''`, arrays and objects, which this file keeps, so an extension mirroring its output there
+ *   should emit non-empty scalars or leave the key out.
  *
  * Every callback that decides OUTPUT — `condition`, a field's `className` or `attributes`, and
  * the `classGenerator` / `attributeGenerator` overrides — gets the same output context in every

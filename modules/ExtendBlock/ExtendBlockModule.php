@@ -141,7 +141,9 @@ class ExtendBlockModule extends Module
      * - Style names must be custom properties (`--*`). Values are strings or numbers; one
      *   containing `;`, `{`, `}`, `\`, `<`, `>` or `/*`, or leaving a quote open, is dropped.
      * - `null` and `''` mean "unset" and are dropped, so a contributor can write its keys
-     *   unconditionally.
+     *   unconditionally. So are arrays and objects. The canvas disagrees on attributes: it renders
+     *   `''` as `data-x=""` and passes arrays and objects through (mergeAttributes() in
+     *   utils/attributes.js). Emit non-empty scalars, or leave the key out, and the two agree.
      * - Style properties are appended to the wrapper's existing `style`, so on a name the block
      *   already declares, ours comes last and wins.
      *

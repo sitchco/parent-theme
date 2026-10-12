@@ -21,7 +21,10 @@ import { buildAnimationFields } from './animation-fields';
  *         blocks: {
  *             'core/group': {
  *                 parallax: { key: 'parallax', label: 'Parallax', allowed: [], defaults: { speed: 25 } },
- *                 letter: { key: 'letter', label: 'Letter', allowed: { opacity: ['30', '50'] }, defaults: { opacity: '30' } },
+ *                 letter: {
+ *                     key: 'letter', label: 'Letter',
+ *                     allowed: { opacity: ['30', '50'] }, defaults: { opacity: '30' },
+ *                 },
  *             },
  *         },
  *         controls: {
@@ -32,7 +35,11 @@ import { buildAnimationFields } from './animation-fields';
  *             letter: [{
  *                 type: 'select', name: 'opacity', attribute: 'letterAnimationOpacity',
  *                 cssProperty: '--letter-animation-opacity', label: 'Opacity', default: '',
- *                 options: [{ label: 'Default', value: '' }, { label: '30%', value: '30', css: '0.3' }, { label: '50%', value: '50', css: '0.5' }],
+ *                 options: [
+ *                     { label: 'Default', value: '' },
+ *                     { label: '30%', value: '30', css: '0.3' },
+ *                     { label: '50%', value: '50', css: '0.5' },
+ *                 ],
  *             }],
  *         },
  *         ownMotion: ['letter'],

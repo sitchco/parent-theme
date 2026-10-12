@@ -31,7 +31,9 @@
  *   changed default only once the post is opened and saved again, and until then keeps the class
  *   it was saved with.
  * - On a static block, the editor stores the default as soon as the field applies (no condition,
- *   or its condition passes); see contextualDefaultsToStore() below. A static block's saved markup
+ *   or its condition passes); see contextualDefaultsToStore() below. Not for an extension
+ *   registered with `saveOutput: false`: it never reaches saved markup, so there is nothing to
+ *   protect, and an untouched block keeps following the default, as a dynamic block does. A static block's saved markup
  *   is checked against what save() produces from its stored attributes on every editor load, so
  *   save() must not depend on a default that can move: markup saved under one default would fail
  *   validation once the default changed. Stored, the value stays put, and a later change to the
@@ -40,8 +42,8 @@
  *   mounted — a pattern registered in PHP, a REST or programmatic insert, content saved before the
  *   field existed — still has nothing stored, so save() falls back to the current default, and
  *   block validation runs at parse time, before any store. Harmless while no function-default
- *   field emits output; S6, which gives the animation controls output, is to make save() read
- *   stored values only, leaving the fallback to the editor.
+ *   field emits saved output. The animation controls, the first fields with output, register with
+ *   `saveOutput: false` and are rendered by the server, so they stay out of this case.
  * - A value an author picks is stored, even when it happens to equal the default, and from then
  *   on it stays put whatever the default does.
  *

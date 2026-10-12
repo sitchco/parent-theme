@@ -84,23 +84,28 @@ class AnimationFrameworkModule extends Module
     ) {}
 
     /**
-     * Opens memoization and registers the editor control.
+     * Opens memoization and hooks everything else: the reduced-motion stylesheet (front end and
+     * canvas), the behaviour runtime (front end), `wrapper-props` and `render_block` for each
+     * animated block's output, and the editor control.
      *
      * ModuleRegistry runs every init() only after the registration pass has finished, so this is the
      * earliest moment at which the active-module list is whole and an answer is safe to keep.
      *
-     * Nothing is resolved here. The enqueue callback runs on enqueue_block_editor_assets, long after
-     * every module has initialized, which is both what the timing rule above requires and what keeps
-     * a front-end request from resolving config it will never use.
+     * Nothing is resolved here. Every hook runs long after every module has initialized, which is
+     * what the timing rule above requires. The enqueues only check that an `animations` section
+     * exists; config is resolved on demand, by the editor control or by the first animated block a
+     * page renders, so a request that renders none resolves nothing.
      */
     public function init(): void
     {
         $this->initialized = true;
 
-        /* Front-end assets only where blocks may carry animations at all. Checked against the raw
-           section, which is a cached config read, rather than by resolving it: resolution would log
-           any config problem on every page view, not just where an animated block renders. */
-        // The reduced-motion rule; global, so the canvas follows the preference as the front end does.
+        /* Both enqueues below load only where blocks may carry animations at all. Checked against
+           the raw section, which is a cached config read, rather than by resolving it: resolution
+           would log any config problem on every page view, not just where an animated block renders.
+
+           The reduced-motion rule is global, so the canvas follows the preference as the front end
+           does. */
         $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
             if ($this->hasAnimationConfig()) {
                 $assets->enqueueStyle(static::hookName(), 'main.css');
@@ -275,8 +280,8 @@ class AnimationFrameworkModule extends Module
      * Inserts the selected animation's markup() into a block's rendered HTML, at its host.
      *
      * Only for an animation the block may use now, as with wrapperProps(), and only when the
-     * animation declares markup. A block with no host for it (see AnimationModule::markupHosts())
-     * renders without the markup, and the miss is logged as a warning once per animation and block
+     * animation declares markup. When nothing in the block carries one of its hosts (see
+     * AnimationModule::markupHosts()), the block renders without the markup, and the miss is logged as a warning once per animation and block
      * type per request: the fix is a config or markupHosts() change, and render_block runs on every
      * request, so a warning per render would bury it.
      *
@@ -373,8 +378,8 @@ class AnimationFrameworkModule extends Module
 
     /**
      * The controls as the editor receives them: per animation key, a list of serialized controls,
-     * each carrying the `attribute` its value is stored under and the `cssProperty` it emits to. Animations without controls are left
-     * out.
+     * each carrying the `attribute` its value is stored under and the `cssProperty` it emits to.
+     * Animations without controls are left out.
      *
      * @return array<string, list<array<string, mixed>>>
      */
