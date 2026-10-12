@@ -14,6 +14,10 @@
  * stuck at its invisible start.
  *
  * The rule stops at an `own` block nested inside, so that block's own handling still applies.
+ * `:not()` can't tell which ancestor matched, so each arm handles one more level of nesting rather
+ * than drawing the boundary exactly, as `@scope` would. The first settles a framework block outside
+ * any `own` block; the second, one inside an `own` block, which may itself sit inside a framework
+ * block. A framework block inside own → framework → own still loses the rule on its descendants.
  *
  * `!important` because one rule has to beat every animation's own selectors, whatever their
  * specificity, without each animation repeating it. It is scoped to the reduced-motion preference
@@ -27,6 +31,33 @@
         *:not([data-animation-motion='own'], [data-animation-motion='own'] *)::before,
     [data-animation]:not([data-animation-motion='own'])
         *:not([data-animation-motion='own'], [data-animation-motion='own'] *)::after,
+    [data-animation-motion='own']
+        [data-animation]:not([data-animation-motion='own'])
+        *:not(
+            [data-animation-motion='own'],
+            [data-animation-motion='own']
+                [data-animation]:not([data-animation-motion='own'])
+                [data-animation-motion='own']
+                *
+        ),
+    [data-animation-motion='own']
+        [data-animation]:not([data-animation-motion='own'])
+        *:not(
+            [data-animation-motion='own'],
+            [data-animation-motion='own']
+                [data-animation]:not([data-animation-motion='own'])
+                [data-animation-motion='own']
+                *
+        )::before,
+    [data-animation-motion='own']
+        [data-animation]:not([data-animation-motion='own'])
+        *:not(
+            [data-animation-motion='own'],
+            [data-animation-motion='own']
+                [data-animation]:not([data-animation-motion='own'])
+                [data-animation-motion='own']
+                *
+        )::after,
     [data-animation]:not([data-animation-motion='own'])::before,
     [data-animation]:not([data-animation-motion='own'])::after {
         animation-duration: 0s !important;
