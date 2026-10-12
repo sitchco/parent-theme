@@ -107,10 +107,12 @@ class AnimationConfigResolver
 {
     /**
      * Blocks that render no wrapper of their own, so cannot carry an animation. A synced pattern
-     * renders its inner blocks and nothing around them: its wrapper props would land on its first
-     * inner block, and its markup in whatever host that block happens to hold.
+     * (`core/block`) or a pattern (`core/pattern`) renders its inner blocks and nothing around them:
+     * its wrapper props would land on its first inner block, and its markup in whatever host that
+     * block happens to hold. `core/more` and `core/nextpage` render only a comment, so there is
+     * nothing to write to at all.
      */
-    private const WRAPPERLESS_BLOCKS = ['core/block'];
+    private const WRAPPERLESS_BLOCKS = ['core/block', 'core/pattern', 'core/more', 'core/nextpage'];
 
     /** The only sub-keys a per-block override array may use. */
     private const OVERRIDE_ALLOWED = 'allowed';

@@ -16,7 +16,8 @@
  * - Only custom properties (`--*`) are emitted. Anything else is dropped, with a one-time console
  *   warning per name. A block's own `style` belongs to the block and to core's block supports.
  * - A value is a string or a finite number. One containing `;`, `{`, `}`, `\`, `<` or `>` is
- *   dropped, because it could end its own declaration and start another.
+ *   dropped, because it could end its own declaration and start another. So is one containing
+ *   `/*`, or with a quote it never closes: either would swallow every declaration after it.
  * - `undefined`, `null` and `''` are "unset" and dropped, so a generator can return its keys
  *   unconditionally.
  * - In the canvas, `useBlockProps` merges `style` key by key with the block's own style
@@ -35,7 +36,11 @@ const ALLOWED_NAME = /^--[A-Za-z0-9_-]+$/;
 /** Mirrors ExtendBlockModule::UNSAFE_STYLE_VALUE_PATTERN. */
 const UNSAFE_VALUE = /[;{}\\<>]|\/\*/;
 
-/** Mirrors ExtendBlockModule::CLOSED_QUOTES_PATTERN: every quote in the value closes. */
+/**
+ * Mirrors ExtendBlockModule::CLOSED_QUOTES_PATTERN: every quote in the value closes. JS has no
+ * possessive quantifiers, and needs none: V8's regex engine has no JIT stack limit for a long
+ * value to exhaust.
+ */
 const CLOSED_QUOTES = /^(?:[^'"]|"[^"]*"|'[^']*')*$/;
 
 const warned = new Set();

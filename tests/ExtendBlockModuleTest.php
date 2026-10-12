@@ -308,6 +308,7 @@ class ExtendBlockModuleTest extends TestCase
             ],
             'quote in the name' => [['attributes' => ['data-x"><script>' => '1']], "'data-x\"><script>' attribute"],
             'bare prefix' => [['attributes' => ['data-' => '1']], "'data-' attribute"],
+            'trailing newline' => [['attributes' => ["data-x\n" => '1']], "'data-x\n' attribute"],
             'class' => [['attributes' => ['class' => 'x']], "'class' attribute"],
             'plain style property' => [['style' => ['color' => 'red']], "'color' style"],
             'declaration break' => [['style' => ['--x' => 'red; background: url(x)']], "'--x' style"],
@@ -334,6 +335,12 @@ class ExtendBlockModuleTest extends TestCase
     {
         [$result] = $this->renderWithProps('<div>content</div>', ['style' => ['--a' => '"Don\'t"', '--b' => "'x'"]]);
         $this->assertSame('<div style="--a:&quot;Don&apos;t&quot;;--b:&apos;x&apos;;">content</div>', $result);
+    }
+
+    public function testALongValueIsKept(): void
+    {
+        $this->assertTrue(ExtendBlockModule::isSafeStyleValue(str_repeat('a', 10000)));
+        $this->assertSame(PREG_NO_ERROR, preg_last_error());
     }
 
     public function testWrapperPropsFromTwoContributorsBothLand(): void

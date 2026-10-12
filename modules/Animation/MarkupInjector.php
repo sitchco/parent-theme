@@ -20,6 +20,12 @@ final class MarkupInjector extends \WP_HTML_Tag_Processor
     private const BOOKMARK = 'sitchco-animation-markup';
 
     /**
+     * Elements whose contents are raw text, not markup. The Tag Processor's token for one covers the
+     * whole element, closing tag included, so an insert after the token would land after it.
+     */
+    private const RAW_TEXT_TAGS = ['SCRIPT', 'STYLE', 'TEXTAREA', 'TITLE', 'IFRAME', 'XMP', 'NOEMBED', 'NOFRAMES'];
+
+    /**
      * $html with $markup inserted as the first child of its host, or null when there is no host.
      *
      * The host is the first element, in document order, carrying any of $hosts' classes. Document
@@ -28,7 +34,10 @@ final class MarkupInjector extends \WP_HTML_Tag_Processor
      * when a column carries an earlier class in the list. With no $hosts, the host is the block's
      * outermost element.
      *
-     * A void element (`img`, `input`, …) has no children, so it cannot host markup either.
+     * An element that can't hold child markup can't host it either: a void element (`img`,
+     * `input`, …), a raw-text one (`style`, `script`, …), or a self-closing one, such as a `<path/>`
+     * inside an SVG. The Tag Processor reports `<path>` in the html namespace, so it is the
+     * self-closing flag that marks it.
      *
      * @param list<string> $hosts
      */
@@ -38,7 +47,12 @@ final class MarkupInjector extends \WP_HTML_Tag_Processor
         if (!($hosts ? $processor->seekHost($hosts) : ExtendBlockModule::seekWrapper($processor))) {
             return null;
         }
-        if (\WP_HTML_Processor::is_void($processor->get_tag())) {
+        $tag = $processor->get_tag();
+        if (
+            \WP_HTML_Processor::is_void($tag) ||
+            in_array($tag, self::RAW_TEXT_TAGS, true) ||
+            $processor->has_self_closing_flag()
+        ) {
             return null;
         }
 

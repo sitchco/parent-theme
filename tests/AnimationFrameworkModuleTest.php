@@ -573,8 +573,10 @@ class AnimationFrameworkModuleTest extends TestCase
         });
 
         $this->assertSame(['core/group'], array_keys($blocks));
-        $this->assertCount(1, $entry['value']['problems']);
-        $this->assertStringContainsString('core/block: renders no wrapper', $entry['value']['problems'][0]);
+        $this->assertCount(4, $entry['value']['problems']);
+        foreach (['core/block', 'core/pattern', 'core/more', 'core/nextpage'] as $i => $blockName) {
+            $this->assertStringContainsString("{$blockName}: renders no wrapper", $entry['value']['problems'][$i]);
+        }
     }
 
     public function testAnAnimationNoModuleProvidesIsDroppedWithoutLosingItsSiblings(): void

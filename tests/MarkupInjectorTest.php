@@ -77,6 +77,8 @@ class MarkupInjectorTest extends TestCase
             'class only in text' => ['<div>inner</div>', ['inner']],
             'void outermost element' => ['<img src="x.png">', []],
             'void host' => ['<div><img class="inner" src="x.png"></div>', ['inner']],
+            'raw-text host' => ['<div><style class="inner">.x{}</style></div>', ['inner']],
+            'self-closing host' => ['<svg><path class="inner"/></svg>', ['inner']],
             'content opening with text' => ['text <div>content</div>', []],
             'empty' => ['', []],
         ];

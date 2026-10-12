@@ -37,8 +37,12 @@ class ExtendBlockModule extends Module
      * An unclosed one (an author's `Don't`) would open a CSS string that swallows every declaration
      * after it. Quotes as such are allowed, so a template can build a string: `'"{value}"'`.
      * Mirrored by CLOSED_QUOTES in assets/scripts/includes/utils/styles.js.
+     *
+     * Possessive, so nothing is kept to backtrack into: a backtracking repeat of one character
+     * exhausts PCRE's JIT stack at around 10,000 characters, and the match then fails as though a
+     * quote were open.
      */
-    public const CLOSED_QUOTES_PATTERN = '/^(?:[^\'"]|"[^"]*"|\'[^\']*\')*$/D';
+    public const CLOSED_QUOTES_PATTERN = '/^(?:[^\'"]++|"[^"]*+"|\'[^\']*+\')*+$/D';
 
     /** Names already warned about this request, so a bad contributor logs once, not per block. */
     private array $warned = [];
