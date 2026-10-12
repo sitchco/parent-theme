@@ -26,7 +26,11 @@
  *   re-renders, or when the visitor changes their reduced-motion preference.
  * - `ctx.option(name)` reads the control's custom property, `--{key}-animation-{name}`, from the
  *   element's computed style: the same value the stylesheet sees, so CSS and JS share one channel.
- *   It is `''` when the control emits nothing, so the behaviour supplies its own default.
+ *   It is the raw string, read at the time of the call, so read it once in `init`. Custom
+ *   properties inherit: when the control emits nothing, it is the value of the nearest ancestor
+ *   block with the same animation, or `''` when there is none, and the behaviour supplies its own
+ *   default. An animation that never wants an ancestor's value registers the property with
+ *   `@property` and `inherits: false`.
  * - `ctx.reducedMotion` is the visitor's preference. A behaviour only sees it true when its
  *   animation handles reduced motion itself (AnimationModule::MOTION_OWN): any other animation's
  *   behaviour is not started at all while the preference is set. A change of preference after
@@ -37,6 +41,25 @@
  *   stays visible whenever the behaviour doesn't run — under reduced motion, or when the script
  *   fails — at the cost of a possible flash of content before `init` hides it. Its cleanup takes
  *   the hidden state back off.
+ * - `scrollWatch` checks nothing when it registers, only on ready, scroll, layout and window load,
+ *   and it returns no handle to cancel a watch. So a reveal shows at once when its element is
+ *   already in view — it may be started after load, by a `scan(root)` or a change of preference —
+ *   and its cleanup sets a flag that turns a watch still pending into a no-op:
+ *
+ *       init(el) {
+ *           let stopped = false;
+ *           const reveal = () => { if (!stopped) el.classList.remove('is-hidden'); };
+ *           el.classList.add('is-hidden');
+ *           if (sitchco.viewport.isInViewport(el)) {
+ *               reveal();
+ *           } else {
+ *               sitchco.scrollWatch([el], reveal);
+ *           }
+ *           return () => {
+ *               stopped = true;
+ *               el.classList.remove('is-hidden');
+ *           };
+ *       },
  *
  * Regions that re-render after load (fetched results, say) call `sitchco.animations.teardown(root)`
  * before replacing their content and `sitchco.animations.scan(root)` after, so nothing is started

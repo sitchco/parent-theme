@@ -1317,6 +1317,13 @@ class AnimationFrameworkModuleTest extends TestCase
         );
     }
 
+    public function testInitHooksMarkupInjectionAfterCoreBlockSupports(): void
+    {
+        $framework = $this->markupFramework();
+
+        $this->assertSame(11, has_filter('render_block', [$framework, 'injectMarkup']));
+    }
+
     public function testASelectedAnimationsMarkupGoesIntoItsHost(): void
     {
         $html = '<div class="block"><div class="inner">content</div></div>';
