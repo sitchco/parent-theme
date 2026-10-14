@@ -25,31 +25,29 @@
 
 .wp-block-kadence-tabs {
     max-width: none !important;
+    /*
+     * The editor nests a second .wp-block-kadence-tabs (also .kt-tabs-wrap) inside the
+     * aligned block wrapper. Declare on the outer one only, so the inner inherits its alignment.
+     */
+    &:not(.kt-tabs-wrap) {
+        --tabs-column-width: var(--wp--style--global--content-size);
+        /* Space on each side of the centered column, for child themes that align within it */
+        --tabs-column-gutter: max(0px, (100% - var(--tabs-column-width)) / 2);
+    }
     ul.kt-tabs-title-list,
     .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
-        max-width: var(--wp--style--global--content-size);
+        max-width: var(--tabs-column-width);
         margin-inline: auto;
-        .editor-styles-wrapper & {
-            margin-inline: auto !important;
-        }
     }
     &.alignwide {
-        .kt-tabs-title-list,
-        .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
-            max-width: var(--wp--style--global--wide-size);
-        }
+        --tabs-column-width: var(--wp--style--global--wide-size);
     }
     &.alignxwide {
-        .kt-tabs-title-list,
-        .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
-            max-width: var(--wp--custom--extra-wide-size);
-        }
+        --tabs-column-width: var(--wp--custom--extra-wide-size);
     }
     &.alignfull {
-        .kt-tabs-title-list,
-        .wp-block-kadence-tab:not(.kt-tab-full-width) > .kt-tab-inner-content-inner {
-            max-width: none;
-        }
+        --tabs-column-width: none;
+        --tabs-column-gutter: 0px;
     }
     .kt-tabs-wrap {
         .wp-block-kadence-tab,
